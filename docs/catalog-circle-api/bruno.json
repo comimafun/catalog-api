@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "catalog-circle-api",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

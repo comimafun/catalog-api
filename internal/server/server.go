@@ -1,15 +1,17 @@
 package server
 
 import (
-	"github.com/gofiber/fiber/v2"
-
 	"catalog-be/internal/database"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type FiberServer struct {
-	*fiber.App
-
-	db database.Service
+	App       *fiber.App
+	PG        *gorm.DB
+	validator *validator.Validate
 }
 
 func New() *FiberServer {
@@ -18,8 +20,8 @@ func New() *FiberServer {
 			ServerHeader: "catalog-be",
 			AppName:      "catalog-be",
 		}),
-
-		db: database.New(),
+		PG:        database.New(),
+		validator: validator.New(),
 	}
 
 	return server
