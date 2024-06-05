@@ -5,7 +5,6 @@ import (
 	"catalog-be/internal/entity"
 	fandom_dto "catalog-be/internal/modules/fandom/dto"
 	"errors"
-	"strconv"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -45,7 +44,7 @@ func (h *FandomHandler) CreateOne(c *fiber.Ctx) error {
 }
 
 func (h *FandomHandler) DeleteByID(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("FANDOM_ID_INVALID"), nil)))
 	}
@@ -73,7 +72,7 @@ func (h *FandomHandler) UpdateOne(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	id, err := strconv.Atoi(c.Params("id"))
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("FANDOM_ID_INVALID"), nil)))
 	}

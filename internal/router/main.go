@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/work_type"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,6 +13,7 @@ type HTTP struct {
 	auth           *auth.AuthHandler
 	authMiddleware *middlewares.AuthMiddleware
 	fandom         *fandom.FandomHandler
+	workType       *work_type.WorkTypeHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -36,16 +38,25 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	fandom.Put("/:id", h.fandom.UpdateOne)
 	fandom.Delete("/:id", h.fandom.DeleteByID)
 	fandom.Get("/", h.fandom.GetFandomPagination)
+
+	workType := v1.Group("/worktype")
+
+	workType.Post("/", h.workType.CreateOne)
+	workType.Put("/:id", h.workType.UpdateOne)
+	workType.Delete("/:id", h.workType.DeleteByID)
+	workType.Get("/all", h.workType.GetAll)
 }
 
 func NewHTTP(
 	auth *auth.AuthHandler,
 	authMiddleware *middlewares.AuthMiddleware,
 	fandom *fandom.FandomHandler,
+	workType *work_type.WorkTypeHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
 		authMiddleware,
 		fandom,
+		workType,
 	}
 }

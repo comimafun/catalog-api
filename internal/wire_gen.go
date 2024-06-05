@@ -13,6 +13,7 @@ import (
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
+	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
 	"github.com/go-playground/validator/v10"
@@ -34,6 +35,9 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	fandomRepo := fandom.NewFandomRepo(db)
 	fandomService := fandom.NewFandomService(fandomRepo)
 	fandomHandler := fandom.NewFandomHandler(fandomService, validator2)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler)
+	workTypeRepo := work_type.NewWorkTypeRepo(db)
+	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
+	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler)
 	return http
 }
