@@ -19,7 +19,10 @@ import (
 type AuthService interface {
 	AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error)
 	GetAuthURL() string
+	RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error)
+	Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error)
 	login(user *entity.User) (*auth_dto.NewTokenResponse, *domain.Error)
+	generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error)
 	registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error)
 	generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error)
 }
@@ -29,6 +32,64 @@ type authService struct {
 	config              internal_config.Config
 	refreshTokenService refreshtoken.RefreshTokenService
 	utils               utils.Utils
+}
+
+// generateAndUpdateToken implements AuthService.
+func (a *authService) generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error) {
+	token, tokenErr := a.generateNewJWTAndRefreshToken(user)
+	if tokenErr != nil {
+		return nil, tokenErr
+	}
+	now := time.Now()
+	update, updateErr := a.refreshTokenService.UpdateByID(refreshTokenID, entity.RefreshToken{
+		AccessToken: token.AccessToken,
+		ExpiredAt:   &token.RefreshTokenExpiredAt,
+		Token:       token.RefreshToken,
+		UserID:      user.ID,
+		UpdatedAt:   &now,
+	})
+	if updateErr != nil {
+		return nil, updateErr
+	}
+	return &auth_dto.NewTokenResponse{
+		AccessToken:           update.AccessToken,
+		RefreshToken:          update.Token,
+		AccessTokenExpiredAt:  token.AccessTokenExpiredAt.Format(time.RFC3339),
+		RefreshTokenExpiredAt: token.RefreshTokenExpiredAt.Format(time.RFC3339),
+	}, nil
+}
+
+// RefreshToken implements AuthService.
+func (a *authService) RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
+	refresh, refreshErr := a.refreshTokenService.CheckValidityByRefreshToken(refreshToken)
+	if refreshErr != nil {
+		return nil, refreshErr
+	}
+
+	user, userErr := a.userService.FindOneByID(refresh.UserID)
+	if userErr != nil {
+		return nil, userErr
+	}
+
+	newToken, newTokenErr := a.generateAndUpdateToken(user, refresh.ID)
+	if newTokenErr != nil {
+		return nil, newTokenErr
+	}
+	return newToken, nil
+}
+
+// Self implements AuthService.
+func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error) {
+	refresh, err := a.refreshTokenService.FindOneByAccessToken(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &auth_dto.SelfResponse{
+		BasicClaims:           user.BasicClaims,
+		AccessTokenExpiredAt:  user.ExpiresAt.Time.Format(time.RFC3339),
+		RefreshTokenExpiredAt: refresh.ExpiredAt.Format(time.RFC3339),
+	}, nil
 }
 
 // GetAuthURL implements AuthService.
@@ -60,9 +121,11 @@ func (a *authService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dt
 	secret := os.Getenv("JWT_SECRET")
 	expiredAt := time.Now().Add(time.Minute * 60)
 	claims := auth_dto.ATClaims{
-		UserID:   user.ID,
-		Email:    user.Email,
-		CircleID: user.CircleID,
+		BasicClaims: auth_dto.BasicClaims{
+			UserID:   user.ID,
+			Email:    user.Email,
+			CircleID: user.CircleID,
+		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiredAt),
 		},
@@ -94,10 +157,10 @@ func (a *authService) login(user *entity.User) (*auth_dto.NewTokenResponse, *dom
 	}
 
 	_, insertErr := a.refreshTokenService.CreateOne(entity.RefreshToken{
-		AccessToken:  newToken.AccessToken,
-		RefreshToken: newToken.RefreshToken,
-		UserID:       user.ID,
-		ExpiredAt:    &newToken.RefreshTokenExpiredAt,
+		AccessToken: newToken.AccessToken,
+		Token:       newToken.RefreshToken,
+		UserID:      user.ID,
+		ExpiredAt:   &newToken.RefreshTokenExpiredAt,
 	})
 	if insertErr != nil {
 		return nil, insertErr
@@ -124,7 +187,7 @@ func (a *authService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 		return nil, existingUserErr
 	}
 
-	if existingUser == nil {
+	if existingUser != nil {
 		login, loginErr := a.login(existingUser)
 		if loginErr != nil {
 			return nil, loginErr

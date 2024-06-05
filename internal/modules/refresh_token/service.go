@@ -14,11 +14,17 @@ type RefreshTokenService interface {
 	CreateOne(refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error)
 	LogoutRefreshToken(id int) *domain.Error
 	UpdateByID(id int, refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error)
-	CheckValidityByRefreshToken(refreshToken string) (bool, *domain.Error)
+	CheckValidityByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error)
+	FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error)
 }
 
 type refreshTokenService struct {
 	refreshTokenRepo RefreshTokenRepo
+}
+
+// FindOneByAccessToken implements RefreshTokenService.
+func (r *refreshTokenService) FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error) {
+	return r.refreshTokenRepo.FindOneByAccessToken(accessToken)
 }
 
 // LogoutRefreshToken implements RefreshTokenService.
@@ -32,22 +38,22 @@ func (r *refreshTokenService) UpdateByID(id int, refreshToken entity.RefreshToke
 }
 
 // CheckValidityByRefreshToken implements RefreshTokenService.
-func (r *refreshTokenService) CheckValidityByRefreshToken(refreshToken string) (bool, *domain.Error) {
+func (r *refreshTokenService) CheckValidityByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error) {
 	token, err := r.refreshTokenRepo.FindOneByRefreshToken(refreshToken)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
-			return false, domain.NewError(401, errors.New("REFRESH_TOKEN_NOT_FOUND"), nil)
+			return nil, domain.NewError(401, errors.New("REFRESH_TOKEN_NOT_FOUND"), nil)
 		}
-		return false, err
+		return nil, err
 	}
 
 	now := time.Now()
 
 	if token.ExpiredAt.Before(now) {
-		return false, domain.NewError(401, errors.New("REFRESH_TOKEN_EXPIRED"), nil)
+		return nil, domain.NewError(401, errors.New("REFRESH_TOKEN_EXPIRED"), nil)
 	}
 
-	return true, nil
+	return token, nil
 }
 
 // CreateOne implements RefreshTokenService.

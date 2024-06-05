@@ -22,12 +22,10 @@ type refreshTokenRepo struct {
 
 // CreateOne implements RefreshTokenRepo.
 func (r *refreshTokenRepo) CreateOne(refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error) {
-	var newRefreshToken entity.RefreshToken
-	err := r.db.Create(&refreshToken).Scan(&newRefreshToken).Error
-	if err != nil {
+	if err := r.db.Create(&refreshToken).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
-	return &newRefreshToken, nil
+	return &refreshToken, nil
 }
 
 // DeleteOneByAccessToken implements RefreshTokenRepo.
@@ -60,7 +58,7 @@ func (r *refreshTokenRepo) FindOneByAccessToken(accessToken string) (*entity.Ref
 // FindOneByRefreshToken implements RefreshTokenRepo.
 func (r *refreshTokenRepo) FindOneByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error) {
 	var refreshTokenEntity entity.RefreshToken
-	if err := r.db.Where("refresh_token = ?", refreshToken).First(&refreshTokenEntity).Error; err != nil {
+	if err := r.db.Where("token = ?", refreshToken).First(&refreshTokenEntity).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
 	return &refreshTokenEntity, nil

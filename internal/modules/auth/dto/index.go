@@ -28,10 +28,14 @@ type User struct {
 	Hash      string     `json:"-"`
 }
 
-type ATClaims struct {
+type BasicClaims struct {
 	UserID   int    `json:"user_id"`
 	Email    string `json:"email"`
 	CircleID *int   `json:"circle_id"`
+}
+
+type ATClaims struct {
+	BasicClaims
 	jwt.RegisteredClaims
 }
 
@@ -45,6 +49,12 @@ type NewToken struct {
 type NewTokenResponse struct {
 	AccessToken           string `json:"access_token"`
 	RefreshToken          string `json:"refresh_token"`
-	AccessTokenExpiredAt  string `json:"access_tokenexpired_at"`
+	AccessTokenExpiredAt  string `json:"access_token_expired_at"`
+	RefreshTokenExpiredAt string `json:"refresh_token_expired_at"`
+}
+
+type SelfResponse struct {
+	BasicClaims
+	AccessTokenExpiredAt  string `json:"access_token_expired_at"`
 	RefreshTokenExpiredAt string `json:"refresh_token_expired_at"`
 }

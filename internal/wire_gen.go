@@ -8,6 +8,7 @@ package internal
 
 import (
 	"catalog-be/internal/config"
+	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
@@ -28,6 +29,7 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	refreshTokenService := refreshtoken.NewRefreshTokenService(refreshTokenRepo, utilsUtils)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils)
 	authHandler := auth.NewAuthHandler(authService, validator2)
-	http := router.NewHTTP(authHandler)
+	authMiddleware := middlewares.NewAuthMiddleware()
+	http := router.NewHTTP(authHandler, authMiddleware)
 	return http
 }

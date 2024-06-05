@@ -57,11 +57,10 @@ func (u *userRepo) UpdateOneByID(id int, user entity.User) (*entity.User, *domai
 
 // CreateOne implements UserRepo.
 func (u *userRepo) CreateOne(user entity.User) (*entity.User, *domain.Error) {
-	var newUser entity.User
-	if err := u.db.Create(&user).Scan(&newUser).Error; err != nil {
+	if err := u.db.Create(&user).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
-	return &newUser, nil
+	return &user, nil
 }
 
 func NewUserRepo(db *gorm.DB) UserRepo {
