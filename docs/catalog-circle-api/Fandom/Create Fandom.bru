@@ -1,0 +1,17 @@
+meta {
+  name: Create Fandom
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{hostnamev1}}/fandom
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "   "
+  }
+}

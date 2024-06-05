@@ -1,0 +1,22 @@
+meta {
+  name: Get Fandom Pagination
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{hostnamev1}}/fandom?page=2&limit=20
+  body: none
+  auth: none
+}
+
+query {
+  page: 2
+  limit: 20
+}
+
+body:json {
+  {
+    "name": "   "
+  }
+}
