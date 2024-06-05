@@ -1,0 +1,15 @@
+meta {
+  name: Self
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{hostnamev1}}/auth/self
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Login With Google
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{hostnamev1}}/auth/google/callback
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "code": "CODE_HERE"
+  }
+}

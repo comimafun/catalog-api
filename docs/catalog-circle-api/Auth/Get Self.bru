@@ -1,0 +1,15 @@
+meta {
+  name: Get Self
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{hostnamev1}}/auth/refresh
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{rt}}
+}
