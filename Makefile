@@ -57,4 +57,17 @@ watch:
 	    fi; \
 	fi
 
+include .env
+create-migration:
+	@read -p "Enter migration name: " name; \
+	migrate create -ext sql -dir migrator/migrations $$name
+
+migrate-up:
+	@read -p "how many steps to migrate up? " steps; \
+	migrate -path migrator/migrations -database "${DB_URL}" up $$steps
+
+migrate-down:
+	@read -p "how many steps to migrate down? " steps; \
+	migrate -path migrator/migrations -database "${DB_URL}" down $$steps
+
 .PHONY: all build run test clean
