@@ -1,4 +1,4 @@
-package config
+package internal_config
 
 import (
 	"catalog-be/internal/domain"
