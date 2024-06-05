@@ -13,6 +13,15 @@ import (
 
 type AuthMiddleware struct{}
 
+func (a *AuthMiddleware) CircleOnly(c *fiber.Ctx) error {
+	user := c.Locals("user").(*auth_dto.ATClaims)
+	if user.CircleID == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+	}
+
+	return c.Next()
+}
+
 func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 	accessToken := c.Get("Authorization")
 	accessToken = strings.TrimPrefix(accessToken, "Bearer ")

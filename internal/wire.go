@@ -7,6 +7,7 @@ import (
 	internal_config "catalog-be/internal/config"
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/fandom"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/router"
@@ -31,6 +32,10 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 
 		auth.NewAuthHandler,
 		auth.NewAuthService,
+
+		fandom.NewFandomHandler,
+		fandom.NewFandomRepo,
+		fandom.NewFandomService,
 
 		middlewares.NewAuthMiddleware,
 
