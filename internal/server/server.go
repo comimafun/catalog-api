@@ -10,8 +10,8 @@ import (
 
 type FiberServer struct {
 	App       *fiber.App
-	PG        *gorm.DB
-	validator *validator.Validate
+	Pg        *gorm.DB
+	Validator *validator.Validate
 }
 
 func New() *FiberServer {
@@ -20,8 +20,8 @@ func New() *FiberServer {
 			ServerHeader: "catalog-be",
 			AppName:      "catalog-be",
 		}),
-		PG:        database.New(),
-		validator: validator.New(),
+		Pg:        database.New(),
+		Validator: validator.New(),
 	}
 
 	return server
