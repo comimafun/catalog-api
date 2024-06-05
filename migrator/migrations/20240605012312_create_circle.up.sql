@@ -18,7 +18,7 @@ create table
         "created_at" timestamp not null default current_timestamp,
         "updated_at" timestamp not null default current_timestamp,
         "deleted_at" timestamp,
-        "user_id" integer not null,
+        "user_id" integer,
         "day" day,
         foreign key ("user_id") references "user" ("id") on delete cascade
     );
