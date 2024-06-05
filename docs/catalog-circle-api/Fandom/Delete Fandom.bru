@@ -1,0 +1,17 @@
+meta {
+  name: Delete Fandom
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{hostnamev1}}/fandom/2
+  body: none
+  auth: none
+}
+
+body:json {
+  {
+    "name": "nocomplete?"
+  }
+}

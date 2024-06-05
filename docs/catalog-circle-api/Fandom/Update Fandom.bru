@@ -1,0 +1,17 @@
+meta {
+  name: Update Fandom
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{hostnamev1}}/fandom/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "nocomplete?"
+  }
+}

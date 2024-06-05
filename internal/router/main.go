@@ -3,6 +3,7 @@ package router
 import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/fandom"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -10,6 +11,7 @@ import (
 type HTTP struct {
 	auth           *auth.AuthHandler
 	authMiddleware *middlewares.AuthMiddleware
+	fandom         *fandom.FandomHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -28,14 +30,22 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	auth.Post("/google/callback", h.auth.PostGoogleCallback)
 	auth.Get("/refresh", h.auth.RefreshToken)
 	auth.Get("/self", h.authMiddleware.Init, h.auth.GetSelf)
+
+	fandom := v1.Group("/fandom")
+	fandom.Post("/", h.fandom.CreateOne)
+	fandom.Put("/:id", h.fandom.UpdateOne)
+	fandom.Delete("/:id", h.fandom.DeleteByID)
+	fandom.Get("/", h.fandom.GetFandomPagination)
 }
 
 func NewHTTP(
 	auth *auth.AuthHandler,
 	authMiddleware *middlewares.AuthMiddleware,
+	fandom *fandom.FandomHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
 		authMiddleware,
+		fandom,
 	}
 }

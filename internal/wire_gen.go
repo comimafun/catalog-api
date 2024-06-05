@@ -10,6 +10,7 @@ import (
 	"catalog-be/internal/config"
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/router"
@@ -30,6 +31,9 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils)
 	authHandler := auth.NewAuthHandler(authService, validator2)
 	authMiddleware := middlewares.NewAuthMiddleware()
-	http := router.NewHTTP(authHandler, authMiddleware)
+	fandomRepo := fandom.NewFandomRepo(db)
+	fandomService := fandom.NewFandomService(fandomRepo)
+	fandomHandler := fandom.NewFandomHandler(fandomService, validator2)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler)
 	return http
 }
