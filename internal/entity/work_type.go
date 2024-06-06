@@ -15,5 +15,5 @@ type WorkType struct {
 }
 
 func (WorkType) TableName() string {
-	return "fandom"
+	return "work_type"
 }

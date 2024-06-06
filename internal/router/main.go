@@ -40,10 +40,10 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	fandom.Get("/", h.fandom.GetFandomPagination)
 
 	workType := v1.Group("/worktype")
-
-	workType.Post("/", h.workType.CreateOne)
-	workType.Put("/:id", h.workType.UpdateOne)
-	workType.Delete("/:id", h.workType.DeleteByID)
+	// For admin only account
+	// workType.Post("/", h.workType.CreateOne)
+	// workType.Put("/:id", h.workType.UpdateOne)
+	// workType.Delete("/:id", h.workType.DeleteByID)
 	workType.Get("/all", h.workType.GetAll)
 }
 
