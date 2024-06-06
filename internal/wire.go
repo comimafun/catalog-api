@@ -10,6 +10,7 @@ import (
 	"catalog-be/internal/modules/fandom"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
+	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
 
@@ -36,6 +37,10 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 		fandom.NewFandomHandler,
 		fandom.NewFandomRepo,
 		fandom.NewFandomService,
+
+		work_type.NewWorkTypeHandler,
+		work_type.NewWorkTypeRepo,
+		work_type.NewWorkTypeService,
 
 		middlewares.NewAuthMiddleware,
 
