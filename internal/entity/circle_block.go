@@ -10,6 +10,7 @@ type CircleBlock struct {
 	ID        int        `json:"id"`
 	Prefix    string     `json:"prefix"`
 	Postfix   string     `json:"postfix"`
+	CircleID  int        `json:"circle_id"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt gorm.DeletedAt
