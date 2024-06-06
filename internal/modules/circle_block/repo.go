@@ -7,42 +7,64 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleBlock interface {
+type CircleBlockRepo interface {
 	CreateOne(block entity.CircleBlock) (*entity.CircleBlock, *domain.Error)
 	UpdateOne(id int, block entity.CircleBlock) (*entity.CircleBlock, *domain.Error)
 	DeleteByID(id int) *domain.Error
+	GetOneByBlock(prefix string, block string) (*entity.CircleBlock, *domain.Error)
+	GetOneByID(id int) (*entity.CircleBlock, *domain.Error)
 }
-type circleBlock struct {
+type circleBlockRepo struct {
 	db *gorm.DB
 }
 
+// GetOneByID implements CircleBlock.
+func (c *circleBlockRepo) GetOneByID(id int) (*entity.CircleBlock, *domain.Error) {
+	var circleBlock entity.CircleBlock
+	err := c.db.First(&circleBlock, id).Error
+	if err != nil {
+		return nil, &domain.Error{Err: err, Code: 500}
+	}
+	return &circleBlock, nil
+}
+
+// GetOneByBlock implements CircleBlock.
+func (c *circleBlockRepo) GetOneByBlock(prefix string, block string) (*entity.CircleBlock, *domain.Error) {
+	var circleBlock entity.CircleBlock
+	err := c.db.Where("prefix = ? AND postfix = ?", prefix, block).First(&circleBlock).Error
+	if err != nil {
+		return nil, &domain.Error{Err: err, Code: 500}
+	}
+	return &circleBlock, nil
+}
+
 // CreateOne implements CircleBlock.
-func (c *circleBlock) CreateOne(block entity.CircleBlock) (*entity.CircleBlock, *domain.Error) {
+func (c *circleBlockRepo) CreateOne(block entity.CircleBlock) (*entity.CircleBlock, *domain.Error) {
 	err := c.db.Create(&block).Error
 	if err != nil {
-		return nil, &domain.Error{Err: err}
+		return nil, &domain.Error{Err: err, Code: 500}
 	}
 	return &block, nil
 }
 
 // DeleteByID implements CircleBlock.
-func (c *circleBlock) DeleteByID(id int) *domain.Error {
+func (c *circleBlockRepo) DeleteByID(id int) *domain.Error {
 	err := c.db.Delete(&entity.CircleBlock{}, id).Error
 	if err != nil {
-		return &domain.Error{Err: err}
+		return &domain.Error{Err: err, Code: 500}
 	}
 	return nil
 }
 
 // UpdateOne implements CircleBlock.
-func (c *circleBlock) UpdateOne(id int, block entity.CircleBlock) (*entity.CircleBlock, *domain.Error) {
+func (c *circleBlockRepo) UpdateOne(id int, block entity.CircleBlock) (*entity.CircleBlock, *domain.Error) {
 	err := c.db.Model(&entity.CircleBlock{}).Where("id = ?", id).Updates(&block).Scan(&block).Error
 	if err != nil {
-		return nil, &domain.Error{Err: err}
+		return nil, &domain.Error{Err: err, Code: 500}
 	}
 	return &block, nil
 }
 
-func NewCircleBlockRepo(db *gorm.DB) CircleBlock {
-	return &circleBlock{db}
+func NewCircleBlockRepo(db *gorm.DB) CircleBlockRepo {
+	return &circleBlockRepo{db}
 }
