@@ -39,16 +39,19 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 
 		body.CircleBlock = &trimmedBlock
 
-		_, err := c.circleBlockService.GetOneByBlock(*body.CircleBlock)
+		block, err := c.circleBlockService.GetOneByBlock(*body.CircleBlock)
 		if err != nil && !errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, err
+		}
+
+		if block != nil {
+			return nil, domain.NewError(400, errors.New("CIRCLE_BLOCK_ALREADY_EXIST"), nil)
 		}
 
 		_, newCircleBlockErr := c.circleBlockService.CreateOne(*body.CircleBlock, circleID)
 		if newCircleBlockErr != nil {
 			return nil, newCircleBlockErr
 		}
-
 	}
 
 	updated, err := c.circleRepo.UpdateOneByID(circleID, entity.Circle{

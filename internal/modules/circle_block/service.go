@@ -33,6 +33,11 @@ func (c *circleBlockService) transformBlockString(block string) (*entity.CircleB
 	prefix = strings.ToUpper(splitted[0])
 	postfix = strings.ToLower(splitted[1])
 
+	// check prefix length
+	if len(postfix) > 8 || len(prefix) > 2 {
+		return nil, domain.NewError(400, errors.New("INVALID_BLOCK_FORMAT"), nil)
+	}
+
 	return &entity.CircleBlock{
 		Prefix:  prefix,
 		Postfix: postfix,
