@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/domain"
 	auth_dto "catalog-be/internal/modules/auth/dto"
 	circle_dto "catalog-be/internal/modules/circle/dto"
+	circleblock "catalog-be/internal/modules/circle_block"
 	"errors"
 	"strings"
 
@@ -12,11 +13,12 @@ import (
 )
 
 type CircleHandler struct {
-	circleService CircleService
-	validator     *validator.Validate
+	circleService      CircleService
+	validator          *validator.Validate
+	circleBlockService circleblock.CircleBlockService
 }
 
-func (h *CircleHandler) PublishCircleByID(c *fiber.Ctx) error {
+func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
 	if user.CircleID == nil {
@@ -34,11 +36,36 @@ func (h *CircleHandler) PublishCircleByID(c *fiber.Ctx) error {
 	})
 }
 
+func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+	if user.CircleID == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("USER_DONT_HAVE_CIRCLE"), nil)))
+	}
+
+	var body circle_dto.UpdateCircleRequestBody
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	if err := h.validator.Struct(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	circle, err := h.circleService.UpdateCircleByID(*user.CircleID, &body)
+	if err != nil {
+		return c.Status(err.Code).JSON(err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": circle,
+		"code": fiber.StatusOK,
+	})
+}
+
 func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 	user := c.Locals("user").(*auth_dto.ATClaims)
-	if user.CircleID != nil {
-		return c.Status(fiber.StatusConflict).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusConflict, errors.New("CIRCLE_ALREADY_EXIST"), nil)))
-	}
+
 	var body circle_dto.OnboardNewCircleRequestBody
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
@@ -48,6 +75,10 @@ func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 
 	if err := h.validator.Struct(body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	if user.CircleID != nil {
+		return c.Status(fiber.StatusConflict).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusConflict, errors.New("CIRCLE_ALREADY_EXIST"), nil)))
 	}
 
 	circle, err := h.circleService.OnboardNewCircle(&body, user.UserID)
@@ -83,9 +114,11 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 func NewCircleHandler(
 	circleService CircleService,
 	validator *validator.Validate,
+	circleBlockService circleblock.CircleBlockService,
 ) *CircleHandler {
 	return &CircleHandler{
-		circleService: circleService,
-		validator:     validator,
+		circleService:      circleService,
+		validator:          validator,
+		circleBlockService: circleBlockService,
 	}
 }

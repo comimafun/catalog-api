@@ -1,11 +1,11 @@
 meta {
-  name: Onboard New Circle
+  name: Update Circle
   type: http
   seq: 4
 }
 
-post {
-  url: {{hostnamev1}}/circle/onboard
+patch {
+  url: {{hostnamev1}}/circle
   body: json
   auth: none
 }
@@ -16,6 +16,6 @@ headers {
 
 body:json {
   {
-    "sdfsdfsd": "PT  cinta sejati"
+    "description": "PT mencari cin"
   }
 }

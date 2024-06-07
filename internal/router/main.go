@@ -50,7 +50,8 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	circle := v1.Group("/circle")
 	circle.Post("/onboard", h.authMiddleware.Init, h.circle.OnboardNewCircle)
-	circle.Post("/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishCircleByID)
+	circle.Post("/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishUnpublishCircle)
+	circle.Patch("/", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.UpdateCircle)
 	circle.Get("/:slug", h.circle.FindCircleBySlug)
 }
 

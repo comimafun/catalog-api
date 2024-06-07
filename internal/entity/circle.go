@@ -31,8 +31,7 @@ type Circle struct {
 	UpdatedAt    *time.Time     `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
 
-	CircleBlockID *int `json:"circle_block_id"`
-	Day           *Day `json:"day"`
+	Day *Day `json:"day"`
 }
 
 func (Circle) TableName() string {

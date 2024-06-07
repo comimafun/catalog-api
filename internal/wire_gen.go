@@ -11,6 +11,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
+	"catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
@@ -40,8 +41,10 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
 	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
 	circleRepo := circle.NewCircleRepo(db)
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService)
-	circleHandler := circle.NewCircleHandler(circleService, validator2)
+	circleBlockRepo := circleblock.NewCircleBlockRepo(db)
+	circleBlockService := circleblock.NewCircleBlockService(circleBlockRepo)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleBlockService)
+	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService)
 	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler)
 	return http
 }
