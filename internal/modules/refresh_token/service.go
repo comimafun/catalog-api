@@ -16,10 +16,27 @@ type RefreshTokenService interface {
 	UpdateByID(id int, refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error)
 	CheckValidityByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error)
 	FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error)
+	ForceExpiredRefreshToken(accessToken string) *domain.Error
 }
 
 type refreshTokenService struct {
 	refreshTokenRepo RefreshTokenRepo
+}
+
+// ForceExpiredRefreshToken implements RefreshTokenService.
+func (r *refreshTokenService) ForceExpiredRefreshToken(accessToken string) *domain.Error {
+	token, err := r.refreshTokenRepo.FindOneByAccessToken(accessToken)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+
+	_, err = r.refreshTokenRepo.UpdateOneByID(token.ID, entity.RefreshToken{
+		ExpiredAt: &now,
+	})
+
+	return err
 }
 
 // FindOneByAccessToken implements RefreshTokenService.

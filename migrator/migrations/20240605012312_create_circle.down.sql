@@ -1,5 +1,3 @@
-drop index if exists "idx_circle_user_id";
-
 drop index if exists "idx_circle_verified";
 
 drop index if exists "idx_circle_batch";

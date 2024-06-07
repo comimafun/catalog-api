@@ -3,6 +3,7 @@ package router
 import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/work_type"
 
@@ -14,6 +15,7 @@ type HTTP struct {
 	authMiddleware *middlewares.AuthMiddleware
 	fandom         *fandom.FandomHandler
 	workType       *work_type.WorkTypeHandler
+	circle         *circle.CircleHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -45,6 +47,11 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	// workType.Put("/:id", h.workType.UpdateOne)
 	// workType.Delete("/:id", h.workType.DeleteByID)
 	workType.Get("/all", h.workType.GetAll)
+
+	circle := v1.Group("/circle")
+	circle.Post("/onboard", h.authMiddleware.Init, h.circle.OnboardNewCircle)
+	circle.Post("/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishCircleByID)
+	circle.Get("/:slug", h.circle.FindCircleBySlug)
 }
 
 func NewHTTP(
@@ -52,11 +59,13 @@ func NewHTTP(
 	authMiddleware *middlewares.AuthMiddleware,
 	fandom *fandom.FandomHandler,
 	workType *work_type.WorkTypeHandler,
+	circle *circle.CircleHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
 		authMiddleware,
 		fandom,
 		workType,
+		circle,
 	}
 }

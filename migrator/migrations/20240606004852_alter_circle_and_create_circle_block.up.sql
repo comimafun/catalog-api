@@ -13,6 +13,6 @@ create table
 
 alter table "circle"
 add column "circle_block_id" integer,
-add foreign key ("circle_block_id") references "circle_block" (id);
+add foreign key ("circle_block_id") references "circle_block" (id) on delete set null;
 
 create index "idx_circle_circle_block" on "circle" ("circle_block_id");

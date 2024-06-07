@@ -10,6 +10,7 @@ import (
 	"catalog-be/internal/config"
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
@@ -31,13 +32,16 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	refreshTokenService := refreshtoken.NewRefreshTokenService(refreshTokenRepo, utilsUtils)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils)
 	authHandler := auth.NewAuthHandler(authService, validator2)
-	authMiddleware := middlewares.NewAuthMiddleware()
+	authMiddleware := middlewares.NewAuthMiddleware(userService)
 	fandomRepo := fandom.NewFandomRepo(db)
 	fandomService := fandom.NewFandomService(fandomRepo)
 	fandomHandler := fandom.NewFandomHandler(fandomService, validator2)
 	workTypeRepo := work_type.NewWorkTypeRepo(db)
 	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
 	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler)
+	circleRepo := circle.NewCircleRepo(db)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService)
+	circleHandler := circle.NewCircleHandler(circleService, validator2)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler)
 	return http
 }

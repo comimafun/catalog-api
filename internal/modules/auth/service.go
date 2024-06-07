@@ -85,6 +85,17 @@ func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 		return nil, err
 	}
 
+	if user.CircleID == nil {
+		checkUser, checkUserErr := a.userService.FindOneByID(user.UserID)
+		if checkUserErr != nil {
+			return nil, checkUserErr
+		}
+
+		if checkUser.CircleID != nil {
+			user.CircleID = checkUser.CircleID
+		}
+	}
+
 	return &auth_dto.SelfResponse{
 		BasicClaims:           user.BasicClaims,
 		AccessTokenExpiredAt:  user.ExpiresAt.Time.Format(time.RFC3339),
