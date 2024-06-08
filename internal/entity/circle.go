@@ -37,3 +37,14 @@ type Circle struct {
 func (Circle) TableName() string {
 	return "circle"
 }
+
+type CircleFandom struct {
+	CircleID  int        `json:"circle_id"`
+	FandomID  int        `json:"fandom_id"`
+	CreatedAt *time.Time `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+}
+
+func (CircleFandom) TableName() string {
+	return "circle_fandom"
+}
