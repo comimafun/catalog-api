@@ -35,12 +35,7 @@ func (a *AuthMiddleware) CircleOnly(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
-	accessToken := c.Get("Authorization")
-	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
-	if accessToken == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
-	}
+func (a *AuthMiddleware) parseToken(accessToken string) (*auth_dto.ATClaims, *domain.Error) {
 	secret := os.Getenv("JWT_SECRET")
 	claims := &auth_dto.ATClaims{}
 	token, err := jwt.ParseWithClaims(accessToken, claims, func(t *jwt.Token) (interface{}, error) {
@@ -49,17 +44,50 @@ func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrSignatureInvalid) {
-			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("INVALID_SIGNATURE"), nil)))
+			return nil, domain.NewError(fiber.StatusUnauthorized, errors.New("INVALID_SIGNATURE"), nil)
 		}
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_EXPIRED"), nil)))
+			return nil, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_EXPIRED"), nil)
 		}
 
-		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+		return nil, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)
 	}
 
 	if !token.Valid {
-		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
+		return nil, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)
+	}
+
+	return claims, nil
+}
+
+func (a *AuthMiddleware) IfAuthed(c *fiber.Ctx) error {
+	accessToken := c.Get("Authorization")
+	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+	if accessToken == "" {
+		c.Locals("user", nil)
+		return c.Next()
+	}
+
+	claims, err := a.parseToken(accessToken)
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+	}
+
+	c.Locals("user", claims)
+	c.Locals("accessToken", accessToken)
+	return c.Next()
+}
+
+func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
+	accessToken := c.Get("Authorization")
+	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+	if accessToken == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+	}
+
+	claims, err := a.parseToken(accessToken)
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
 	c.Locals("user", claims)

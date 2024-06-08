@@ -2,6 +2,7 @@ package circle_dto
 
 import (
 	"catalog-be/internal/entity"
+	"time"
 )
 
 type ImageURLs struct {
@@ -42,4 +43,7 @@ type CircleResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
 	WorkType []entity.WorkType `json:"work_type"`
+
+	Bookmarked   bool       `json:"bookmarked"`
+	BookmarkedAt *time.Time `json:"bookmarked_at"`
 }

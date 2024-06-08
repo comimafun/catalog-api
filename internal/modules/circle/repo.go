@@ -2,6 +2,7 @@ package circle
 
 import (
 	"catalog-be/internal/domain"
+
 	"catalog-be/internal/entity"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	"fmt"
@@ -16,19 +17,120 @@ type CircleRepo interface {
 	FindOneBySlug(slug string) (*entity.Circle, *domain.Error)
 	FindOneByUserID(userID int) (*entity.Circle, *domain.Error)
 	UpdateOneByID(circleID int, circle entity.Circle) (*entity.Circle, *domain.Error)
-	FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
+	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 	DeleteOneByID(id int) *domain.Error
+
 	deleteWorkTypeRelationByCircleID(circleID int) *domain.Error
-	deleteFandomRelationByCircleID(circleID int) *domain.Error
 	BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error
+	FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error)
+
+	deleteFandomRelationByCircleID(circleID int) *domain.Error
 	BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error
 	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
-	FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error)
+
+	FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
+	FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
 }
 type circleRepo struct {
 	db *gorm.DB
+}
+
+func NewCircleRepo(
+	db *gorm.DB,
+) CircleRepo {
+	return &circleRepo{
+		db: db,
+	}
+}
+
+// findAllBookmarkedCount implements CircleRepo.
+func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
+	whereClause, args := c.findAllWhereSQL(filter)
+
+	query := fmt.Sprintf(`
+		select
+			count(DISTINCT c.id) as count
+		from 
+			circle c
+		JOIN
+			user_bookmark ub on c.id = ub.circle_id and ub.user_id = ?
+		LEFT JOIN
+			circle_fandom cf on c.id = cf.circle_id
+		LEFT JOIN
+			fandom f on f.id = cf.fandom_id
+		lEFT JOIN
+			circle_work_type cwt on c.id = cwt.circle_id
+		LEFT JOIN
+			work_type wt on wt.id = cwt.work_type_id
+		%s
+	`, whereClause)
+
+	args = append(args, userID)
+
+	var count int
+	err := c.db.Raw(query, args...).Scan(&count).Error
+
+	if err != nil {
+		return 0, domain.NewError(500, err, nil)
+	}
+
+	return count, nil
+}
+
+// FindBookmarkedCircleByUserID implements CircleRepo.
+func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+	whereClause, args := c.findAllWhereSQL(filter)
+
+	query := fmt.Sprintf(`
+		select
+			c.*,
+			
+			f."name" as fandom_name,
+			f.id as fandom_id,
+			f.visible as fandom_visible,
+			f.created_at as fandom_created_at,
+			f.updated_at as fandom_updated_at,
+			f.deleted_at as fandom_updated_at,
+
+			wt."name" as work_type_name,
+			wt.id as work_type_id,
+			wt.created_at as work_type_created_at,
+			wt.updated_at as work_type_updated_at,
+			wt.deleted_at as work_type_updated_at,
+
+			ub.created_at as bookmarked_at,
+			CASE WHEN ub.user_id is not null THEN true ELSE false END as bookmarked
+		from 
+			circle c
+		JOIN
+			user_bookmark ub on c.id = ub.circle_id and ub.user_id = ?
+		LEFT JOIN
+			circle_fandom cf on c.id = cf.circle_id
+		LEFT JOIN
+			fandom f on f.id = cf.fandom_id
+		lEFT JOIN
+			circle_work_type cwt on c.id = cwt.circle_id
+		LEFT JOIN
+			work_type wt on wt.id = cwt.work_type_id
+		%s
+		order by ub.created_at desc
+		offset ?
+		limit ?
+	`, whereClause)
+
+	args = append(args, userID)
+
+	offset := (filter.Page - 1) * filter.Limit
+	args = append(args, offset, filter.Limit)
+
+	var circles []entity.CircleRaw
+	err := c.db.Raw(query, args...).Scan(&circles).Error
+	if err != nil {
+		return nil, domain.NewError(500, err, nil)
+	}
+	return circles, nil
 }
 
 // BatchInsertFandomCircleRelation implements CircleRepo.
@@ -193,7 +295,7 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 }
 
 // FindAll implements CircleRepo.
-func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
 	whereClause, args := c.findAllWhereSQL(filter)
 
 	query := fmt.Sprintf(`
@@ -211,7 +313,10 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 			wt.id as work_type_id,
 			wt.created_at as work_type_created_at,
 			wt.updated_at as work_type_updated_at,
-			wt.deleted_at as work_type_updated_at
+			wt.deleted_at as work_type_updated_at,
+
+			ub.created_at as bookmarked_at,
+			CASE WHEN ub.user_id is not null THEN true ELSE false END as bookmarked
 		from 
 			circle c
 		LEFT JOIN
@@ -222,6 +327,8 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 			circle_work_type cwt on c.id = cwt.circle_id
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
+		LEFT JOIN
+			user_bookmark ub on c.id = ub.circle_id and ub.user_id = COALESCE(?, ub.user_id)
 		%s
 		order by c.created_at desc
 		offset ?
@@ -229,6 +336,7 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 	`, whereClause)
 
 	offset := (filter.Page - 1) * filter.Limit
+	args = append(args, userID)
 	args = append(args, offset, filter.Limit)
 
 	var circles []entity.CircleRaw
@@ -329,12 +437,4 @@ func (c *circleRepo) UpdateOneByID(circleID int, circle entity.Circle) (*entity.
 		return nil, domain.NewError(500, err, nil)
 	}
 	return &updated, nil
-}
-
-func NewCircleRepo(
-	db *gorm.DB,
-) CircleRepo {
-	return &circleRepo{
-		db: db,
-	}
 }

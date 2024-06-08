@@ -8,6 +8,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
+	"catalog-be/internal/modules/circle/bookmark"
 	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/fandom"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
@@ -46,6 +47,9 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 
 		circleblock.NewCircleBlockRepo,
 		circleblock.NewCircleBlockService,
+
+		bookmark.NewCircleBookmarkRepo,
+		bookmark.NewCircleBookmarkService,
 
 		circle.NewCircleHandler,
 		circle.NewCircleRepo,

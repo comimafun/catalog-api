@@ -1,18 +1,13 @@
 meta {
-  name: Get Circle
+  name: Save Bookmark Circle
   type: http
-  seq: 5
+  seq: 6
 }
 
-get {
-  url: {{hostnamev1}}/circle?page=1&limit=20
+post {
+  url: {{hostnamev1}}/circle/6/bookmark
   body: none
   auth: none
-}
-
-query {
-  page: 1
-  limit: 20
 }
 
 headers {

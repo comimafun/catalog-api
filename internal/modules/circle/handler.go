@@ -3,6 +3,7 @@ package circle
 import (
 	"catalog-be/internal/domain"
 	auth_dto "catalog-be/internal/modules/auth/dto"
+	"catalog-be/internal/modules/circle/bookmark"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/user"
@@ -14,10 +15,11 @@ import (
 )
 
 type CircleHandler struct {
-	circleService      CircleService
-	validator          *validator.Validate
-	circleBlockService circleblock.CircleBlockService
-	userService        user.UserService
+	circleService         CircleService
+	validator             *validator.Validate
+	circleBlockService    circleblock.CircleBlockService
+	userService           user.UserService
+	circleBookmarkService bookmark.CircleBookmarkService
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
@@ -129,14 +131,88 @@ func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	circles, err := h.circleService.GetPaginatedCircle(&query)
+	user := c.Locals("user")
+
+	userID := 0
+	if user != nil {
+		userID = user.(*auth_dto.ATClaims).UserID
+	}
+
+	circles, err := h.circleService.GetPaginatedCircle(&query, userID)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"code": fiber.StatusOK,
-		"data": circles,
+		"code":     fiber.StatusOK,
+		"data":     circles.Data,
+		"metadata": circles.Metadata,
+	})
+}
+
+func (h *CircleHandler) GetPaginatedBookmarkedCircle(c *fiber.Ctx) error {
+
+	var query circle_dto.FindAllCircleFilter
+	if err := c.QueryParser(&query); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	if err := h.validator.Struct(query); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+
+	circles, err := h.circleService.GetPaginatedBookmarkedCircle(user.UserID, &query)
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code":     fiber.StatusOK,
+		"data":     circles.Data,
+		"metadata": circles.Metadata,
+	})
+}
+
+func (h *CircleHandler) SaveCircle(c *fiber.Ctx) error {
+
+	circleID, parseErr := c.ParamsInt("id")
+
+	if parseErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, parseErr, nil)))
+	}
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+
+	err := h.circleBookmarkService.CreateBookmark(circleID, user.UserID)
+
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code": fiber.StatusCreated,
+		"data": "BOOKMARKED",
+	})
+}
+
+func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
+	circleID, parseErr := c.ParamsInt("id")
+
+	if parseErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, parseErr, nil)))
+	}
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+
+	err := h.circleBookmarkService.DeleteBookmark(circleID, user.UserID)
+
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code": fiber.StatusCreated,
+		"data": "UNBOOKMARKED",
 	})
 }
 
@@ -145,12 +221,13 @@ func NewCircleHandler(
 	validator *validator.Validate,
 	circleBlockService circleblock.CircleBlockService,
 	userService user.UserService,
-
+	circleBookmarkService bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
-		circleService:      circleService,
-		validator:          validator,
-		circleBlockService: circleBlockService,
-		userService:        userService,
+		circleService:         circleService,
+		validator:             validator,
+		circleBlockService:    circleBlockService,
+		userService:           userService,
+		circleBookmarkService: circleBookmarkService,
 	}
 }
