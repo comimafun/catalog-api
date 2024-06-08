@@ -44,7 +44,7 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	circleBlockRepo := circleblock.NewCircleBlockRepo(db)
 	circleBlockService := circleblock.NewCircleBlockService(circleBlockRepo)
 	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleBlockService)
-	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService)
+	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService, userService)
 	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler)
 	return http
 }

@@ -53,6 +53,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Post("/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishUnpublishCircle)
 	circle.Patch("/", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.UpdateCircle)
 	circle.Get("/:slug", h.circle.FindCircleBySlug)
+	circle.Get("/", h.circle.GetPaginatedCircle)
 }
 
 func NewHTTP(

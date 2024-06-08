@@ -19,6 +19,7 @@ type CircleService interface {
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*entity.Circle, *domain.Error)
+	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]entity.Circle, *domain.Error)
 }
 
 type circleService struct {
@@ -29,17 +30,23 @@ type circleService struct {
 	circleBlockService  circleblock.CircleBlockService
 }
 
+// GetPaginatedCircle implements CircleService.
+func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]entity.Circle, *domain.Error) {
+	circles, err := c.circleRepo.FindAll(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &circles, nil
+}
+
 // UpdateCircleByID implements CircleService.
 func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*entity.Circle, *domain.Error) {
-	if body.CircleBlock != nil {
-		trimmedBlock := strings.TrimSpace(*body.CircleBlock)
-		if trimmedBlock == "" {
-			return nil, domain.NewError(400, errors.New("CIRCLE_BLOCK_IS_EMPTY"), nil)
-		}
+	trimmedBlock := strings.TrimSpace(body.CircleBlock)
+	if trimmedBlock != "" {
+		body.CircleBlock = trimmedBlock
 
-		body.CircleBlock = &trimmedBlock
-
-		block, err := c.circleBlockService.GetOneByBlock(*body.CircleBlock)
+		block, err := c.circleBlockService.GetOneByBlock(body.CircleBlock)
 		if err != nil && !errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
@@ -48,20 +55,20 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 			return nil, domain.NewError(400, errors.New("CIRCLE_BLOCK_ALREADY_EXIST"), nil)
 		}
 
-		_, newCircleBlockErr := c.circleBlockService.CreateOne(*body.CircleBlock, circleID)
+		_, newCircleBlockErr := c.circleBlockService.CreateOne(body.CircleBlock, circleID)
 		if newCircleBlockErr != nil {
 			return nil, newCircleBlockErr
 		}
 	}
 
 	updated, err := c.circleRepo.UpdateOneByID(circleID, entity.Circle{
-		PictureURL:   body.PictureURL,
-		FacebookURL:  body.FacebookURL,
-		InstagramURL: body.InstagramURL,
-		TwitterURL:   body.TwitterURL,
+		PictureURL:   &body.PictureURL,
+		FacebookURL:  &body.FacebookURL,
+		InstagramURL: &body.InstagramURL,
+		TwitterURL:   &body.TwitterURL,
 		Day:          body.Day,
-		Description:  body.Description,
-		Batch:        body.Batch,
+		Description:  &body.Description,
+		Batch:        &body.Batch,
 	})
 
 	if err != nil {
@@ -121,10 +128,10 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 	circle, err := c.circleRepo.CreateOne(entity.Circle{
 		Name:         body.Name,
 		Slug:         slug,
-		PictureURL:   body.PictureURL,
-		FacebookURL:  body.FacebookURL,
-		InstagramURL: body.InstagramURL,
-		TwitterURL:   body.TwitterURL,
+		PictureURL:   &body.PictureURL,
+		FacebookURL:  &body.FacebookURL,
+		InstagramURL: &body.InstagramURL,
+		TwitterURL:   &body.TwitterURL,
 	})
 
 	if err != nil {
