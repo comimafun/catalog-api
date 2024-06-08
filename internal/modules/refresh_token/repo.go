@@ -14,10 +14,20 @@ type RefreshTokenRepo interface {
 	UpdateOneByID(id int, refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error)
 	FindOneByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error)
 	FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error)
+	DeleteAllRecordsByUserID(userID int) *domain.Error
 }
 
 type refreshTokenRepo struct {
 	db *gorm.DB
+}
+
+// DeleteAllRecordsByUserID implements RefreshTokenRepo.
+func (r *refreshTokenRepo) DeleteAllRecordsByUserID(userID int) *domain.Error {
+	err := r.db.Where("user_id = ?", userID).Unscoped().Delete(&entity.RefreshToken{}).Error
+	if err != nil {
+		return domain.NewError(500, err, nil)
+	}
+	return nil
 }
 
 // CreateOne implements RefreshTokenRepo.

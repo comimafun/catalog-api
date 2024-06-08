@@ -199,6 +199,10 @@ func (a *authService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 	}
 
 	if existingUser != nil {
+		deleteErr := a.refreshTokenService.DeleteAllRecordsByUserID(existingUser.ID)
+		if deleteErr != nil {
+			return nil, deleteErr
+		}
 		login, loginErr := a.login(existingUser)
 		if loginErr != nil {
 			return nil, loginErr

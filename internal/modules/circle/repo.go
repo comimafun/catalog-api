@@ -6,7 +6,6 @@ import (
 	"catalog-be/internal/entity"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	"fmt"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -21,14 +20,6 @@ type CircleRepo interface {
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 	DeleteOneByID(id int) *domain.Error
-
-	deleteWorkTypeRelationByCircleID(circleID int) *domain.Error
-	BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error
-	FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error)
-
-	deleteFandomRelationByCircleID(circleID int) *domain.Error
-	BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error
-	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
 
 	FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
@@ -131,143 +122,6 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 		return nil, domain.NewError(500, err, nil)
 	}
 	return circles, nil
-}
-
-// BatchInsertFandomCircleRelation implements CircleRepo.
-func (c *circleRepo) BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error {
-	tx := c.db.Begin()
-	if tx.Error != nil {
-		return domain.NewError(500, tx.Error, nil)
-	}
-
-	deleteErr := c.deleteFandomRelationByCircleID(circleID)
-	if deleteErr != nil {
-		tx.Rollback()
-		return deleteErr
-	}
-	var valueStrings []string
-	valueArgs := make([]interface{}, 0)
-	for _, fandomID := range fandomIDs {
-		valueStrings = append(valueStrings, "(?, ?)")
-		valueArgs = append(valueArgs, circleID, fandomID)
-	}
-
-	query := fmt.Sprintf(`
-			INSERT INTO circle_fandom (circle_id, fandom_id)
-			VALUES %s
-		`, strings.Join(valueStrings, ", "))
-
-	err := c.db.Exec(query, valueArgs...).Error
-	if err != nil {
-		tx.Rollback()
-		return domain.NewError(500, err, nil)
-	}
-
-	err = tx.Commit().Error
-	if err != nil {
-		tx.Rollback()
-		return domain.NewError(500, err, nil)
-	}
-	return nil
-}
-
-// deleteFandomRelationByCircleID implements CircleRepo.
-func (c *circleRepo) deleteFandomRelationByCircleID(circleID int) *domain.Error {
-	err := c.db.Exec(`
-		delete from circle_fandom where circle_id = ?
-	`, circleID).Error
-	if err != nil {
-		return domain.NewError(500, err, nil)
-	}
-	return nil
-}
-
-// BatchInsertCircleWorkTypeRelation implements CircleRepo.
-func (c *circleRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error {
-	tx := c.db.Begin()
-	if tx.Error != nil {
-		return domain.NewError(500, tx.Error, nil)
-	}
-
-	deleteErr := c.deleteWorkTypeRelationByCircleID(circleID)
-
-	if deleteErr != nil {
-		tx.Rollback()
-		return deleteErr
-	}
-
-	var valueStrings []string
-	valueArgs := make([]interface{}, 0)
-	for _, workTypeID := range workTypeIDs {
-		valueStrings = append(valueStrings, "(?, ?)")
-		valueArgs = append(valueArgs, circleID, workTypeID)
-	}
-
-	query := fmt.Sprintf(`
-			INSERT INTO circle_work_type (circle_id, work_type_id)
-			VALUES %s
-		`, strings.Join(valueStrings, ", "))
-
-	err := tx.Exec(query, valueArgs...).Error
-	if err != nil {
-		tx.Rollback()
-		return domain.NewError(500, err, nil)
-	}
-
-	err = tx.Commit().Error
-	if err != nil {
-		tx.Rollback()
-		return domain.NewError(500, err, nil)
-	}
-
-	return nil
-}
-
-// deleteWorkTypeRelationByCircleID implements CircleRepo.
-func (c *circleRepo) deleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
-	err := c.db.Exec(`
-		delete from circle_work_type where circle_id = ?
-	`, circleID).Error
-	if err != nil {
-		return domain.NewError(500, err, nil)
-	}
-	return nil
-}
-
-// FindAllCircleRelationWorkType implements CircleRepo.
-func (c *circleRepo) FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error) {
-	var workTypes []entity.WorkType
-	err := c.db.Raw(`
-		select
-			w.*
-		from
-			work_type w
-		inner join circle_work_type cw on w.id = cw.work_type_id
-		where
-			cw.circle_id = ? and w.deleted_at is null
-	`, circleID).Scan(&workTypes).Error
-	if err != nil {
-		return nil, domain.NewError(500, err, nil)
-	}
-	return workTypes, nil
-}
-
-// FindAllCircleRelationFandom implements CircleRepo.
-func (c *circleRepo) FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error) {
-	var fandoms []entity.Fandom
-	err := c.db.Raw(`
-		select
-			f.*
-		from
-			fandom f
-		inner join circle_fandom cf on f.id = cf.fandom_id
-		where
-			cf.circle_id = ? and f.deleted_at is null
-	`, circleID).Scan(&fandoms).Error
-	if err != nil {
-		return nil, domain.NewError(500, err, nil)
-	}
-	return fandoms, nil
 }
 
 // findAllWhereSQL implements CircleRepo.
