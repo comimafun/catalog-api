@@ -4,10 +4,10 @@ import (
 	"catalog-be/internal"
 	"catalog-be/internal/server"
 	"catalog-be/internal/utils"
+	"catalog-be/seed"
 	"fmt"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -20,7 +20,9 @@ func main() {
 
 	server := server.New()
 
-	println("again", time.Now().Format(time.RFC3339))
+	seed := seed.NewSeed(server.Pg)
+	seed.Run()
+
 	server.App.Use(cors.New())
 	server.App.Use(requestid.New(requestid.Config{
 		Generator: func() string {
