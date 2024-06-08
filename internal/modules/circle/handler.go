@@ -15,11 +15,10 @@ import (
 )
 
 type CircleHandler struct {
-	circleService         CircleService
-	validator             *validator.Validate
-	circleBlockService    circleblock.CircleBlockService
-	userService           user.UserService
-	circleBookmarkService bookmark.CircleBookmarkService
+	circleService      CircleService
+	validator          *validator.Validate
+	circleBlockService circleblock.CircleBlockService
+	userService        user.UserService
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
@@ -70,15 +69,15 @@ func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
 func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
-	// checkUser, checkErr := h.userService.FindOneByID(user.UserID)
+	checkUser, checkErr := h.userService.FindOneByID(user.UserID)
 
-	// if checkErr != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(c, checkErr))
-	// }
+	if checkErr != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(c, checkErr))
+	}
 
-	// if checkUser.CircleID != nil {
-	// 	return c.Status(fiber.StatusConflict).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusConflict, errors.New("USER_ALREADY_HAVE_CIRCLE"), nil)))
-	// }
+	if checkUser.CircleID != nil {
+		return c.Status(fiber.StatusConflict).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusConflict, errors.New("USER_ALREADY_HAVE_CIRCLE"), nil)))
+	}
 
 	var body circle_dto.OnboardNewCircleRequestBody
 	if err := c.BodyParser(&body); err != nil {
@@ -110,7 +109,13 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("SLUG_IS_EMPTY"), nil)))
 	}
 
-	circle, err := h.circleService.FindCircleBySlug(slug)
+	userID := 0
+	user := c.Locals("user")
+	if user != nil {
+		userID = user.(*auth_dto.ATClaims).UserID
+	}
+
+	circle, err := h.circleService.FindCircleBySlug(slug, userID)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
@@ -185,7 +190,7 @@ func (h *CircleHandler) SaveCircle(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
-	err := h.circleBookmarkService.CreateBookmark(circleID, user.UserID)
+	err := h.circleService.SaveBookmarkCircle(circleID, user.UserID)
 
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
@@ -205,7 +210,7 @@ func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
-	err := h.circleBookmarkService.DeleteBookmark(circleID, user.UserID)
+	err := h.circleService.DeleteBookmarkCircle(circleID, user.UserID)
 
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
@@ -224,10 +229,9 @@ func NewCircleHandler(
 	circleBookmarkService bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
-		circleService:         circleService,
-		validator:             validator,
-		circleBlockService:    circleBlockService,
-		userService:           userService,
-		circleBookmarkService: circleBookmarkService,
+		circleService:      circleService,
+		validator:          validator,
+		circleBlockService: circleBlockService,
+		userService:        userService,
 	}
 }

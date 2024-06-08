@@ -5,6 +5,9 @@ import (
 	"catalog-be/internal/domain"
 	"catalog-be/internal/dto"
 	"catalog-be/internal/entity"
+	"catalog-be/internal/modules/circle/bookmark"
+	"catalog-be/internal/modules/circle/circle_fandom"
+	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	circleblock "catalog-be/internal/modules/circle_block"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
@@ -19,22 +22,26 @@ import (
 type CircleService interface {
 	OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*entity.Circle, *domain.Error)
 	PublishCircleByID(circleID int) (*string, *domain.Error)
-	FindCircleBySlug(slug string) (*entity.Circle, *domain.Error)
+	FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error)
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
 	transformCircleRawToCircleResponse(rows []entity.CircleRaw) ([]circle_dto.CircleResponse, *domain.Error)
-
 	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
-
 	GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
+
+	SaveBookmarkCircle(circleID int, userID int) *domain.Error
+	DeleteBookmarkCircle(circleID int, userID int) *domain.Error
 }
 
 type circleService struct {
-	circleRepo          CircleRepo
-	userService         user.UserService
-	utils               utils.Utils
-	refreshTokenService refreshtoken.RefreshTokenService
-	circleBlockService  circleblock.CircleBlockService
+	circleRepo            CircleRepo
+	userService           user.UserService
+	utils                 utils.Utils
+	refreshTokenService   refreshtoken.RefreshTokenService
+	circleBlockService    circleblock.CircleBlockService
+	circleWorkTypeService circle_work_type.CircleWorkTypeService
+	circleFandomService   circle_fandom.CircleFandomService
+	bookmark              bookmark.CircleBookmarkService
 }
 
 func NewCircleService(
@@ -43,14 +50,30 @@ func NewCircleService(
 	utils utils.Utils,
 	refreshTokenService refreshtoken.RefreshTokenService,
 	circleBlockService circleblock.CircleBlockService,
+	circleWorkTypeService circle_work_type.CircleWorkTypeService,
+	circleFandomService circle_fandom.CircleFandomService,
+	bookmark bookmark.CircleBookmarkService,
 ) CircleService {
 	return &circleService{
-		circleRepo:          circleRepo,
-		userService:         userService,
-		utils:               utils,
-		refreshTokenService: refreshTokenService,
-		circleBlockService:  circleBlockService,
+		circleRepo:            circleRepo,
+		userService:           userService,
+		utils:                 utils,
+		refreshTokenService:   refreshTokenService,
+		circleBlockService:    circleBlockService,
+		circleWorkTypeService: circleWorkTypeService,
+		circleFandomService:   circleFandomService,
+		bookmark:              bookmark,
 	}
+}
+
+// DeleteBookmarkCircle implements CircleService.
+func (c *circleService) DeleteBookmarkCircle(circleID int, userID int) *domain.Error {
+	return c.bookmark.DeleteBookmark(circleID, userID)
+}
+
+// SaveBookmarkCircle implements CircleService.
+func (c *circleService) SaveBookmarkCircle(circleID int, userID int) *domain.Error {
+	return c.bookmark.CreateBookmark(circleID, userID)
 }
 
 // transformCircleRawToCircleResponse implements CircleService.
@@ -231,7 +254,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 			return nil, domain.NewError(400, errors.New("FANDOM_LIMIT_EXCEEDED"), nil)
 		}
 
-		insertErr := c.circleRepo.BatchInsertFandomCircleRelation(circleID, body.FandomIDs)
+		insertErr := c.circleFandomService.BulkDeleteAndInsertCircleFandomType(circleID, body.FandomIDs)
 		if insertErr != nil {
 			return nil, insertErr
 		}
@@ -242,18 +265,18 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 			return nil, domain.NewError(400, errors.New("WORK_TYPE_LIMIT_EXCEEDED"), nil)
 		}
 
-		insertErr := c.circleRepo.BatchInsertCircleWorkTypeRelation(circleID, body.WorkTypeIDs)
+		insertErr := c.circleWorkTypeService.BulkDeleteAndInsertCircleWorkType(circleID, body.WorkTypeIDs)
 		if insertErr != nil {
 			return nil, insertErr
 		}
 	}
 
-	fandoms, fandomErr := c.circleRepo.FindAllCircleRelationFandom(circleID)
+	fandoms, fandomErr := c.circleFandomService.FindAllCircleFandomTypeRelated(circleID)
 	if fandomErr != nil {
 		return nil, fandomErr
 	}
 
-	workType, workTypeErr := c.circleRepo.FindAllCircleRelationWorkType(circleID)
+	workType, workTypeErr := c.circleWorkTypeService.FindAllCircleWorkTypeRelated(circleID)
 	if workTypeErr != nil {
 		return nil, workTypeErr
 	}
@@ -280,7 +303,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 }
 
 // FindCircleBySlug implements CircleService.
-func (c *circleService) FindCircleBySlug(slug string) (*entity.Circle, *domain.Error) {
+func (c *circleService) FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error) {
 	if slug == "" {
 		return nil, domain.NewError(400, errors.New("SLUG_IS_EMPTY"), nil)
 	}
@@ -290,7 +313,31 @@ func (c *circleService) FindCircleBySlug(slug string) (*entity.Circle, *domain.E
 		return nil, err
 	}
 
-	return circle, nil
+	fandoms, err := c.circleFandomService.FindAllCircleFandomTypeRelated(circle.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	workTypes, err := c.circleWorkTypeService.FindAllCircleWorkTypeRelated(circle.ID)
+
+	if err != nil {
+		return nil, err
+	}
+	bookmark := new(entity.UserBookmark)
+	if userID != 0 {
+		bookmark, err = c.bookmark.FindByCircleIDAndUserID(circle.ID, userID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &circle_dto.CircleResponse{
+		Circle:       *circle,
+		Fandom:       fandoms,
+		WorkType:     workTypes,
+		Bookmarked:   bookmark.UserID != 0,
+		BookmarkedAt: bookmark.CreatedAt,
+	}, nil
 }
 
 // PublishCircleByID implements CircleService.
