@@ -59,7 +59,6 @@ type CircleFandom struct {
 	CircleID  int        `json:"circle_id"`
 	FandomID  int        `json:"fandom_id"`
 	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
 }
 
 func (CircleFandom) TableName() string {
@@ -70,7 +69,6 @@ type CircleWorkType struct {
 	CircleID   int        `json:"circle_id"`
 	WorkTypeID int        `json:"work_type_id"`
 	CreatedAt  *time.Time `json:"created_at"`
-	UpdatedAt  *time.Time `json:"updated_at"`
 }
 
 func (CircleWorkType) TableName() string {
