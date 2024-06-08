@@ -323,11 +323,18 @@ func (c *circleService) FindCircleBySlug(slug string, userID int) (*circle_dto.C
 	if err != nil {
 		return nil, err
 	}
-	bookmark := new(entity.UserBookmark)
+
+	var bookmark entity.UserBookmark
+
 	if userID != 0 {
-		bookmark, err = c.bookmark.FindByCircleIDAndUserID(circle.ID, userID)
-		if err != nil {
-			return nil, err
+		bookmarked, bookmarkErr := c.bookmark.FindByCircleIDAndUserID(circle.ID, userID)
+		if bookmarkErr != nil && !errors.Is(bookmarkErr.Err, gorm.ErrRecordNotFound) {
+			return nil, bookmarkErr
+		}
+
+		if bookmarked != nil {
+			bookmark.CircleID = bookmarked.CircleID
+			bookmark.UserID = bookmarked.UserID
 		}
 	}
 

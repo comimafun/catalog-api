@@ -20,7 +20,7 @@ type circleBookmarkRepo struct {
 // FindByCircleIDAndUserID implements CircleBookmarkRepo.
 func (c *circleBookmarkRepo) FindByCircleIDAndUserID(circleID int, userID int) (*entity.UserBookmark, *domain.Error) {
 	bookmark := new(entity.UserBookmark)
-	err := c.db.Table("user_bookmark").Where("circle_id = ? AND user_id = ?", circleID, userID).First(&bookmark).Error
+	err := c.db.Table("user_bookmark").Where("circle_id = ? AND user_id = ?", circleID, userID).First(bookmark).Error
 
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
