@@ -20,8 +20,8 @@ type CircleRepo interface {
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 	DeleteOneByID(id int) *domain.Error
-	DeleteWorkTypeRelationByCircleID(circleID int) *domain.Error
-	DeleteFandomRelationByCircleID(circleID int) *domain.Error
+	deleteWorkTypeRelationByCircleID(circleID int) *domain.Error
+	deleteFandomRelationByCircleID(circleID int) *domain.Error
 	BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error
 	BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error
 	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
@@ -33,6 +33,16 @@ type circleRepo struct {
 
 // BatchInsertFandomCircleRelation implements CircleRepo.
 func (c *circleRepo) BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error {
+	tx := c.db.Begin()
+	if tx.Error != nil {
+		return domain.NewError(500, tx.Error, nil)
+	}
+
+	deleteErr := c.deleteFandomRelationByCircleID(circleID)
+	if deleteErr != nil {
+		tx.Rollback()
+		return deleteErr
+	}
 	var valueStrings []string
 	valueArgs := make([]interface{}, 0)
 	for _, fandomID := range fandomIDs {
@@ -47,13 +57,20 @@ func (c *circleRepo) BatchInsertFandomCircleRelation(circleID int, fandomIDs []i
 
 	err := c.db.Exec(query, valueArgs...).Error
 	if err != nil {
+		tx.Rollback()
+		return domain.NewError(500, err, nil)
+	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
 		return domain.NewError(500, err, nil)
 	}
 	return nil
 }
 
-// DeleteFandomRelationByCircleID implements CircleRepo.
-func (c *circleRepo) DeleteFandomRelationByCircleID(circleID int) *domain.Error {
+// deleteFandomRelationByCircleID implements CircleRepo.
+func (c *circleRepo) deleteFandomRelationByCircleID(circleID int) *domain.Error {
 	err := c.db.Exec(`
 		delete from circle_fandom where circle_id = ?
 	`, circleID).Error
@@ -65,6 +82,18 @@ func (c *circleRepo) DeleteFandomRelationByCircleID(circleID int) *domain.Error 
 
 // BatchInsertCircleWorkTypeRelation implements CircleRepo.
 func (c *circleRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error {
+	tx := c.db.Begin()
+	if tx.Error != nil {
+		return domain.NewError(500, tx.Error, nil)
+	}
+
+	deleteErr := c.deleteWorkTypeRelationByCircleID(circleID)
+
+	if deleteErr != nil {
+		tx.Rollback()
+		return deleteErr
+	}
+
 	var valueStrings []string
 	valueArgs := make([]interface{}, 0)
 	for _, workTypeID := range workTypeIDs {
@@ -77,15 +106,23 @@ func (c *circleRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs
 			VALUES %s
 		`, strings.Join(valueStrings, ", "))
 
-	err := c.db.Exec(query, valueArgs...).Error
+	err := tx.Exec(query, valueArgs...).Error
 	if err != nil {
+		tx.Rollback()
 		return domain.NewError(500, err, nil)
 	}
+
+	err = tx.Commit().Error
+	if err != nil {
+		tx.Rollback()
+		return domain.NewError(500, err, nil)
+	}
+
 	return nil
 }
 
-// DeleteWorkTypeRelationByCircleID implements CircleRepo.
-func (c *circleRepo) DeleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
+// deleteWorkTypeRelationByCircleID implements CircleRepo.
+func (c *circleRepo) deleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
 	err := c.db.Exec(`
 		delete from circle_work_type where circle_id = ?
 	`, circleID).Error
