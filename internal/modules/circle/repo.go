@@ -15,15 +15,48 @@ type CircleRepo interface {
 	FindOneBySlug(slug string) (*entity.Circle, *domain.Error)
 	FindOneByUserID(userID int) (*entity.Circle, *domain.Error)
 	UpdateOneByID(circleID int, circle entity.Circle) (*entity.Circle, *domain.Error)
-	FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.Circle, *domain.Error)
+	FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
 	DeleteOneByID(id int) *domain.Error
+	UpsertCircleFandomRelation(circleID int, fandomID int) *domain.Error
+	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
 }
 type circleRepo struct {
 	db *gorm.DB
 }
 
+// FindAllCircleRelationFandom implements CircleRepo.
+func (c *circleRepo) FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error) {
+	var fandoms []entity.Fandom
+	err := c.db.Raw(`
+		select
+			f.*
+		from
+			fandom f
+		inner join circle_fandom cf on f.id = cf.fandom_id
+		where
+			cf.circle_id = ? and f.deleted_at is null
+	`, circleID).Scan(&fandoms).Error
+	if err != nil {
+		return nil, domain.NewError(500, err, nil)
+	}
+	return fandoms, nil
+}
+
+// UpsertCircleFandomRelation implements CircleRepo.
+func (c *circleRepo) UpsertCircleFandomRelation(circleID int, fandomID int) *domain.Error {
+	err := c.db.Exec(`
+		insert into circle_fandom (circle_id, fandom_id)
+		values (?, ?)
+		on conflict (circle_id, fandom_id) do nothing
+	`, circleID, fandomID).Error
+	if err != nil {
+		return domain.NewError(500, err, nil)
+	}
+	return nil
+}
+
 // FindAll implements CircleRepo.
-func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.Circle, *domain.Error) {
+func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
 	whereClause := "where c.deleted_at is null"
 	args := make([]interface{}, 0)
 
@@ -32,12 +65,29 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 		args = append(args, filter.Search)
 	}
 
+	if len(filter.FandomID) > 0 {
+		whereClause += " and f.id in (?)"
+		args = append(args, filter.FandomID)
+	}
+
 	query := fmt.Sprintf(`
 		select
-			c.*
-		from
+			c.*,
+			
+			f."name" as fandom_name,
+			f.id as fandom_id,
+			f.visible as fandom_visible,
+			f.created_at as fandom_created_at,
+			f.updated_at as fandom_updated_at,
+			f.deleted_at as fandom_updated_at
+		from 
 			circle c
+		LEFT JOIN
+			circle_fandom cf on c.id = cf.circle_id
+		LEFT JOIN
+			fandom f on f.id = cf.fandom_id
 		%s
+		order by c.created_at desc
 		offset ?
 		limit ?
 	`, whereClause)
@@ -45,7 +95,7 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 	offset := (filter.Page - 1) * filter.Limit
 	args = append(args, offset, filter.Limit)
 
-	var circles []entity.Circle
+	var circles []entity.CircleRaw
 	err := c.db.Raw(query, args...).Scan(&circles).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)

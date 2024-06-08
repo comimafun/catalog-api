@@ -91,7 +91,7 @@ func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 
 	circle, err := h.circleService.OnboardNewCircle(&body, user.UserID)
 	if err != nil {
-		return c.Status(err.Code).JSON(err)
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -110,7 +110,7 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 
 	circle, err := h.circleService.FindCircleBySlug(slug)
 	if err != nil {
-		return c.Status(err.Code).JSON(err)
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -131,7 +131,7 @@ func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
 
 	circles, err := h.circleService.GetPaginatedCircle(&query)
 	if err != nil {
-		return c.Status(err.Code).JSON(err)
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
