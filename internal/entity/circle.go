@@ -43,6 +43,13 @@ type CircleRaw struct {
 	FandomCreatedAt *time.Time     `json:"fandom_created_at"`
 	FandomUpdatedAt *time.Time     `json:"fandom_updated_at"`
 	FandomDeletedAt gorm.DeletedAt `json:"-"`
+
+	WorkTypeID        int            `json:"work_type_id"`
+	WorkTypeName      string         `json:"work_type_name"`
+	WorkTypeVisible   bool           `json:"work_type_visible"`
+	WorkTypeCreatedAt *time.Time     `json:"work_type_created_at"`
+	WorkTypeUpdatedAt *time.Time     `json:"work_type_updated_at"`
+	WorkTypeDeletedAt gorm.DeletedAt `json:"-"`
 }
 
 func (Circle) TableName() string {

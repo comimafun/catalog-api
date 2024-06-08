@@ -5,6 +5,7 @@ import (
 	"catalog-be/internal/entity"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	"fmt"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -16,12 +17,81 @@ type CircleRepo interface {
 	FindOneByUserID(userID int) (*entity.Circle, *domain.Error)
 	UpdateOneByID(circleID int, circle entity.Circle) (*entity.Circle, *domain.Error)
 	FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
+	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
+	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 	DeleteOneByID(id int) *domain.Error
+	DeleteWorkTypeRelationByCircleID(circleID int) *domain.Error
 	UpsertCircleFandomRelation(circleID int, fandomID int) *domain.Error
+	UpsertCircleWorkTypeRelation(circleID int, workTypeID int) *domain.Error
+	BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error
 	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
+	FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error)
 }
 type circleRepo struct {
 	db *gorm.DB
+}
+
+// BatchInsertCircleWorkTypeRelation implements CircleRepo.
+func (c *circleRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error {
+	var valueStrings []string
+	valueArgs := make([]interface{}, 0)
+	for _, workTypeID := range workTypeIDs {
+		valueStrings = append(valueStrings, "(?, ?)")
+		valueArgs = append(valueArgs, circleID, workTypeID)
+	}
+
+	query := fmt.Sprintf(`
+			INSERT INTO circle_work_type (circle_id, work_type_id)
+			VALUES %s
+		`, strings.Join(valueStrings, ", "))
+
+	err := c.db.Exec(query, valueArgs...).Error
+	if err != nil {
+		return domain.NewError(500, err, nil)
+	}
+	return nil
+}
+
+// DeleteWorkTypeRelationByCircleID implements CircleRepo.
+func (c *circleRepo) DeleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
+	err := c.db.Exec(`
+		delete from circle_work_type where circle_id = ?
+	`, circleID).Error
+	if err != nil {
+		return domain.NewError(500, err, nil)
+	}
+	return nil
+}
+
+// UpsertCircleWorkTypeRelation implements CircleRepo.
+func (c *circleRepo) UpsertCircleWorkTypeRelation(circleID int, workTypeID int) *domain.Error {
+	err := c.db.Exec(`
+		insert into circle_work_type (circle_id, work_type_id)
+		values (?, ?)
+		on conflict (circle_id, work_type_id) do nothing
+	`, circleID, workTypeID).Error
+	if err != nil {
+		return domain.NewError(500, err, nil)
+	}
+	return nil
+}
+
+// FindAllCircleRelationWorkType implements CircleRepo.
+func (c *circleRepo) FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error) {
+	var workTypes []entity.WorkType
+	err := c.db.Raw(`
+		select
+			w.*
+		from
+			work_type w
+		inner join circle_work_type cw on w.id = cw.work_type_id
+		where
+			cw.circle_id = ? and w.deleted_at is null
+	`, circleID).Scan(&workTypes).Error
+	if err != nil {
+		return nil, domain.NewError(500, err, nil)
+	}
+	return workTypes, nil
 }
 
 // FindAllCircleRelationFandom implements CircleRepo.
@@ -55,8 +125,8 @@ func (c *circleRepo) UpsertCircleFandomRelation(circleID int, fandomID int) *dom
 	return nil
 }
 
-// FindAll implements CircleRepo.
-func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+// findAllWhereSQL implements CircleRepo.
+func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{}) {
 	whereClause := "where c.deleted_at is null"
 	args := make([]interface{}, 0)
 
@@ -70,6 +140,19 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 		args = append(args, filter.FandomID)
 	}
 
+	if len(filter.WorkTypeID) > 0 {
+		whereClause += " and wt.id in (?)"
+		args = append(args, filter.WorkTypeID)
+
+	}
+
+	return whereClause, args
+}
+
+// FindAll implements CircleRepo.
+func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+	whereClause, args := c.findAllWhereSQL(filter)
+
 	query := fmt.Sprintf(`
 		select
 			c.*,
@@ -79,13 +162,23 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 			f.visible as fandom_visible,
 			f.created_at as fandom_created_at,
 			f.updated_at as fandom_updated_at,
-			f.deleted_at as fandom_updated_at
+			f.deleted_at as fandom_updated_at,
+
+			wt."name" as work_type_name,
+			wt.id as work_type_id,
+			wt.created_at as work_type_created_at,
+			wt.updated_at as work_type_updated_at,
+			wt.deleted_at as work_type_updated_at
 		from 
 			circle c
 		LEFT JOIN
 			circle_fandom cf on c.id = cf.circle_id
 		LEFT JOIN
 			fandom f on f.id = cf.fandom_id
+		lEFT JOIN
+			circle_work_type cwt on c.id = cwt.circle_id
+		LEFT JOIN
+			work_type wt on wt.id = cwt.work_type_id
 		%s
 		order by c.created_at desc
 		offset ?
@@ -102,6 +195,36 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 	}
 
 	return circles, nil
+}
+
+// FindAllCount implements CircleRepo.
+func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
+	whereClause, args := c.findAllWhereSQL(filter)
+
+	query := fmt.Sprintf(`
+		select
+			count(DISTINCT c.id) as count
+		from 
+			circle c
+		LEFT JOIN
+			circle_fandom cf on c.id = cf.circle_id
+		LEFT JOIN
+			fandom f on f.id = cf.fandom_id
+		lEFT JOIN
+			circle_work_type cwt on c.id = cwt.circle_id
+		LEFT JOIN
+			work_type wt on wt.id = cwt.work_type_id
+		%s
+	`, whereClause)
+
+	var count int
+	err := c.db.Raw(query, args...).Scan(&count).Error
+
+	if err != nil {
+		return 0, domain.NewError(500, err, nil)
+	}
+
+	return count, nil
 }
 
 // CreateOne implements CircleRepo.
