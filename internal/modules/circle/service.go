@@ -160,15 +160,24 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 	}
 
 	if len(body.FandomIDs) > 0 {
-		for _, fandom := range body.FandomIDs {
-			err := c.circleRepo.UpsertCircleFandomRelation(circleID, fandom)
-			if err != nil {
-				return nil, err
-			}
+		if len(body.FandomIDs) > 5 {
+			return nil, domain.NewError(400, errors.New("FANDOM_LIMIT_EXCEEDED"), nil)
+		}
+		err := c.circleRepo.DeleteFandomRelationByCircleID(circleID)
+		if err != nil {
+			return nil, err
+		}
+
+		insertErr := c.circleRepo.BatchInsertFandomCircleRelation(circleID, body.FandomIDs)
+		if insertErr != nil {
+			return nil, insertErr
 		}
 	}
 
 	if len(body.WorkTypeIDs) > 0 {
+		if len(body.WorkTypeIDs) > 5 {
+			return nil, domain.NewError(400, errors.New("WORK_TYPE_LIMIT_EXCEEDED"), nil)
+		}
 		err := c.circleRepo.DeleteWorkTypeRelationByCircleID(circleID)
 		if err != nil {
 			return nil, err
