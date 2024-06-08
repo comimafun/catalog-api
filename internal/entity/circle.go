@@ -87,3 +87,13 @@ type UserBookmark struct {
 func (UserBookmark) TableName() string {
 	return "user_bookmark"
 }
+
+type UserUpvote struct {
+	UserID    int        `json:"user_id"`
+	CircleID  int        `json:"circle_id"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
+func (UserUpvote) TableName() string {
+	return "user_upvote"
+}
