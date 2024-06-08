@@ -17,7 +17,7 @@ func (s *Seed) SeedFandom() {
 	file, err := os.Open("public/fandom.json")
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return
 	}
 
 	defer file.Close()
@@ -27,7 +27,7 @@ func (s *Seed) SeedFandom() {
 
 	if decodeERr != nil {
 		fmt.Println(decodeERr)
-		os.Exit(1)
+		return
 	}
 
 	println("START SEEDING FANDOM")
@@ -38,7 +38,7 @@ func (s *Seed) SeedFandom() {
 		}).Error
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			return
 		}
 		println("FANDOM SEEDED: ", fandom)
 	}
@@ -51,7 +51,7 @@ func (s *Seed) SeedWorkType() {
 	file, err := os.Open("public/worktype.json")
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return
 	}
 
 	defer file.Close()
@@ -61,7 +61,7 @@ func (s *Seed) SeedWorkType() {
 
 	if decodeERr != nil {
 		fmt.Println(decodeERr)
-		os.Exit(1)
+		return
 	}
 
 	println("START SEEDING WORK_TYPE")
@@ -71,7 +71,7 @@ func (s *Seed) SeedWorkType() {
 		}).Error
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			return
 		}
 		println("WORK_TYPE SEEDED: ", workType)
 	}
@@ -94,8 +94,6 @@ func (s *Seed) Run() {
 	// s.seedWorkType()
 
 	fmt.Println("FINISH_SEEDING")
-
-	os.Exit(1)
 }
 
 func NewSeed(db *gorm.DB) *Seed {

@@ -71,11 +71,5 @@ migrate-down:
 	migrate -path migrator/migrations -database "${DB_URL}" down $$steps
 
 
-seed:
-	@cp .env .env.bak
-	@sed -i.bak 's/^SEED=.*/SEED=true/' .env
-	@go run cmd/api/main.go
-	@mv .env.bak .env
-	@rm .env.bak
 
 .PHONY: all build run test clean seed
