@@ -115,7 +115,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		TwitterURL:   &body.TwitterURL,
 		Day:          body.Day,
 		Description:  &body.Description,
-		Batch:        &body.Batch,
+		Batch:        body.Batch,
 	})
 
 	if err != nil {
