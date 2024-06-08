@@ -70,4 +70,6 @@ migrate-down:
 	@read -p "how many steps to migrate down? " steps; \
 	migrate -path migrator/migrations -database "${DB_URL}" down $$steps
 
-.PHONY: all build run test clean
+
+
+.PHONY: all build run test clean seed

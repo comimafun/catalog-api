@@ -43,6 +43,12 @@ type CircleRaw struct {
 	FandomCreatedAt *time.Time     `json:"fandom_created_at"`
 	FandomUpdatedAt *time.Time     `json:"fandom_updated_at"`
 	FandomDeletedAt gorm.DeletedAt `json:"-"`
+
+	WorkTypeID        int            `json:"work_type_id"`
+	WorkTypeName      string         `json:"work_type_name"`
+	WorkTypeCreatedAt *time.Time     `json:"work_type_created_at"`
+	WorkTypeUpdatedAt *time.Time     `json:"work_type_updated_at"`
+	WorkTypeDeletedAt gorm.DeletedAt `json:"-"`
 }
 
 func (Circle) TableName() string {
@@ -58,4 +64,15 @@ type CircleFandom struct {
 
 func (CircleFandom) TableName() string {
 	return "circle_fandom"
+}
+
+type CircleWorkType struct {
+	CircleID   int        `json:"circle_id"`
+	WorkTypeID int        `json:"work_type_id"`
+	CreatedAt  *time.Time `json:"created_at"`
+	UpdatedAt  *time.Time `json:"updated_at"`
+}
+
+func (CircleWorkType) TableName() string {
+	return "circle_work_type"
 }

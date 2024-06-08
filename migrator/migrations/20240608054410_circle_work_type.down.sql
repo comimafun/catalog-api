@@ -1,0 +1,1 @@
+drop table if exists "circle_work_type";

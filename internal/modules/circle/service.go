@@ -1,7 +1,9 @@
 package circle
 
 import (
+	"catalog-be/internal/database/factory"
 	"catalog-be/internal/domain"
+	"catalog-be/internal/dto"
 	"catalog-be/internal/entity"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	circleblock "catalog-be/internal/modules/circle_block"
@@ -19,7 +21,7 @@ type CircleService interface {
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
-	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]circle_dto.CircleResponse, *domain.Error)
+	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
 }
 
 type circleService struct {
@@ -31,46 +33,117 @@ type circleService struct {
 }
 
 // GetPaginatedCircle implements CircleService.
-func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]circle_dto.CircleResponse, *domain.Error) {
-	circles, err := c.circleRepo.FindAll(filter)
+func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
+	rows, err := c.circleRepo.FindAll(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	var circleMap = make(map[int]circle_dto.CircleResponse)
-
-	for _, circle := range circles {
-		if _, ok := circleMap[circle.ID]; !ok {
-			circleMap[circle.ID] = circle_dto.CircleResponse{
-				Circle: circle.Circle,
-				Fandom: []entity.Fandom{},
-			}
-		}
-
-		if circle.FandomID != 0 {
-			fandom := entity.Fandom{
-				ID:        circle.FandomID,
-				Name:      circle.FandomName,
-				Visible:   circle.FandomVisible,
-				CreatedAt: circle.FandomCreatedAt,
-				UpdatedAt: circle.FandomUpdatedAt,
-				DeletedAt: circle.FandomDeletedAt,
-			}
-
-			circleResponse := circleMap[circle.ID]
-			circleResponse.Fandom = append(circleResponse.Fandom, fandom)
-			circleMap[circle.ID] = circleResponse
-		}
-	}
-
 	var response []circle_dto.CircleResponse
 
-	for _, circle := range circleMap {
-		response = append(response, circle)
+	for _, row := range rows {
+		// check if row is inside response
+		var found bool
+		for i, res := range response {
+			if res.ID == row.ID {
+				found = true
 
+				fandomExist := false
+
+				for _, fandom := range response[i].Fandom {
+					if fandom.ID == row.FandomID {
+						fandomExist = true
+						break
+					}
+				}
+
+				if !fandomExist && row.FandomID != 0 {
+					response[i].Fandom = append(response[i].Fandom, entity.Fandom{
+						ID:        row.FandomID,
+						Name:      row.FandomName,
+						CreatedAt: row.FandomCreatedAt,
+						UpdatedAt: row.FandomUpdatedAt,
+					})
+				}
+
+				workTypeExist := false
+
+				for _, workType := range response[i].WorkType {
+					if workType.ID == row.WorkTypeID {
+						workTypeExist = true
+						break
+					}
+				}
+
+				if !workTypeExist && row.WorkTypeID != 0 {
+					response[i].WorkType = append(response[i].WorkType, entity.WorkType{
+						ID:        row.WorkTypeID,
+						Name:      row.WorkTypeName,
+						CreatedAt: row.WorkTypeCreatedAt,
+						UpdatedAt: row.WorkTypeUpdatedAt,
+					})
+				}
+
+			}
+
+		}
+
+		if !found {
+			latestRow := circle_dto.CircleResponse{
+				Circle: entity.Circle{
+					ID:           row.ID,
+					Name:         row.Name,
+					Slug:         row.Slug,
+					PictureURL:   row.PictureURL,
+					FacebookURL:  row.FacebookURL,
+					InstagramURL: row.InstagramURL,
+					TwitterURL:   row.TwitterURL,
+					Description:  row.Description,
+					Batch:        row.Batch,
+					Verified:     row.Verified,
+					Published:    row.Published,
+					CreatedAt:    row.CreatedAt,
+					UpdatedAt:    row.UpdatedAt,
+					DeletedAt:    row.DeletedAt,
+					Day:          row.Day,
+				},
+				Fandom:   []entity.Fandom{},
+				WorkType: []entity.WorkType{},
+			}
+
+			if row.FandomID != 0 {
+				latestRow.Fandom = append(latestRow.Fandom, entity.Fandom{
+					ID:        row.FandomID,
+					Name:      row.FandomName,
+					CreatedAt: row.FandomCreatedAt,
+					UpdatedAt: row.FandomUpdatedAt,
+				})
+			}
+
+			if row.WorkTypeID != 0 {
+				latestRow.WorkType = append(latestRow.WorkType, entity.WorkType{
+					ID:        row.WorkTypeID,
+					Name:      row.WorkTypeName,
+					CreatedAt: row.WorkTypeCreatedAt,
+					UpdatedAt: row.WorkTypeUpdatedAt,
+				})
+			}
+
+			response = append(response, latestRow)
+		}
 	}
 
-	return &response, nil
+	count, countErr := c.circleRepo.FindAllCount(filter)
+	if countErr != nil {
+		return nil, countErr
+	}
+
+	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
+
+	return &dto.Pagination[[]circle_dto.CircleResponse]{
+		Data:     response,
+		Metadata: *metadata,
+	}, nil
 }
 
 // UpdateCircleByID implements CircleService.
@@ -94,18 +167,36 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		}
 	}
 
-	if len(body.Fandom) > 0 {
-		for _, fandom := range body.Fandom {
-			err := c.circleRepo.UpsertCircleFandomRelation(circleID, fandom.ID)
-			if err != nil {
-				return nil, err
-			}
+	if len(body.FandomIDs) > 0 {
+		if len(body.FandomIDs) > 5 {
+			return nil, domain.NewError(400, errors.New("FANDOM_LIMIT_EXCEEDED"), nil)
+		}
+
+		insertErr := c.circleRepo.BatchInsertFandomCircleRelation(circleID, body.FandomIDs)
+		if insertErr != nil {
+			return nil, insertErr
+		}
+	}
+
+	if len(body.WorkTypeIDs) > 0 {
+		if len(body.WorkTypeIDs) > 5 {
+			return nil, domain.NewError(400, errors.New("WORK_TYPE_LIMIT_EXCEEDED"), nil)
+		}
+
+		insertErr := c.circleRepo.BatchInsertCircleWorkTypeRelation(circleID, body.WorkTypeIDs)
+		if insertErr != nil {
+			return nil, insertErr
 		}
 	}
 
 	fandoms, fandomErr := c.circleRepo.FindAllCircleRelationFandom(circleID)
 	if fandomErr != nil {
 		return nil, fandomErr
+	}
+
+	workType, workTypeErr := c.circleRepo.FindAllCircleRelationWorkType(circleID)
+	if workTypeErr != nil {
+		return nil, workTypeErr
 	}
 
 	updated, err := c.circleRepo.UpdateOneByID(circleID, entity.Circle{
@@ -115,7 +206,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		TwitterURL:   &body.TwitterURL,
 		Day:          body.Day,
 		Description:  &body.Description,
-		Batch:        &body.Batch,
+		Batch:        body.Batch,
 	})
 
 	if err != nil {
@@ -123,8 +214,9 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 	}
 
 	return &circle_dto.CircleResponse{
-		Circle: *updated,
-		Fandom: fandoms,
+		Circle:   *updated,
+		Fandom:   fandoms,
+		WorkType: workType,
 	}, nil
 }
 
