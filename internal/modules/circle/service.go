@@ -59,8 +59,10 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 
 				if !fandomExist && row.FandomID != 0 {
 					response[i].Fandom = append(response[i].Fandom, entity.Fandom{
-						ID:   row.FandomID,
-						Name: row.FandomName,
+						ID:        row.FandomID,
+						Name:      row.FandomName,
+						CreatedAt: row.FandomCreatedAt,
+						UpdatedAt: row.FandomUpdatedAt,
 					})
 				}
 
@@ -75,8 +77,10 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 
 				if !workTypeExist && row.WorkTypeID != 0 {
 					response[i].WorkType = append(response[i].WorkType, entity.WorkType{
-						ID:   row.WorkTypeID,
-						Name: row.WorkTypeName,
+						ID:        row.WorkTypeID,
+						Name:      row.WorkTypeName,
+						CreatedAt: row.WorkTypeCreatedAt,
+						UpdatedAt: row.WorkTypeUpdatedAt,
 					})
 				}
 
@@ -109,15 +113,19 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 
 			if row.FandomID != 0 {
 				latestRow.Fandom = append(latestRow.Fandom, entity.Fandom{
-					ID:   row.FandomID,
-					Name: row.FandomName,
+					ID:        row.FandomID,
+					Name:      row.FandomName,
+					CreatedAt: row.FandomCreatedAt,
+					UpdatedAt: row.FandomUpdatedAt,
 				})
 			}
 
 			if row.WorkTypeID != 0 {
 				latestRow.WorkType = append(latestRow.WorkType, entity.WorkType{
-					ID:   row.WorkTypeID,
-					Name: row.WorkTypeName,
+					ID:        row.WorkTypeID,
+					Name:      row.WorkTypeName,
+					CreatedAt: row.WorkTypeCreatedAt,
+					UpdatedAt: row.WorkTypeUpdatedAt,
 				})
 			}
 

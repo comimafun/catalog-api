@@ -46,7 +46,6 @@ type CircleRaw struct {
 
 	WorkTypeID        int            `json:"work_type_id"`
 	WorkTypeName      string         `json:"work_type_name"`
-	WorkTypeVisible   bool           `json:"work_type_visible"`
 	WorkTypeCreatedAt *time.Time     `json:"work_type_created_at"`
 	WorkTypeUpdatedAt *time.Time     `json:"work_type_updated_at"`
 	WorkTypeDeletedAt gorm.DeletedAt `json:"-"`

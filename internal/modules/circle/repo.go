@@ -233,10 +233,10 @@ func (c *circleRepo) FindAll(filter *circle_dto.FindAllCircleFilter) ([]entity.C
 
 	var circles []entity.CircleRaw
 	err := c.db.Raw(query, args...).Scan(&circles).Error
+
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
-
 	return circles, nil
 }
 
