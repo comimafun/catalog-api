@@ -1,0 +1,22 @@
+meta {
+  name: Get Circle
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{hostnamev1}}/circle?page=1&limit=20
+  body: none
+  auth: none
+}
+
+query {
+  page: 1
+  limit: 20
+}
+
+body:json {
+  {
+    "name": "PT mencari cinta sejati"
+  }
+}

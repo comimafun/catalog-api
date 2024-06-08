@@ -1,0 +1,21 @@
+meta {
+  name: Update Circle
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{hostnamev1}}/circle
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
+
+body:json {
+  {
+    "picture_url": "https://assets-cdn.dealls.com/dcp/banner-job-expo-expert-class-mobile.png"
+  }
+}

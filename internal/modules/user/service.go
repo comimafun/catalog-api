@@ -9,7 +9,7 @@ import (
 type UserService interface {
 	DeleteOneByID(id int) *domain.Error
 	CreateOne(user entity.User) (*entity.User, *domain.Error)
-	UpdateOne(user entity.User) (*entity.User, *domain.Error)
+	UpdateOneByID(user entity.User) (*entity.User, *domain.Error)
 	FindOneByID(id int) (*entity.User, *domain.Error)
 	FindOneByEmail(email string) (*entity.User, *domain.Error)
 }
@@ -59,7 +59,7 @@ func (u *userService) CreateOne(user entity.User) (*entity.User, *domain.Error) 
 }
 
 // UpdateOne implements UserService.
-func (u *userService) UpdateOne(user entity.User) (*entity.User, *domain.Error) {
+func (u *userService) UpdateOneByID(user entity.User) (*entity.User, *domain.Error) {
 	newUser, err := u.userRepo.UpdateOneByID(user.ID, user)
 	if err != nil {
 		return nil, err

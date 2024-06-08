@@ -1,0 +1,21 @@
+meta {
+  name: Get Circle By Slug
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{hostnamev1}}/circle/chungmyod-goood-p4
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
+
+body:json {
+  {
+    "name": "PT mencari cinta sejati"
+  }
+}

@@ -1,0 +1,21 @@
+meta {
+  name: Onboard New Circle
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{hostnamev1}}/circle/onboard
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
+
+body:json {
+  {
+    "name": "chungmyod goood"
+  }
+}

@@ -7,6 +7,8 @@ import (
 	internal_config "catalog-be/internal/config"
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
+	"catalog-be/internal/modules/circle"
+	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/fandom"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
@@ -41,6 +43,13 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 		work_type.NewWorkTypeHandler,
 		work_type.NewWorkTypeRepo,
 		work_type.NewWorkTypeService,
+
+		circleblock.NewCircleBlockRepo,
+		circleblock.NewCircleBlockService,
+
+		circle.NewCircleHandler,
+		circle.NewCircleRepo,
+		circle.NewCircleService,
 
 		middlewares.NewAuthMiddleware,
 
