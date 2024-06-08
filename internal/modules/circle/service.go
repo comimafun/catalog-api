@@ -18,8 +18,8 @@ type CircleService interface {
 	OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*entity.Circle, *domain.Error)
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string) (*entity.Circle, *domain.Error)
-	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*entity.Circle, *domain.Error)
-	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]entity.Circle, *domain.Error)
+	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
+	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]circle_dto.CircleResponse, *domain.Error)
 }
 
 type circleService struct {
@@ -31,17 +31,50 @@ type circleService struct {
 }
 
 // GetPaginatedCircle implements CircleService.
-func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]entity.Circle, *domain.Error) {
+func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*[]circle_dto.CircleResponse, *domain.Error) {
 	circles, err := c.circleRepo.FindAll(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	return &circles, nil
+	var circleMap = make(map[int]circle_dto.CircleResponse)
+
+	for _, circle := range circles {
+		if _, ok := circleMap[circle.ID]; !ok {
+			circleMap[circle.ID] = circle_dto.CircleResponse{
+				Circle: circle.Circle,
+				Fandom: []entity.Fandom{},
+			}
+		}
+
+		if circle.FandomID != 0 {
+			fandom := entity.Fandom{
+				ID:        circle.FandomID,
+				Name:      circle.FandomName,
+				Visible:   circle.FandomVisible,
+				CreatedAt: circle.FandomCreatedAt,
+				UpdatedAt: circle.FandomUpdatedAt,
+				DeletedAt: circle.FandomDeletedAt,
+			}
+
+			circleResponse := circleMap[circle.ID]
+			circleResponse.Fandom = append(circleResponse.Fandom, fandom)
+			circleMap[circle.ID] = circleResponse
+		}
+	}
+
+	var response []circle_dto.CircleResponse
+
+	for _, circle := range circleMap {
+		response = append(response, circle)
+
+	}
+
+	return &response, nil
 }
 
 // UpdateCircleByID implements CircleService.
-func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*entity.Circle, *domain.Error) {
+func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
 	trimmedBlock := strings.TrimSpace(body.CircleBlock)
 	if trimmedBlock != "" {
 		body.CircleBlock = trimmedBlock
@@ -61,6 +94,20 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		}
 	}
 
+	if len(body.Fandom) > 0 {
+		for _, fandom := range body.Fandom {
+			err := c.circleRepo.UpsertCircleFandomRelation(circleID, fandom.ID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	fandoms, fandomErr := c.circleRepo.FindAllCircleRelationFandom(circleID)
+	if fandomErr != nil {
+		return nil, fandomErr
+	}
+
 	updated, err := c.circleRepo.UpdateOneByID(circleID, entity.Circle{
 		PictureURL:   &body.PictureURL,
 		FacebookURL:  &body.FacebookURL,
@@ -75,7 +122,10 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		return nil, err
 	}
 
-	return updated, nil
+	return &circle_dto.CircleResponse{
+		Circle: *updated,
+		Fandom: fandoms,
+	}, nil
 }
 
 // FindCircleBySlug implements CircleService.

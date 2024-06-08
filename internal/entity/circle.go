@@ -34,6 +34,17 @@ type Circle struct {
 	Day *Day `json:"day"`
 }
 
+type CircleRaw struct {
+	Circle
+
+	FandomID        int            `json:"fandom_id"`
+	FandomName      string         `json:"fandom_name"`
+	FandomVisible   bool           `json:"fandom_visible"`
+	FandomCreatedAt *time.Time     `json:"fandom_created_at"`
+	FandomUpdatedAt *time.Time     `json:"fandom_updated_at"`
+	FandomDeletedAt gorm.DeletedAt `json:"-"`
+}
+
 func (Circle) TableName() string {
 	return "circle"
 }
