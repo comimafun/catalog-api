@@ -52,8 +52,13 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Post("/onboard", h.authMiddleware.Init, h.circle.OnboardNewCircle)
 	circle.Post("/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishUnpublishCircle)
 	circle.Patch("/", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.UpdateCircle)
+
+	circle.Get("/", h.authMiddleware.IfAuthed, h.circle.GetPaginatedCircle)
+	circle.Get("/bookmark", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
 	circle.Get("/:slug", h.circle.FindCircleBySlug)
-	circle.Get("/", h.circle.GetPaginatedCircle)
+
+	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)
+	circle.Delete("/:id/bookmark", h.authMiddleware.Init, h.circle.UnsaveCircle)
 }
 
 func NewHTTP(

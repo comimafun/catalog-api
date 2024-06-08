@@ -49,6 +49,9 @@ type CircleRaw struct {
 	WorkTypeCreatedAt *time.Time     `json:"work_type_created_at"`
 	WorkTypeUpdatedAt *time.Time     `json:"work_type_updated_at"`
 	WorkTypeDeletedAt gorm.DeletedAt `json:"-"`
+
+	Bookmarked   bool       `json:"bookmarked"`
+	BookmarkedAt *time.Time `json:"bookmarked_at"`
 }
 
 func (Circle) TableName() string {
@@ -73,4 +76,14 @@ type CircleWorkType struct {
 
 func (CircleWorkType) TableName() string {
 	return "circle_work_type"
+}
+
+type UserBookmark struct {
+	UserID    int        `json:"user_id"`
+	CircleID  int        `json:"circle_id"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
+func (UserBookmark) TableName() string {
+	return "user_bookmark"
 }

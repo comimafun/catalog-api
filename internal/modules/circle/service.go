@@ -21,7 +21,12 @@ type CircleService interface {
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
-	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
+
+	transformCircleRawToCircleResponse(rows []entity.CircleRaw) ([]circle_dto.CircleResponse, *domain.Error)
+
+	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
+
+	GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
 }
 
 type circleService struct {
@@ -32,13 +37,24 @@ type circleService struct {
 	circleBlockService  circleblock.CircleBlockService
 }
 
-// GetPaginatedCircle implements CircleService.
-func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
-	rows, err := c.circleRepo.FindAll(filter)
-	if err != nil {
-		return nil, err
+func NewCircleService(
+	circleRepo CircleRepo,
+	userService user.UserService,
+	utils utils.Utils,
+	refreshTokenService refreshtoken.RefreshTokenService,
+	circleBlockService circleblock.CircleBlockService,
+) CircleService {
+	return &circleService{
+		circleRepo:          circleRepo,
+		userService:         userService,
+		utils:               utils,
+		refreshTokenService: refreshTokenService,
+		circleBlockService:  circleBlockService,
 	}
+}
 
+// transformCircleRawToCircleResponse implements CircleService.
+func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleRaw) ([]circle_dto.CircleResponse, *domain.Error) {
 	var response []circle_dto.CircleResponse
 
 	for _, row := range rows {
@@ -107,8 +123,10 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 					DeletedAt:    row.DeletedAt,
 					Day:          row.Day,
 				},
-				Fandom:   []entity.Fandom{},
-				WorkType: []entity.WorkType{},
+				Fandom:       []entity.Fandom{},
+				WorkType:     []entity.WorkType{},
+				Bookmarked:   row.Bookmarked,
+				BookmarkedAt: row.BookmarkedAt,
 			}
 
 			if row.FandomID != 0 {
@@ -131,6 +149,47 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 
 			response = append(response, latestRow)
 		}
+	}
+
+	return response, nil
+}
+
+// GetPaginatedBookmarkedCircle implements CircleService.
+func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
+	rows, err := c.circleRepo.FindBookmarkedCircleByUserID(userID, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.transformCircleRawToCircleResponse(rows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := c.circleRepo.FindAllBookmarkedCount(userID, filter)
+	if err != nil {
+		return nil, err
+	}
+	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
+
+	return &dto.Pagination[[]circle_dto.CircleResponse]{
+		Data:     response,
+		Metadata: *metadata,
+	}, nil
+}
+
+// GetPaginatedCircle implements CircleService.
+func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
+	rows, err := c.circleRepo.FindAllCircles(filter, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.transformCircleRawToCircleResponse(rows)
+
+	if err != nil {
+		return nil, err
 	}
 
 	count, countErr := c.circleRepo.FindAllCount(filter)
@@ -290,20 +349,4 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 
 	return circle, nil
 
-}
-
-func NewCircleService(
-	circleRepo CircleRepo,
-	userService user.UserService,
-	utils utils.Utils,
-	refreshTokenService refreshtoken.RefreshTokenService,
-	circleBlockService circleblock.CircleBlockService,
-) CircleService {
-	return &circleService{
-		circleRepo:          circleRepo,
-		userService:         userService,
-		utils:               utils,
-		refreshTokenService: refreshTokenService,
-		circleBlockService:  circleBlockService,
-	}
 }
