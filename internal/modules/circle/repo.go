@@ -53,6 +53,11 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 			wt.created_at AS work_type_created_at,
 			wt.updated_at AS work_type_updated_at,
 			wt.deleted_at AS work_type_updated_at,
+			p.id as product_id,
+			p."name" as product_name,
+			p.image_url as product_image_url,
+			p.created_at as product_created_at,
+			p.updated_at as product_updated_at,
 			cb.id AS block_id,
 			cb.prefix AS block_prefix,
 			cb.postfix AS block_postfix,
@@ -66,13 +71,13 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 			END AS bookmarked
 		FROM
 			circle c
-			LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
-			LEFT JOIN fandom f ON f.id = cf.fandom_id
-			LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
-			LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
-			LEFT JOIN circle_block cb ON c.id = cb.id
-			LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
-				AND ub.user_id = COALESCE(?, ub.user_id)
+		LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
+		LEFT JOIN fandom f ON f.id = cf.fandom_id
+		LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
+		LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
+		LEFT JOIN circle_block cb ON c.id = cb.id
+		LEFT JOIN product p on c.id = p.circle_id
+		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)
 		WHERE
 			c.deleted_at IS NULL
 			AND c.slug = ?

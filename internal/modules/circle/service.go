@@ -127,6 +127,26 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 					})
 				}
 
+				productExist := false
+
+				for _, product := range response[i].Product {
+					if product.ID == row.ProductID {
+						productExist = true
+						break
+					}
+				}
+
+				if !productExist && row.ProductID != 0 {
+					response[i].Product = append(response[i].Product, entity.Product{
+						ID:        row.ProductID,
+						Name:      row.ProductName,
+						ImageURL:  row.ProductImageURL,
+						CircleID:  row.ID,
+						CreatedAt: row.ProductCreatedAt,
+						UpdatedAt: row.ProductUpdatedAt,
+					})
+				}
+
 			}
 
 		}
@@ -181,6 +201,17 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 					CreatedAt: row.BlockCreatedAt,
 					UpdatedAt: row.BlockUpdatedAt,
 				}
+			}
+
+			if row.ProductID != 0 {
+				latestRow.Product = append(latestRow.Product, entity.Product{
+					ID:        row.ProductID,
+					Name:      row.ProductName,
+					ImageURL:  row.ProductImageURL,
+					CircleID:  row.ID,
+					CreatedAt: row.ProductCreatedAt,
+					UpdatedAt: row.ProductUpdatedAt,
+				})
 			}
 
 			response = append(response, latestRow)
