@@ -170,6 +170,15 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 				})
 			}
 
+			if row.BlockID != 0 {
+				latestRow.Block = &circle_dto.BlockResponse{
+					ID:        row.BlockID,
+					Block:     row.BlockPrefix + "-" + row.BlockPostfix,
+					CreatedAt: row.BlockCreatedAt,
+					UpdatedAt: row.BlockUpdatedAt,
+				}
+			}
+
 			response = append(response, latestRow)
 		}
 	}

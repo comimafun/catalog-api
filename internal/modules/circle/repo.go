@@ -142,7 +142,6 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 	if len(filter.WorkTypeID) > 0 {
 		whereClause += " and wt.id in (?)"
 		args = append(args, filter.WorkTypeID)
-
 	}
 
 	return whereClause, args
@@ -153,7 +152,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	whereClause, args := c.findAllWhereSQL(filter)
 
 	query := fmt.Sprintf(`
-		select
+		SELECT
 			c.*,
 			
 			f."name" as fandom_name,
@@ -169,9 +168,15 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			wt.updated_at as work_type_updated_at,
 			wt.deleted_at as work_type_updated_at,
 
+			cb.id as block_id,
+			cb.prefix as block_prefix,
+			cb.postfix as block_postfix,
+			cb.created_at as block_created_at,
+			cb.updated_at as block_updated_at,
+
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id is not null THEN true ELSE false END as bookmarked
-		from 
+		FROM 
 			circle c
 		LEFT JOIN
 			circle_fandom cf on c.id = cf.circle_id
@@ -183,14 +188,21 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			work_type wt on wt.id = cwt.work_type_id
 		LEFT JOIN
 			user_bookmark ub on c.id = ub.circle_id and ub.user_id = COALESCE(?, ub.user_id)
+		LEFT JOIN
+			circle_block cb on c.id = cb.circle_id
 		%s
-		order by c.created_at desc
-		offset ?
-		limit ?
+		ORDER BY
+			c.created_at desc
+		OFFSET ?
+		LIMIT ?
 	`, whereClause)
 
 	offset := (filter.Page - 1) * filter.Limit
-	args = append(args, userID)
+	if userID == 0 {
+		args = append(args, nil)
+	} else {
+		args = append(args, userID)
+	}
 	args = append(args, offset, filter.Limit)
 
 	var circles []entity.CircleRaw
