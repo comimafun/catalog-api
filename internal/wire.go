@@ -10,10 +10,10 @@ import (
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
-	"catalog-be/internal/modules/circle/circle_upvote"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/modules/work_type"
@@ -60,8 +60,11 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 		circle_fandom.NewCircleFandomRepo,
 		circle_fandom.NewCircleFandomService,
 
-		circle_upvote.NewCircleUpvoteRepo,
-		circle_upvote.NewCircleUpvoteService,
+		// circle_upvote.NewCircleUpvoteRepo,
+		// circle_upvote.NewCircleUpvoteService,
+
+		product.NewProductRepo,
+		product.NewProductService,
 
 		circle.NewCircleHandler,
 		circle.NewCircleRepo,

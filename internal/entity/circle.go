@@ -58,6 +58,12 @@ type CircleRaw struct {
 	BlockPostfix   string     `json:"block_postfix"`
 	BlockCreatedAt *time.Time `json:"block_created_at"`
 	BlockUpdatedAt *time.Time `json:"block_updated_at"`
+
+	ProductID        int        `json:"product_id"`
+	ProductName      string     `json:"product_name"`
+	ProductImageURL  string     `json:"product_image_url"`
+	ProductCreatedAt *time.Time `json:"product_created_at"`
+	ProductUpdatedAt *time.Time `json:"product_updated_at"`
 }
 
 func (Circle) TableName() string {
