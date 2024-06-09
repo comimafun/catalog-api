@@ -13,7 +13,8 @@ import (
 type CircleRepo interface {
 	CreateOne(circle entity.Circle) (*entity.Circle, *domain.Error)
 	FindOneByID(id int) (*entity.Circle, *domain.Error)
-	FindOneBySlug(slug string) (*entity.Circle, *domain.Error)
+	FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error)
+
 	FindOneByUserID(userID int) (*entity.Circle, *domain.Error)
 	UpdateOneByID(circleID int, circle entity.Circle) (*entity.Circle, *domain.Error)
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
@@ -34,6 +35,57 @@ func NewCircleRepo(
 	return &circleRepo{
 		db: db,
 	}
+}
+
+// FindOneBySlugAndRelatedTables implements CircleRepo.
+func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error) {
+	query := `
+		SELECT
+			c.*,
+			f. "name" AS fandom_name,
+			f.id AS fandom_id,
+			f.visible AS fandom_visible,
+			f.created_at AS fandom_created_at,
+			f.updated_at AS fandom_updated_at,
+			f.deleted_at AS fandom_updated_at,
+			wt. "name" AS work_type_name,
+			wt.id AS work_type_id,
+			wt.created_at AS work_type_created_at,
+			wt.updated_at AS work_type_updated_at,
+			wt.deleted_at AS work_type_updated_at,
+			cb.id AS block_id,
+			cb.prefix AS block_prefix,
+			cb.postfix AS block_postfix,
+			cb.created_at AS block_created_at,
+			cb.updated_at AS block_updated_at,
+			ub.created_at AS bookmarked_at,
+			CASE WHEN ub.user_id IS NOT NULL THEN
+				TRUE
+			ELSE
+				FALSE
+			END AS bookmarked
+		FROM
+			circle c
+			LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
+			LEFT JOIN fandom f ON f.id = cf.fandom_id
+			LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
+			LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
+			LEFT JOIN circle_block cb ON c.id = cb.id
+			LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
+				AND ub.user_id = COALESCE(?, ub.user_id)
+		WHERE
+			c.deleted_at IS NULL
+			AND c.slug = ?
+		`
+
+	var row []entity.CircleRaw
+
+	err := c.db.Raw(query, userID, slug).Scan(&row).Error
+	if err != nil {
+		return nil, domain.NewError(500, err, nil)
+	}
+
+	return row, nil
 }
 
 // findAllBookmarkedCount implements CircleRepo.
@@ -91,6 +143,12 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			wt.updated_at as work_type_updated_at,
 			wt.deleted_at as work_type_updated_at,
 
+			cb.id as block_id,
+			cb.prefix as block_prefix,
+			cb.postfix as block_postfix,
+			cb.created_at as block_created_at,
+			cb.updated_at as block_updated_at,
+
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id is not null THEN true ELSE false END as bookmarked
 		from 
@@ -105,6 +163,8 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			circle_work_type cwt on c.id = cwt.circle_id
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
+		LEFT JOIN
+			circle_block cb on c.id = cb.circle_id
 		%s
 		order by ub.created_at desc
 		offset ?
@@ -198,11 +258,8 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	`, whereClause)
 
 	offset := (filter.Page - 1) * filter.Limit
-	if userID == 0 {
-		args = append(args, nil)
-	} else {
-		args = append(args, userID)
-	}
+	args = append(args, userID)
+
 	args = append(args, offset, filter.Limit)
 
 	var circles []entity.CircleRaw
@@ -266,17 +323,6 @@ func (c *circleRepo) DeleteOneByID(id int) *domain.Error {
 func (c *circleRepo) FindOneByID(id int) (*entity.Circle, *domain.Error) {
 	var circle entity.Circle
 	err := c.db.First(&circle, id).Error
-	if err != nil {
-		return nil, domain.NewError(500, err, nil)
-	}
-
-	return &circle, nil
-}
-
-// FindOneBySlug implements CircleRepo.
-func (c *circleRepo) FindOneBySlug(slug string) (*entity.Circle, *domain.Error) {
-	var circle entity.Circle
-	err := c.db.First(&circle, "slug = ?", slug).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
