@@ -170,6 +170,15 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 				})
 			}
 
+			if row.BlockID != 0 {
+				latestRow.Block = &circle_dto.BlockResponse{
+					ID:        row.BlockID,
+					Block:     row.BlockPrefix + "-" + row.BlockPostfix,
+					CreatedAt: row.BlockCreatedAt,
+					UpdatedAt: row.BlockUpdatedAt,
+				}
+			}
+
 			response = append(response, latestRow)
 		}
 	}
@@ -308,43 +317,21 @@ func (c *circleService) FindCircleBySlug(slug string, userID int) (*circle_dto.C
 		return nil, domain.NewError(400, errors.New("SLUG_IS_EMPTY"), nil)
 	}
 
-	circle, err := c.circleRepo.FindOneBySlug(slug)
+	rows, err := c.circleRepo.FindOneBySlugAndRelatedTables(slug, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	fandoms, err := c.circleFandomService.FindAllCircleFandomTypeRelated(circle.ID)
+	response, err := c.transformCircleRawToCircleResponse(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	workTypes, err := c.circleWorkTypeService.FindAllCircleWorkTypeRelated(circle.ID)
-
-	if err != nil {
-		return nil, err
+	if len(response) == 0 {
+		return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
 	}
 
-	var bookmark entity.UserBookmark
-
-	if userID != 0 {
-		bookmarked, bookmarkErr := c.bookmark.FindByCircleIDAndUserID(circle.ID, userID)
-		if bookmarkErr != nil && !errors.Is(bookmarkErr.Err, gorm.ErrRecordNotFound) {
-			return nil, bookmarkErr
-		}
-
-		if bookmarked != nil {
-			bookmark.CircleID = bookmarked.CircleID
-			bookmark.UserID = bookmarked.UserID
-		}
-	}
-
-	return &circle_dto.CircleResponse{
-		Circle:       *circle,
-		Fandom:       fandoms,
-		WorkType:     workTypes,
-		Bookmarked:   bookmark.UserID != 0,
-		BookmarkedAt: bookmark.CreatedAt,
-	}, nil
+	return &response[0], nil
 }
 
 // PublishCircleByID implements CircleService.

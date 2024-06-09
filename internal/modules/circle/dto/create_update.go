@@ -39,6 +39,13 @@ type UpdateCircleRequestBody struct {
 	WorkTypeIDs []int `json:"work_type_ids" validate:"omitempty,dive"`
 }
 
+type BlockResponse struct {
+	ID        int        `json:"id"`
+	Block     string     `json:"block"`
+	CreatedAt *time.Time `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+}
+
 type CircleResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
@@ -46,4 +53,6 @@ type CircleResponse struct {
 
 	Bookmarked   bool       `json:"bookmarked"`
 	BookmarkedAt *time.Time `json:"bookmarked_at"`
+
+	Block *BlockResponse `json:"block"`
 }

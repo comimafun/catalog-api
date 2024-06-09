@@ -52,6 +52,12 @@ type CircleRaw struct {
 
 	Bookmarked   bool       `json:"bookmarked"`
 	BookmarkedAt *time.Time `json:"bookmarked_at"`
+
+	BlockID        int        `json:"block_id"`
+	BlockPrefix    string     `json:"block_prefix"`
+	BlockPostfix   string     `json:"block_postfix"`
+	BlockCreatedAt *time.Time `json:"block_created_at"`
+	BlockUpdatedAt *time.Time `json:"block_updated_at"`
 }
 
 func (Circle) TableName() string {
@@ -86,4 +92,14 @@ type UserBookmark struct {
 
 func (UserBookmark) TableName() string {
 	return "user_bookmark"
+}
+
+type UserUpvote struct {
+	UserID    int        `json:"user_id"`
+	CircleID  int        `json:"circle_id"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
+func (UserUpvote) TableName() string {
+	return "user_upvote"
 }
