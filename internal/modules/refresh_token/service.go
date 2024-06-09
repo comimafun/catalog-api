@@ -18,10 +18,16 @@ type RefreshTokenService interface {
 	FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error)
 	ForceExpiredRefreshToken(accessToken string) *domain.Error
 	DeleteAllRecordsByUserID(userID int) *domain.Error
+	DeleteByRefreshToken(refreshToken string) *domain.Error
 }
 
 type refreshTokenService struct {
 	refreshTokenRepo RefreshTokenRepo
+}
+
+// DeleteByRefreshToken implements RefreshTokenService.
+func (r *refreshTokenService) DeleteByRefreshToken(refreshToken string) *domain.Error {
+	return r.refreshTokenRepo.DeleteByRefreshToken(refreshToken)
 }
 
 // DeleteAllRecordsByUserID implements RefreshTokenService.
