@@ -16,6 +16,7 @@ import (
 	"catalog-be/internal/modules/circle/circle_work_type"
 	"catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/modules/work_type"
@@ -52,7 +53,9 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	circleFandomService := circle_fandom.NewCircleFandomService(circleFandomRepo)
 	circleBookmarkRepo := bookmark.NewCircleBookmarkRepo(db)
 	circleBookmarkService := bookmark.NewCircleBookmarkService(circleBookmarkRepo)
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleBlockService, circleWorkTypeService, circleFandomService, circleBookmarkService)
+	productRepo := product.NewProductRepo(db)
+	productService := product.NewProductService(productRepo)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleBlockService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService)
 	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService, userService, circleBookmarkService)
 	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler)
 	return http

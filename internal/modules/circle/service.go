@@ -10,6 +10,7 @@ import (
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	circleblock "catalog-be/internal/modules/circle_block"
+	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
@@ -42,6 +43,7 @@ type circleService struct {
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
+	productService        product.ProductService
 }
 
 func NewCircleService(
@@ -53,6 +55,7 @@ func NewCircleService(
 	circleWorkTypeService circle_work_type.CircleWorkTypeService,
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
+	product product.ProductService,
 ) CircleService {
 	return &circleService{
 		circleRepo:            circleRepo,
@@ -63,6 +66,7 @@ func NewCircleService(
 		circleWorkTypeService: circleWorkTypeService,
 		circleFandomService:   circleFandomService,
 		bookmark:              bookmark,
+		productService:        product,
 	}
 }
 
@@ -280,6 +284,29 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		}
 	}
 
+	var products []entity.Product
+	if len(body.Products) > 0 {
+		if len(body.Products) > 5 {
+			return nil, domain.NewError(400, errors.New("PRODUCT_LIMIT_EXCEEDED"), nil)
+		}
+		inputs := make([]entity.Product, 0)
+		for _, product := range body.Products {
+			inputs = append(inputs, entity.Product{
+				ID:       product.ID,
+				Name:     product.Name,
+				ImageURL: product.ImageURL,
+				CircleID: circleID,
+			})
+		}
+
+		createdProducts, err := c.productService.UpsertProductByCircleID(circleID, inputs)
+		if err != nil {
+			return nil, err
+		}
+
+		products = createdProducts
+	}
+
 	fandoms, fandomErr := c.circleFandomService.FindAllCircleFandomTypeRelated(circleID)
 	if fandomErr != nil {
 		return nil, fandomErr
@@ -308,6 +335,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		Circle:   *updated,
 		Fandom:   fandoms,
 		WorkType: workType,
+		Product:  products,
 	}, nil
 }
 
