@@ -22,6 +22,8 @@ type AuthService interface {
 	RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error)
 	Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error)
 	login(user *entity.User) (*auth_dto.NewTokenResponse, *domain.Error)
+	LogoutByAccessToken(userID int) *domain.Error
+	LogoutByRefreshToken(refreshToken string) *domain.Error
 	generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error)
 	registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error)
 	generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error)
@@ -32,6 +34,24 @@ type authService struct {
 	config              internal_config.Config
 	refreshTokenService refreshtoken.RefreshTokenService
 	utils               utils.Utils
+}
+
+// LogoutByAccessToken implements AuthService.
+func (a *authService) LogoutByAccessToken(userID int) *domain.Error {
+	err := a.refreshTokenService.DeleteAllRecordsByUserID(userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// LogoutByRefreshToken implements AuthService.
+func (a *authService) LogoutByRefreshToken(refreshToken string) *domain.Error {
+	err := a.refreshTokenService.DeleteByRefreshToken(refreshToken)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // generateAndUpdateToken implements AuthService.

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -20,6 +21,80 @@ func (a *AuthHandler) GetAuthURL(c *fiber.Ctx) error {
 	url := a.authService.GetAuthURL()
 	c.Status(fiber.StatusFound)
 	return c.Redirect(url)
+}
+
+func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt string) error {
+	expiredAtTime, err := time.Parse(time.RFC3339, expiredAt)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	cookie := new(fiber.Cookie)
+	cookie.Name = "refresh_token"
+	cookie.Value = refreshToken
+	cookie.Expires = expiredAtTime
+	cookie.HTTPOnly = true
+	cookie.Domain = "localhost"
+
+	c.Cookie(cookie)
+	return nil
+}
+
+func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
+	cookie := new(fiber.Cookie)
+	cookie.Name = "refresh_token"
+	cookie.Expires = time.Now().Add(-time.Hour)
+	cookie.HTTPOnly = true
+	cookie.Domain = "localhost"
+
+	c.Cookie(cookie)
+}
+
+func (a *AuthHandler) Logout(c *fiber.Ctx) error {
+	user := c.Locals("user")
+	if user != nil {
+		claims := user.(*auth_dto.ATClaims)
+		err := a.authService.LogoutByAccessToken(claims.UserID)
+		if err != nil {
+			return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+		}
+
+		a.removeCookie(c)
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"code": fiber.StatusOK,
+			"data": "LOGOUT_SUCCESS",
+		})
+
+	}
+
+	type reqCookie struct {
+		RefreshToken string `cookie:"refresh_token"`
+	}
+
+	cookie := new(reqCookie)
+
+	if err := c.CookieParser(&cookie); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	if cookie.RefreshToken == "" {
+		err := errors.New("FORBIDDEN")
+		a.removeCookie(c)
+		return c.Status(fiber.StatusForbidden).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, err, nil)))
+	}
+
+	err := a.authService.LogoutByRefreshToken(cookie.RefreshToken)
+	if err != nil {
+		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+	}
+
+	a.removeCookie(c)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code": fiber.StatusOK,
+		"data": "LOGOUT_SUCCESS",
+	})
 }
 
 func (a *AuthHandler) GetGoogleCallback(c *fiber.Ctx) error {
@@ -77,6 +152,8 @@ func (a *AuthHandler) PostGoogleCallback(c *fiber.Ctx) error {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
+	a.setCookie(c, data.RefreshToken, data.RefreshTokenExpiredAt)
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"code": fiber.StatusCreated,
 		"data": data,
@@ -100,6 +177,19 @@ func (a *AuthHandler) GetSelf(c *fiber.Ctx) error {
 }
 
 func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+	// type reqCookie struct {
+	// 	RefreshToken string `cookie:"refresh_token"`
+	// }
+	// reqCookies := new(reqCookie)
+	// if err := c.CookieParser(reqCookies); err != nil {
+	// 	return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	// }
+
+	// if reqCookies.RefreshToken == "" {
+	// 	err := errors.New("INVALID_REFRESH_TOKEN")
+	// 	return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	// }
+
 	refreshToken := c.Get("Authorization")
 	refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
 
@@ -112,6 +202,8 @@ func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
+
+	a.setCookie(c, data.RefreshToken, data.RefreshTokenExpiredAt)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"code": fiber.StatusCreated,
