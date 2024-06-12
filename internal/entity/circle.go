@@ -19,6 +19,7 @@ type Circle struct {
 	ID           int            `json:"id"`
 	Name         string         `json:"name"`
 	Slug         string         `json:"slug"`
+	URL          string         `json:"url"`
 	PictureURL   *string        `json:"picture_url"`
 	FacebookURL  *string        `json:"facebook_url"`
 	InstagramURL *string        `json:"instagram_url"`

@@ -1,6 +1,7 @@
 package auth_dto
 
 import (
+	"catalog-be/internal/entity"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,17 +16,6 @@ type GoogleUserData struct {
 	Family_name    string `json:"family_name"`
 	Picture        string `json:"picture"`
 	Locale         string `json:"locale"`
-}
-
-type User struct {
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	Email     string     `json:"email"`
-	CircleID  *int       `json:"circle_id"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
-	DeletedAt *time.Time `json:"-"`
-	Hash      string     `json:"-"`
 }
 
 type BasicClaims struct {
@@ -54,7 +44,8 @@ type NewTokenResponse struct {
 }
 
 type SelfResponse struct {
-	BasicClaims
-	AccessTokenExpiredAt  string `json:"access_token_expired_at"`
-	RefreshTokenExpiredAt string `json:"refresh_token_expired_at"`
+	User                  entity.User    `json:"user"`
+	Circle                *entity.Circle `json:"circle"`
+	AccessTokenExpiredAt  string         `json:"access_token_expired_at"`
+	RefreshTokenExpiredAt string         `json:"refresh_token_expired_at"`
 }

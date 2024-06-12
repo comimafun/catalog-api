@@ -5,6 +5,7 @@ import (
 	"catalog-be/internal/domain"
 	"catalog-be/internal/entity"
 	auth_dto "catalog-be/internal/modules/auth/dto"
+	"catalog-be/internal/modules/circle"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
@@ -34,6 +36,7 @@ type authService struct {
 	config              internal_config.Config
 	refreshTokenService refreshtoken.RefreshTokenService
 	utils               utils.Utils
+	circleService       circle.CircleService
 }
 
 // LogoutByAccessToken implements AuthService.
@@ -102,22 +105,39 @@ func (a *authService) RefreshToken(refreshToken string) (*auth_dto.NewTokenRespo
 func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error) {
 	refresh, err := a.refreshTokenService.FindOneByAccessToken(accessToken)
 	if err != nil {
+		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(fiber.StatusNotFound, errors.New("RECORD_NOT_FOUND"), nil)
+		}
 		return nil, err
 	}
 
-	if user.CircleID == nil {
-		checkUser, checkUserErr := a.userService.FindOneByID(user.UserID)
-		if checkUserErr != nil {
-			return nil, checkUserErr
+	checkUser, checkUserErr := a.userService.FindOneByID(user.UserID)
+	if checkUserErr != nil {
+		if errors.Is(checkUserErr.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(fiber.StatusNotFound, errors.New("RECORD_NOT_FOUND"), nil)
 		}
+		return nil, checkUserErr
+	}
 
-		if checkUser.CircleID != nil {
-			user.CircleID = checkUser.CircleID
-		}
+	myCircle := new(entity.Circle)
+
+	circle, circleErr := a.circleService.FindCircleByID(*checkUser.CircleID)
+
+	if circleErr != nil && !errors.Is(circleErr.Err, gorm.ErrRecordNotFound) {
+		return nil, circleErr
+	}
+
+	if circle != nil {
+		myCircle = circle
+	}
+
+	if user.CircleID == nil && checkUser.CircleID != nil {
+		user.CircleID = checkUser.CircleID
 	}
 
 	return &auth_dto.SelfResponse{
-		BasicClaims:           user.BasicClaims,
+		User:                  *checkUser,
+		Circle:                myCircle,
 		AccessTokenExpiredAt:  user.ExpiresAt.Time.Format(time.RFC3339),
 		RefreshTokenExpiredAt: refresh.ExpiredAt.Format(time.RFC3339),
 	}, nil
@@ -250,11 +270,13 @@ func NewAuthService(
 	config internal_config.Config,
 	refreshToken refreshtoken.RefreshTokenService,
 	utils utils.Utils,
+	circleService circle.CircleService,
 ) AuthService {
 	return &authService{
 		userService,
 		config,
 		refreshToken,
 		utils,
+		circleService,
 	}
 }
