@@ -21,9 +21,10 @@ import (
 )
 
 type CircleService interface {
-	OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*entity.Circle, *domain.Error)
+	OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error)
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error)
+	FindCircleByID(circleID int) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
 	transformCircleRawToCircleResponse(rows []entity.CircleRaw) ([]circle_dto.CircleResponse, *domain.Error)
@@ -44,6 +45,16 @@ type circleService struct {
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	productService        product.ProductService
+}
+
+// FindCircleByID implements CircleService.
+func (c *circleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Error) {
+	circle, err := c.circleRepo.FindOneByID(circleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return circle, nil
 }
 
 func NewCircleService(
@@ -420,7 +431,7 @@ func (c *circleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 }
 
 // OnboardNewCircle implements CircleService.
-func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*entity.Circle, *domain.Error) {
+func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
 	slug, slugErr := c.utils.Slugify(body.Name)
 	if slugErr != nil {
 		return nil, domain.NewError(500, slugErr, nil)
@@ -447,6 +458,11 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		return nil, updateErr
 	}
 
-	return circle, nil
+	return &circle_dto.CircleResponse{
+		Circle:   *circle,
+		Fandom:   []entity.Fandom{},
+		WorkType: []entity.WorkType{},
+		Product:  []entity.Product{},
+	}, nil
 
 }

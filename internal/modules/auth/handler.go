@@ -35,6 +35,8 @@ func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt str
 	cookie.Expires = expiredAtTime
 	cookie.HTTPOnly = true
 	cookie.Domain = "localhost"
+	cookie.SameSite = "None"
+	cookie.Secure = false
 
 	c.Cookie(cookie)
 	return nil
@@ -46,6 +48,8 @@ func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
 	cookie.Expires = time.Now().Add(-time.Hour)
 	cookie.HTTPOnly = true
 	cookie.Domain = "localhost"
+	cookie.SameSite = "None"
+	cookie.Secure = false
 
 	c.Cookie(cookie)
 }
@@ -73,8 +77,7 @@ func (a *AuthHandler) Logout(c *fiber.Ctx) error {
 	}
 
 	cookie := new(reqCookie)
-
-	if err := c.CookieParser(&cookie); err != nil {
+	if err := c.CookieParser(cookie); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
@@ -177,28 +180,20 @@ func (a *AuthHandler) GetSelf(c *fiber.Ctx) error {
 }
 
 func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
-	// type reqCookie struct {
-	// 	RefreshToken string `cookie:"refresh_token"`
-	// }
-	// reqCookies := new(reqCookie)
-	// if err := c.CookieParser(reqCookies); err != nil {
-	// 	return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
-	// }
+	type reqCookie struct {
+		RefreshToken string `cookie:"refresh_token"`
+	}
+	reqCookies := new(reqCookie)
+	if err := c.CookieParser(reqCookies); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
 
-	// if reqCookies.RefreshToken == "" {
-	// 	err := errors.New("INVALID_REFRESH_TOKEN")
-	// 	return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
-	// }
-
-	refreshToken := c.Get("Authorization")
-	refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
-
-	if refreshToken == "" {
+	if reqCookies.RefreshToken == "" {
 		err := errors.New("INVALID_REFRESH_TOKEN")
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	data, err := a.authService.RefreshToken(refreshToken)
+	data, err := a.authService.RefreshToken(reqCookies.RefreshToken)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}

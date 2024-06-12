@@ -23,7 +23,10 @@ func main() {
 	seed := seed.NewSeed(server.Pg)
 	seed.Run()
 
-	server.App.Use(cors.New())
+	server.App.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000",
+		AllowCredentials: true,
+	}))
 	server.App.Use(requestid.New(requestid.Config{
 		Generator: func() string {
 			return utils.NewUtils().GenerateRandomCode(7)

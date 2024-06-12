@@ -199,14 +199,14 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 		args = append(args, filter.Search)
 	}
 
-	if len(filter.FandomID) > 0 {
+	if len(filter.FandomIDs) > 0 {
 		whereClause += " and f.id in (?)"
-		args = append(args, filter.FandomID)
+		args = append(args, filter.FandomIDs)
 	}
 
-	if len(filter.WorkTypeID) > 0 {
+	if len(filter.WorkTypeIDs) > 0 {
 		whereClause += " and wt.id in (?)"
-		args = append(args, filter.WorkTypeID)
+		args = append(args, filter.WorkTypeIDs)
 	}
 
 	return whereClause, args

@@ -34,6 +34,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	auth.Post("/google/callback", h.auth.PostGoogleCallback)
 	auth.Get("/refresh", h.auth.RefreshToken)
 	auth.Get("/self", h.authMiddleware.Init, h.auth.GetSelf)
+	auth.Post("/logout", h.authMiddleware.IfAuthed, h.auth.Logout)
 
 	fandom := v1.Group("/fandom")
 	fandom.Post("/", h.fandom.CreateOne)
