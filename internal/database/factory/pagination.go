@@ -10,7 +10,7 @@ func GetPaginationMetadata(totalDocs int, page int, limit int) *dto.Metadata {
 	return &dto.Metadata{
 		TotalDocs:   totalDocs,
 		TotalPages:  totalPages,
-		HasNextPage: totalPages > 1,
+		HasNextPage: page < totalPages,
 		Page:        page,
 		Limit:       limit,
 	}

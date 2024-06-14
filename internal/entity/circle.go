@@ -57,6 +57,7 @@ type CircleRaw struct {
 	BlockID        int        `json:"block_id"`
 	BlockPrefix    string     `json:"block_prefix"`
 	BlockPostfix   string     `json:"block_postfix"`
+	BlockName      string     `json:"block_name"`
 	BlockCreatedAt *time.Time `json:"block_created_at"`
 	BlockUpdatedAt *time.Time `json:"block_updated_at"`
 

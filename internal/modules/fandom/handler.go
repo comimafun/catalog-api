@@ -104,8 +104,9 @@ func (h *FandomHandler) GetFandomPagination(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"data": pagination,
-		"code": fiber.StatusOK,
+		"data":     pagination.Data,
+		"metadata": pagination.Metadata,
+		"code":     fiber.StatusOK,
 	})
 }
 
