@@ -41,11 +41,11 @@ type UpdateCircleRequestBody struct {
 	Batch       *int        `json:"batch" validate:"omitempty"`
 	Day         *entity.Day `json:"day" validate:"omitempty,oneof=first second both"`
 
-	URL          *string `json:"url" validate:"omitempty,url,max=255"`
-	PictureURL   *string `json:"picture_url" validate:"omitempty,url,max=255"`
-	FacebookURL  *string `json:"facebook_url" validate:"omitempty,url,max=255"`
-	InstagramURL *string `json:"instagram_url" validate:"omitempty,url,max=255"`
-	TwitterURL   *string `json:"twitter_url" validate:"omitempty,url,max=255"`
+	URL          *string `json:"url" validate:"omitempty,url_or_empty,max=255"`
+	PictureURL   *string `json:"picture_url" validate:"omitempty,url_or_empty,max=255"`
+	FacebookURL  *string `json:"facebook_url" validate:"omitempty,url_or_empty,max=255"`
+	InstagramURL *string `json:"instagram_url" validate:"omitempty,url_or_empty,max=255"`
+	TwitterURL   *string `json:"twitter_url" validate:"omitempty,url_or_empty,max=255"`
 
 	FandomIDs   *[]int         `json:"fandom_ids" validate:"omitempty,dive"`
 	WorkTypeIDs *[]int         `json:"work_type_ids" validate:"omitempty,dive"`

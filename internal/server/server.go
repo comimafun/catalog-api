@@ -24,5 +24,13 @@ func New() *FiberServer {
 		Validator: validator.New(),
 	}
 
+	server.Validator.RegisterValidation("url_or_empty", func(fl validator.FieldLevel) bool {
+		urlString := fl.Field().String()
+		if urlString == "" {
+			return true
+		}
+		return server.Validator.Var(urlString, "url") == nil
+	})
+
 	return server
 }

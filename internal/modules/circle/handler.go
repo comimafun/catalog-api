@@ -22,10 +22,18 @@ type CircleHandler struct {
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
+	circleID, parserr := c.ParamsInt("circleid")
+	if parserr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, parserr, nil)))
+	}
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
 	if user.CircleID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("USER_DONT_HAVE_CIRCLE"), nil)))
+	}
+
+	if *user.CircleID != circleID {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, errors.New("FORBIDDEN"), nil)))
 	}
 
 	publish, err := h.circleService.PublishCircleByID(*user.CircleID)
@@ -40,10 +48,17 @@ func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
 }
 
 func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
-
+	circleID, parserr := c.ParamsInt("circleid")
+	if parserr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("CIRCLE_ID_SHOULD_BE_NUMBER"), nil)))
+	}
 	user := c.Locals("user").(*auth_dto.ATClaims)
 	if user.CircleID == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("USER_DONT_HAVE_CIRCLE"), nil)))
+	}
+
+	if *user.CircleID != circleID {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, errors.New("FORBIDDEN"), nil)))
 	}
 
 	var body circle_dto.UpdateCircleRequestBody
