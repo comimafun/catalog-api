@@ -32,6 +32,8 @@ type Circle struct {
 	UpdatedAt    *time.Time     `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
 
+	EventID *int `json:"-"`
+
 	Day *Day `json:"day"`
 }
 
@@ -54,18 +56,22 @@ type CircleRaw struct {
 	Bookmarked   bool       `json:"bookmarked"`
 	BookmarkedAt *time.Time `json:"bookmarked_at"`
 
-	BlockID        int        `json:"block_id"`
-	BlockPrefix    string     `json:"block_prefix"`
-	BlockPostfix   string     `json:"block_postfix"`
-	BlockName      string     `json:"block_name"`
-	BlockCreatedAt *time.Time `json:"block_created_at"`
-	BlockUpdatedAt *time.Time `json:"block_updated_at"`
-
 	ProductID        int        `json:"product_id"`
 	ProductName      string     `json:"product_name"`
 	ProductImageURL  string     `json:"product_image_url"`
 	ProductCreatedAt *time.Time `json:"product_created_at"`
 	ProductUpdatedAt *time.Time `json:"product_updated_at"`
+
+	EventName        string     `json:"event_name"`
+	EventSlug        string     `json:"event_slug"`
+	EventDescription string     `json:"event_description"`
+	EventStartedAt   *time.Time `json:"event_started_at"`
+	EventEndedAt     *time.Time `json:"event_ended_at"`
+
+	BlockEventID      int    `json:"block_event_id"`
+	BlockEventPrefix  string `json:"block_event_prefix"`
+	BlockEventPostfix string `json:"block_event_postfix"`
+	BlockEventName    string `json:"block_event_name"`
 }
 
 func (Circle) TableName() string {

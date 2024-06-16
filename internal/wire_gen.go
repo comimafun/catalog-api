@@ -14,7 +14,6 @@ import (
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
-	"catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
@@ -37,8 +36,6 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	utilsUtils := utils.NewUtils()
 	refreshTokenService := refreshtoken.NewRefreshTokenService(refreshTokenRepo, utilsUtils)
 	circleRepo := circle.NewCircleRepo(db)
-	circleBlockRepo := circleblock.NewCircleBlockRepo(db)
-	circleBlockService := circleblock.NewCircleBlockService(circleBlockRepo)
 	circleWorkTypeRepo := circle_work_type.NewCircleWorkTypeRepo(db)
 	circleWorkTypeService := circle_work_type.NewCircleWorkTypeService(circleWorkTypeRepo)
 	circleFandomRepo := circle_fandom.NewCircleFandomRepo(db)
@@ -47,7 +44,7 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	circleBookmarkService := bookmark.NewCircleBookmarkService(circleBookmarkRepo)
 	productRepo := product.NewProductRepo(db)
 	productService := product.NewProductService(productRepo)
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleBlockService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils, circleService)
 	authHandler := auth.NewAuthHandler(authService, validator2)
 	authMiddleware := middlewares.NewAuthMiddleware(userService)
@@ -57,7 +54,7 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	workTypeRepo := work_type.NewWorkTypeRepo(db)
 	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
 	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
-	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService, userService, circleBookmarkService)
+	circleHandler := circle.NewCircleHandler(circleService, validator2, userService, circleBookmarkService)
 	eventRepo := event.NewEventRepo(db)
 	eventService := event.NewEventService(eventRepo, utilsUtils)
 	eventHandler := event.NewEventHandler(eventService, validator2)

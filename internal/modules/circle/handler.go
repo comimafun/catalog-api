@@ -5,7 +5,6 @@ import (
 	auth_dto "catalog-be/internal/modules/auth/dto"
 	"catalog-be/internal/modules/circle/bookmark"
 	circle_dto "catalog-be/internal/modules/circle/dto"
-	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/user"
 	"errors"
 	"strings"
@@ -15,10 +14,9 @@ import (
 )
 
 type CircleHandler struct {
-	circleService      CircleService
-	validator          *validator.Validate
-	circleBlockService circleblock.CircleBlockService
-	userService        user.UserService
+	circleService CircleService
+	validator     *validator.Validate
+	userService   user.UserService
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
@@ -239,14 +237,12 @@ func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
 func NewCircleHandler(
 	circleService CircleService,
 	validator *validator.Validate,
-	circleBlockService circleblock.CircleBlockService,
 	userService user.UserService,
 	circleBookmarkService bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
-		circleService:      circleService,
-		validator:          validator,
-		circleBlockService: circleBlockService,
-		userService:        userService,
+		circleService: circleService,
+		validator:     validator,
+		userService:   userService,
 	}
 }
