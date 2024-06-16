@@ -20,7 +20,6 @@ type CircleRepo interface {
 	UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error)
 	UpdateCircleAndAllRelation(circleID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error)
 
-	transformBlockStringIntoCircleBlock(block string) (*entity.CircleBlock, *domain.Error)
 	transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error)
 
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
@@ -59,31 +58,6 @@ func (c *circleRepo) transformBlockStringIntoBlockEvent(block string) (*entity.B
 		Prefix:  prefix,
 		Postfix: postfix,
 		Name:    name,
-	}, nil
-}
-
-// transformBlockStringIntoCircleBlock implements CircleRepo.
-func (c *circleRepo) transformBlockStringIntoCircleBlock(block string) (*entity.CircleBlock, *domain.Error) {
-
-	var postfix string
-	var prefix string
-
-	splitted := strings.SplitN(block, "-", 2)
-	if len(splitted) != 2 {
-		return nil, domain.NewError(400, errors.New("INVALID_BLOCK_FORMAT"), nil)
-	}
-
-	prefix = strings.ToUpper(splitted[0])
-	postfix = strings.ToLower(splitted[1])
-
-	// check prefix length
-	if len(postfix) > 8 || len(prefix) > 2 {
-		return nil, domain.NewError(400, errors.New("INVALID_BLOCK_FORMAT"), nil)
-	}
-
-	return &entity.CircleBlock{
-		Prefix:  prefix,
-		Postfix: postfix,
 	}, nil
 }
 
