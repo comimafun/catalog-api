@@ -12,6 +12,7 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circleblock "catalog-be/internal/modules/circle_block"
+	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
@@ -69,6 +70,10 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 		circle.NewCircleHandler,
 		circle.NewCircleRepo,
 		circle.NewCircleService,
+
+		event.NewEventHandler,
+		event.NewEventRepo,
+		event.NewEventService,
 
 		middlewares.NewAuthMiddleware,
 

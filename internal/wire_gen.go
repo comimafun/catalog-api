@@ -15,6 +15,7 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	"catalog-be/internal/modules/circle_block"
+	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/refresh_token"
@@ -57,6 +58,9 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
 	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
 	circleHandler := circle.NewCircleHandler(circleService, validator2, circleBlockService, userService, circleBookmarkService)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler)
+	eventRepo := event.NewEventRepo(db)
+	eventService := event.NewEventService(eventRepo, utilsUtils)
+	eventHandler := event.NewEventHandler(eventService, validator2)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler)
 	return http
 }
