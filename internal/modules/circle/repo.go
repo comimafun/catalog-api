@@ -375,6 +375,16 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 			circle c
 		JOIN
 			user_bookmark ub on c.id = ub.circle_id and ub.user_id = ?
+		LEFT JOIN
+			circle_fandom cf on c.id = cf.circle_id
+		LEFT JOIN
+			fandom f on f.id = cf.fandom_id
+		lEFT JOIN
+			circle_work_type cwt on c.id = cwt.circle_id
+		LEFT JOIN
+			work_type wt on wt.id = cwt.work_type_id
+		LEFT JOIN
+			block_event be on c.id = be.circle_id
 		%s
 	`, whereClause)
 
@@ -560,6 +570,13 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 			count(DISTINCT c.id) as count
 		from 
 			circle c
+		LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
+		LEFT JOIN fandom f ON f.id = cf.fandom_id
+		LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
+		LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
+		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
+			AND ub.user_id = COALESCE(0, ub.user_id)
+		LEFT JOIN block_event be ON c.id = be.circle_id
 		%s
 	`, whereClause)
 
