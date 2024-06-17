@@ -119,20 +119,21 @@ func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 		return nil, checkUserErr
 	}
 
-	myCircle := new(entity.Circle)
+	myCircle := (*entity.Circle)(nil)
+	if checkUser.CircleID != nil {
+		circle, circleErr := a.circleService.FindCircleByID(*checkUser.CircleID)
 
-	circle, circleErr := a.circleService.FindCircleByID(*checkUser.CircleID)
+		if circleErr != nil && !errors.Is(circleErr.Err, gorm.ErrRecordNotFound) {
+			return nil, circleErr
+		}
 
-	if circleErr != nil && !errors.Is(circleErr.Err, gorm.ErrRecordNotFound) {
-		return nil, circleErr
-	}
+		if circle != nil {
+			myCircle = circle
+		}
 
-	if circle != nil {
-		myCircle = circle
-	}
-
-	if user.CircleID == nil && checkUser.CircleID != nil {
-		user.CircleID = checkUser.CircleID
+		if user.CircleID == nil && checkUser.CircleID != nil {
+			user.CircleID = checkUser.CircleID
+		}
 	}
 
 	return &auth_dto.SelfResponse{

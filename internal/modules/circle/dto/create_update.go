@@ -2,7 +2,6 @@ package circle_dto
 
 import (
 	"catalog-be/internal/entity"
-	"time"
 )
 
 type ImageURLs struct {
@@ -41,6 +40,8 @@ type UpdateCircleRequestBody struct {
 	Batch       *int        `json:"batch" validate:"omitempty"`
 	Day         *entity.Day `json:"day" validate:"omitempty,oneof=first second both"`
 
+	EventID *int `json:"event_id" validate:"omitempty"`
+
 	URL          *string `json:"url" validate:"omitempty,url_or_empty,max=255"`
 	PictureURL   *string `json:"picture_url" validate:"omitempty,url_or_empty,max=255"`
 	FacebookURL  *string `json:"facebook_url" validate:"omitempty,url_or_empty,max=255"`
@@ -53,10 +54,8 @@ type UpdateCircleRequestBody struct {
 }
 
 type BlockResponse struct {
-	ID        int        `json:"id"`
-	Name      string     `json:"name"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type CircleResponse struct {
@@ -67,5 +66,17 @@ type CircleResponse struct {
 
 	Bookmarked bool `json:"bookmarked"`
 
-	Block *BlockResponse `json:"block"`
+	BlockEvent *BlockResponse `json:"block"`
+
+	Event *entity.Event `json:"event"`
+}
+
+type CircleOneForPaginationResponse struct {
+	entity.Circle
+	Fandom   []entity.Fandom   `json:"fandom"`
+	WorkType []entity.WorkType `json:"work_type"`
+	Product  []entity.Product  `json:"product"`
+
+	Bookmarked bool           `json:"bookmarked"`
+	BlockEvent *BlockResponse `json:"block"`
 }

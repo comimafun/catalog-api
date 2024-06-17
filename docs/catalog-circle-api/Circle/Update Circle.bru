@@ -5,7 +5,7 @@ meta {
 }
 
 patch {
-  url: {{hostnamev1}}/circle
+  url: {{hostnamev1}}/circle/11
   body: json
   auth: none
 }
@@ -16,6 +16,7 @@ headers {
 
 body:json {
   {
-    "circle_block": "ZZ-39"
+    "circle_block": "ZZ-23",
+    "event_id": 1
   }
 }

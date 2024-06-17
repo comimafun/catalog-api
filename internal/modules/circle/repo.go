@@ -20,7 +20,7 @@ type CircleRepo interface {
 	UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error)
 	UpdateCircleAndAllRelation(circleID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error)
 
-	transformBlockStringIntoCircleBlock(block string) (*entity.CircleBlock, *domain.Error)
+	transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error)
 
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
@@ -33,11 +33,12 @@ type circleRepo struct {
 	db *gorm.DB
 }
 
-// transformBlockStringIntoCircleBlock implements CircleRepo.
-func (c *circleRepo) transformBlockStringIntoCircleBlock(block string) (*entity.CircleBlock, *domain.Error) {
+// transformBlockStringIntoBlockEvent implements CircleRepo.
+func (c *circleRepo) transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error) {
 
 	var postfix string
 	var prefix string
+	var name string
 
 	splitted := strings.SplitN(block, "-", 2)
 	if len(splitted) != 2 {
@@ -46,15 +47,17 @@ func (c *circleRepo) transformBlockStringIntoCircleBlock(block string) (*entity.
 
 	prefix = strings.ToUpper(splitted[0])
 	postfix = strings.ToLower(splitted[1])
+	name = strings.ToUpper(splitted[0]) + "-" + strings.ToLower(splitted[1])
 
 	// check prefix length
-	if len(postfix) > 8 || len(prefix) > 2 {
+	if len(postfix) > 10 || len(prefix) > 2 {
 		return nil, domain.NewError(400, errors.New("INVALID_BLOCK_FORMAT"), nil)
 	}
 
-	return &entity.CircleBlock{
+	return &entity.BlockEvent{
 		Prefix:  prefix,
 		Postfix: postfix,
+		Name:    name,
 	}, nil
 }
 
@@ -74,25 +77,23 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 		return nil, domain.NewError(500, tx.Error, nil)
 	}
 
-	if body.CircleBlock != nil {
+	if body.CircleBlock != nil && payload.EventID != nil {
 		trimmedBlockString := strings.TrimSpace(*body.CircleBlock)
 		if trimmedBlockString == "" {
-			// delete block
-			err := tx.Where("circle_id = ?", circleID).Unscoped().Delete(&entity.CircleBlock{}).Error
+			err := tx.Table("block_event").Where("circle_id = ?", circleID).Unscoped().Delete(&entity.BlockEvent{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
 			}
 		} else {
-			block, err := c.transformBlockStringIntoCircleBlock(trimmedBlockString)
+			block, err := c.transformBlockStringIntoBlockEvent(trimmedBlockString)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
 			}
 
-			// check if block already exist
-			var existingBlock entity.CircleBlock
-			existingErr := tx.Where("prefix = ? AND postfix = ?", block.Prefix, block.Postfix).First(&existingBlock).Error
+			existingBlock := new(entity.BlockEvent)
+			existingErr := tx.Where("prefix = ? AND postfix = ? AND circle_id = ? AND event_id = ?", block.Prefix, block.Postfix, circleID, payload.EventID).First(&existingBlock).Error
 			if existingErr != nil && !errors.Is(existingErr, gorm.ErrRecordNotFound) {
 				tx.Rollback()
 				return nil, domain.NewError(500, existingErr, nil)
@@ -104,18 +105,17 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			}
 
 			// delete block
-			deleteErr := tx.Where("circle_id = ?", circleID).Unscoped().Delete(&entity.CircleBlock{}).Error
+			deleteErr := tx.Table("block_event").Where("circle_id = ?", circleID).Unscoped().Delete(&entity.BlockEvent{}).Error
 			if deleteErr != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, deleteErr, nil)
 			}
 
 			block.CircleID = circleID
+			block.EventID = *payload.EventID
 
-			// create new block
 			createErr := tx.Create(block).Error
 			if createErr != nil {
-				tx.Rollback()
 				return nil, domain.NewError(500, createErr, nil)
 			}
 		}
@@ -319,28 +319,33 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 			p.created_at as product_created_at,
 			p.updated_at as product_updated_at,
 
-			cb.id AS block_id,
-			cb.prefix AS block_prefix,
-			cb.postfix AS block_postfix,
-			cb.prefix || '-' || cb.postfix AS block_name,
-			cb.created_at AS block_created_at,
-			cb.updated_at AS block_updated_at,
-			
 			ub.created_at AS bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN
 				TRUE
 			ELSE
 				FALSE
-			END AS bookmarked
+			END AS bookmarked,
+
+			e."name" as event_name,
+			e.slug as event_slug,
+			e.description as event_description,
+			e.started_at as event_started_at,
+			e.ended_at as event_ended_at,
+
+			be.id as block_event_id,
+			be.prefix as block_event_prefix,
+			be.postfix as block_event_postfix,
+			be.name as block_event_name
 		FROM
 			circle c
 		LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
 		LEFT JOIN fandom f ON f.id = cf.fandom_id
 		LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
 		LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
-		LEFT JOIN circle_block cb ON c.id = cb.circle_id
 		LEFT JOIN product p on c.id = p.circle_id
 		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)
+		LEFT JOIN "event" e ON c.event_id = e.id
+		LEFT JOIN block_event be on c.id = be.circle_id
 		WHERE
 				c.deleted_at IS NULL AND
 				c.slug = ?
@@ -379,7 +384,7 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
 		LEFT JOIN
-			circle_block cb on c.id = cb.circle_id
+			block_event be on c.id = be.circle_id
 		%s
 	`, whereClause)
 
@@ -427,12 +432,10 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			wt.updated_at as work_type_updated_at,
 			wt.deleted_at as work_type_updated_at,
 
-			cb.id as block_id,
-			cb.prefix as block_prefix,
-			cb.postfix as block_postfix,
-			cb.prefix || '-' || cb.postfix AS block_name,
-			cb.created_at as block_created_at,
-			cb.updated_at as block_updated_at,
+			be.id as block_event_id,
+			be.prefix as block_event_prefix,
+			be.postfix as block_event_postfix,
+			be.name as block_event_name,
 
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id is not null THEN true ELSE false END as bookmarked
@@ -449,7 +452,7 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
 		LEFT JOIN
-			circle_block cb on c.id = cb.circle_id
+			block_event be on c.id = be.circle_id
 		%s
 		ORDER by
 			ub.created_at desc
@@ -475,7 +478,7 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 	args := make([]interface{}, 0)
 
 	if filter.Search != "" {
-		whereClause += " and (c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR (cb.prefix || '-' || cb.postfix) ILIKE ?)"
+		whereClause += " and (c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?)"
 		searchClause := fmt.Sprintf("%%%s%%", filter.Search)
 		args = append(args, searchClause, searchClause, searchClause, searchClause)
 	}
@@ -520,12 +523,12 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			wt.created_at AS work_type_created_at,
 			wt.updated_at AS work_type_updated_at,
 			wt.deleted_at AS work_type_deleted_at,
-			cb.id AS block_id,
-			cb.prefix AS block_prefix,
-			cb.postfix AS block_postfix,
-			(cb.prefix || '-' || cb.postfix) AS block_name,
-			cb.created_at AS block_created_at,
-			cb.updated_at AS block_updated_at,
+
+			be.id AS block_event_id,
+			be.prefix AS block_event_prefix,
+			be.postfix AS block_event_postfix,
+			be.name AS block_event_name,
+			
 			ub.created_at AS bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN
 				TRUE
@@ -540,7 +543,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
 			LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
 				AND ub.user_id = COALESCE(?, ub.user_id)
-			LEFT JOIN circle_block cb ON c.id = cb.circle_id
+			LEFT JOIN block_event be ON c.id = be.circle_id
 		%s
 		ORDER BY
 				c.created_at desc
@@ -567,13 +570,13 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 			count(DISTINCT c.id) as count
 		from 
 			circle c
-			LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
-			LEFT JOIN fandom f ON f.id = cf.fandom_id
-			LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
-			LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
-			LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
-				AND ub.user_id = COALESCE(0, ub.user_id)
-			LEFT JOIN circle_block cb ON c.id = cb.circle_id
+		LEFT JOIN circle_fandom cf ON c.id = cf.circle_id
+		LEFT JOIN fandom f ON f.id = cf.fandom_id
+		LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id
+		LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
+		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
+			AND ub.user_id = COALESCE(0, ub.user_id)
+		LEFT JOIN block_event be ON c.id = be.circle_id
 		%s
 	`, whereClause)
 

@@ -9,7 +9,6 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
-	circleblock "catalog-be/internal/modules/circle_block"
 	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
@@ -26,8 +25,10 @@ type CircleService interface {
 	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
 	transformCircleRawToCircleResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse
-	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
-	GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error)
+	transformCircleRawToCircleOneForPaginationResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse
+
+	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error)
+	GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error)
 
 	SaveBookmarkCircle(circleID int, userID int) *domain.Error
 	DeleteBookmarkCircle(circleID int, userID int) *domain.Error
@@ -38,17 +39,193 @@ type circleService struct {
 	userService           user.UserService
 	utils                 utils.Utils
 	refreshTokenService   refreshtoken.RefreshTokenService
-	circleBlockService    circleblock.CircleBlockService
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	productService        product.ProductService
 }
 
+func NewCircleService(
+	circleRepo CircleRepo,
+	userService user.UserService,
+	utils utils.Utils,
+	refreshTokenService refreshtoken.RefreshTokenService,
+	circleWorkTypeService circle_work_type.CircleWorkTypeService,
+	circleFandomService circle_fandom.CircleFandomService,
+	bookmark bookmark.CircleBookmarkService,
+	product product.ProductService,
+) CircleService {
+	return &circleService{
+		circleRepo:            circleRepo,
+		userService:           userService,
+		utils:                 utils,
+		refreshTokenService:   refreshTokenService,
+		circleWorkTypeService: circleWorkTypeService,
+		circleFandomService:   circleFandomService,
+		bookmark:              bookmark,
+		productService:        product,
+	}
+}
+
+// transformCircleRawToCircleOneForPaginationResponse implements CircleService.
+func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse {
+	if len(rows) == 0 {
+		return []circle_dto.CircleOneForPaginationResponse{}
+	}
+
+	var response []circle_dto.CircleOneForPaginationResponse
+
+	for _, row := range rows {
+		// check if row is inside response
+		var found bool
+		for i, res := range response {
+			if res.ID == row.ID {
+				found = true
+
+				fandomExist := false
+
+				for _, fandom := range response[i].Fandom {
+					if fandom.ID == row.FandomID {
+						fandomExist = true
+						break
+					}
+				}
+
+				if !fandomExist && row.FandomID != 0 {
+					response[i].Fandom = append(response[i].Fandom, entity.Fandom{
+						ID:        row.FandomID,
+						Name:      row.FandomName,
+						CreatedAt: row.FandomCreatedAt,
+						UpdatedAt: row.FandomUpdatedAt,
+					})
+				}
+
+				workTypeExist := false
+
+				for _, workType := range response[i].WorkType {
+					if workType.ID == row.WorkTypeID {
+						workTypeExist = true
+						break
+					}
+				}
+
+				if !workTypeExist && row.WorkTypeID != 0 {
+					response[i].WorkType = append(response[i].WorkType, entity.WorkType{
+						ID:        row.WorkTypeID,
+						Name:      row.WorkTypeName,
+						CreatedAt: row.WorkTypeCreatedAt,
+						UpdatedAt: row.WorkTypeUpdatedAt,
+					})
+				}
+
+				productExist := false
+
+				for _, product := range response[i].Product {
+					if product.ID == row.ProductID {
+						productExist = true
+						break
+					}
+				}
+
+				if !productExist && row.ProductID != 0 {
+					response[i].Product = append(response[i].Product, entity.Product{
+						ID:        row.ProductID,
+						Name:      row.ProductName,
+						ImageURL:  row.ProductImageURL,
+						CircleID:  row.ID,
+						CreatedAt: row.ProductCreatedAt,
+						UpdatedAt: row.ProductUpdatedAt,
+					})
+				}
+
+			}
+
+		}
+
+		if !found {
+			latestRow := circle_dto.CircleOneForPaginationResponse{
+				Circle: entity.Circle{
+					ID:           row.ID,
+					Name:         row.Name,
+					Slug:         row.Slug,
+					PictureURL:   row.PictureURL,
+					FacebookURL:  row.FacebookURL,
+					InstagramURL: row.InstagramURL,
+					TwitterURL:   row.TwitterURL,
+					Description:  row.Description,
+					Batch:        row.Batch,
+					Verified:     row.Verified,
+					Published:    row.Published,
+					CreatedAt:    row.CreatedAt,
+					UpdatedAt:    row.UpdatedAt,
+					DeletedAt:    row.DeletedAt,
+					Day:          row.Day,
+				},
+				Fandom:     []entity.Fandom{},
+				WorkType:   []entity.WorkType{},
+				Bookmarked: row.Bookmarked,
+			}
+
+			if row.FandomID != 0 {
+				latestRow.Fandom = append(latestRow.Fandom, entity.Fandom{
+					ID:        row.FandomID,
+					Name:      row.FandomName,
+					CreatedAt: row.FandomCreatedAt,
+					UpdatedAt: row.FandomUpdatedAt,
+				})
+			} else {
+				latestRow.Fandom = []entity.Fandom{}
+			}
+
+			if row.WorkTypeID != 0 {
+				latestRow.WorkType = append(latestRow.WorkType, entity.WorkType{
+					ID:        row.WorkTypeID,
+					Name:      row.WorkTypeName,
+					CreatedAt: row.WorkTypeCreatedAt,
+					UpdatedAt: row.WorkTypeUpdatedAt,
+				})
+			} else {
+				latestRow.WorkType = []entity.WorkType{}
+			}
+
+			if row.ProductID != 0 {
+				latestRow.Product = append(latestRow.Product, entity.Product{
+					ID:        row.ProductID,
+					Name:      row.ProductName,
+					ImageURL:  row.ProductImageURL,
+					CircleID:  row.ID,
+					CreatedAt: row.ProductCreatedAt,
+					UpdatedAt: row.ProductUpdatedAt,
+				})
+			} else {
+				latestRow.Product = []entity.Product{}
+			}
+
+			if row.BlockEventID != 0 {
+				latestRow.BlockEvent = &circle_dto.BlockResponse{
+					ID:   row.BlockEventID,
+					Name: row.BlockEventName,
+				}
+			}
+
+			response = append(response, latestRow)
+		}
+	}
+
+	return response
+}
+
 // UpdateCircleByID implements CircleService.
 func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
 	if body.Name != nil && *body.Name == "" {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
+	}
+
+	if body.EventID == nil {
+		if body.Day != nil || body.CircleBlock != nil {
+			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
+		}
+
 	}
 
 	circle, err := c.FindCircleByID(circleID)
@@ -97,6 +274,10 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		circle.Day = body.Day
 	}
 
+	if body.EventID != nil && body.EventID != circle.EventID {
+		circle.EventID = body.EventID
+	}
+
 	rows, err := c.circleRepo.UpdateCircleAndAllRelation(circleID, circle, body)
 	if err != nil {
 		return nil, err
@@ -119,30 +300,6 @@ func (c *circleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Er
 	}
 
 	return circle, nil
-}
-
-func NewCircleService(
-	circleRepo CircleRepo,
-	userService user.UserService,
-	utils utils.Utils,
-	refreshTokenService refreshtoken.RefreshTokenService,
-	circleBlockService circleblock.CircleBlockService,
-	circleWorkTypeService circle_work_type.CircleWorkTypeService,
-	circleFandomService circle_fandom.CircleFandomService,
-	bookmark bookmark.CircleBookmarkService,
-	product product.ProductService,
-) CircleService {
-	return &circleService{
-		circleRepo:            circleRepo,
-		userService:           userService,
-		utils:                 utils,
-		refreshTokenService:   refreshTokenService,
-		circleBlockService:    circleBlockService,
-		circleWorkTypeService: circleWorkTypeService,
-		circleFandomService:   circleFandomService,
-		bookmark:              bookmark,
-		productService:        product,
-	}
 }
 
 // DeleteBookmarkCircle implements CircleService.
@@ -289,13 +446,23 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 				latestRow.Product = []entity.Product{}
 			}
 
-			if row.BlockID != 0 {
-				latestRow.Block = &circle_dto.BlockResponse{
-					ID:        row.BlockID,
-					Name:      row.BlockName,
-					CreatedAt: row.BlockCreatedAt,
-					UpdatedAt: row.BlockUpdatedAt,
+			if row.EventID != nil {
+				latestRow.Event = &entity.Event{
+					ID:          *row.EventID,
+					Name:        row.EventName,
+					Slug:        row.EventSlug,
+					Description: row.EventDescription,
+					StartedAt:   *row.EventStartedAt,
+					EndedAt:     *row.EventEndedAt,
 				}
+			}
+
+			if row.BlockEventID != 0 {
+				latestRow.BlockEvent = &circle_dto.BlockResponse{
+					ID:   row.BlockEventID,
+					Name: row.BlockEventName,
+				}
+
 			}
 
 			response = append(response, latestRow)
@@ -306,13 +473,13 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 }
 
 // GetPaginatedBookmarkedCircle implements CircleService.
-func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
+func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
 	rows, err := c.circleRepo.FindBookmarkedCircleByUserID(userID, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	response := c.transformCircleRawToCircleResponse(rows)
+	response := c.transformCircleRawToCircleOneForPaginationResponse(rows)
 
 	count, err := c.circleRepo.FindAllBookmarkedCount(userID, filter)
 	if err != nil {
@@ -320,20 +487,20 @@ func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_
 	}
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	return &dto.Pagination[[]circle_dto.CircleResponse]{
+	return &dto.Pagination[[]circle_dto.CircleOneForPaginationResponse]{
 		Data:     response,
 		Metadata: *metadata,
 	}, nil
 }
 
 // GetPaginatedCircle implements CircleService.
-func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleResponse], *domain.Error) {
+func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
 	rows, err := c.circleRepo.FindAllCircles(filter, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	response := c.transformCircleRawToCircleResponse(rows)
+	response := c.transformCircleRawToCircleOneForPaginationResponse(rows)
 
 	count, countErr := c.circleRepo.FindAllCount(filter)
 	if countErr != nil {
@@ -342,7 +509,7 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	return &dto.Pagination[[]circle_dto.CircleResponse]{
+	return &dto.Pagination[[]circle_dto.CircleOneForPaginationResponse]{
 		Data:     response,
 		Metadata: *metadata,
 	}, nil

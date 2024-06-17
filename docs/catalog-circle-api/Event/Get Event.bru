@@ -1,0 +1,24 @@
+meta {
+  name: Get Event
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{hostnamev1}}/event?page=1&limit=20
+  body: none
+  auth: none
+}
+
+query {
+  page: 1
+  limit: 20
+}
+
+body:json {
+  {
+    "name": "Comic Frontier 19",
+    "started_at": "2024-11-09T02:00:00Z",
+    "ended_at": "2024-11-10T15:00:00Z"
+  }
+}

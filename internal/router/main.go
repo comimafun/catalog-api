@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
+	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/work_type"
 
@@ -16,6 +17,7 @@ type HTTP struct {
 	fandom         *fandom.FandomHandler
 	workType       *work_type.WorkTypeHandler
 	circle         *circle.CircleHandler
+	event          *event.EventHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -60,6 +62,11 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)
 	circle.Delete("/:id/bookmark", h.authMiddleware.Init, h.circle.UnsaveCircle)
+
+	event := v1.Group("/event")
+	// TODO: ADMIN ONLY
+	// event.Post("/", h.event.CreateOne)
+	event.Get("/", h.event.GetPaginatedEvents)
 }
 
 func NewHTTP(
@@ -68,6 +75,7 @@ func NewHTTP(
 	fandom *fandom.FandomHandler,
 	workType *work_type.WorkTypeHandler,
 	circle *circle.CircleHandler,
+	event *event.EventHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -75,5 +83,6 @@ func NewHTTP(
 		fandom,
 		workType,
 		circle,
+		event,
 	}
 }
