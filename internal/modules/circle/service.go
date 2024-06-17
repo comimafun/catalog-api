@@ -221,8 +221,11 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
 
-	if body.CircleBlock != nil && body.EventID == nil {
-		return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
+	if body.EventID == nil {
+		if body.Day != nil || body.CircleBlock != nil {
+			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
+		}
+
 	}
 
 	circle, err := c.FindCircleByID(circleID)

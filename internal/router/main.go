@@ -65,8 +65,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	event := v1.Group("/event")
 	// TODO: ADMIN ONLY
-	event.Post("/", h.event.CreateOne)
-
+	// event.Post("/", h.event.CreateOne)
 	event.Get("/", h.event.GetPaginatedEvents)
 }
 
