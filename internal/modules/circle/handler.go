@@ -68,7 +68,7 @@ func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	circle, err := h.circleService.UpdateCircleByID(*user.CircleID, &body)
+	circle, err := h.circleService.UpdateCircleByID(user.UserID, *user.CircleID, &body)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}

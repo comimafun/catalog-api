@@ -18,7 +18,7 @@ type CircleRepo interface {
 	FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error)
 
 	UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error)
-	UpdateCircleAndAllRelation(circleID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error)
+	UpdateCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error)
 
 	transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error)
 
@@ -71,7 +71,7 @@ func (c *circleRepo) UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *d
 }
 
 // UpdateCircleAndAllRelation implements CircleRepo.
-func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error) {
+func (c *circleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error) {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return nil, domain.NewError(500, tx.Error, nil)
@@ -80,7 +80,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 	if body.CircleBlock != nil && payload.EventID != nil {
 		trimmedBlockString := strings.TrimSpace(*body.CircleBlock)
 		if trimmedBlockString == "" {
-			err := tx.Table("block_event").Where("circle_id = ?", circleID).Unscoped().Delete(&entity.BlockEvent{}).Error
+			err := tx.Table("block_event").Where("circle_id = ?", payload.ID).Unscoped().Delete(&entity.BlockEvent{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -93,7 +93,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			}
 
 			existingBlock := new(entity.BlockEvent)
-			existingErr := tx.Where("prefix = ? AND postfix = ? AND circle_id = ? AND event_id = ?", block.Prefix, block.Postfix, circleID, payload.EventID).First(&existingBlock).Error
+			existingErr := tx.Where("prefix = ? AND postfix = ? AND circle_id = ? AND event_id = ?", block.Prefix, block.Postfix, payload.ID, payload.EventID).First(&existingBlock).Error
 			if existingErr != nil && !errors.Is(existingErr, gorm.ErrRecordNotFound) {
 				tx.Rollback()
 				return nil, domain.NewError(500, existingErr, nil)
@@ -105,13 +105,13 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			}
 
 			// delete block
-			deleteErr := tx.Table("block_event").Where("circle_id = ?", circleID).Unscoped().Delete(&entity.BlockEvent{}).Error
+			deleteErr := tx.Table("block_event").Where("circle_id = ?", payload.ID).Unscoped().Delete(&entity.BlockEvent{}).Error
 			if deleteErr != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, deleteErr, nil)
 			}
 
-			block.CircleID = circleID
+			block.CircleID = payload.ID
 			block.EventID = *payload.EventID
 
 			createErr := tx.Create(block).Error
@@ -125,7 +125,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 	if body.FandomIDs != nil {
 		if len(*body.FandomIDs) == 0 {
 			// delete all fandom by circle id
-			err := tx.Where("circle_id = ?", circleID).Delete(&entity.CircleFandom{}).Error
+			err := tx.Where("circle_id = ?", payload.ID).Delete(&entity.CircleFandom{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -135,7 +135,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			return nil, domain.NewError(400, errors.New("FANDOM_LIMIT_EXCEEDED"), nil)
 		} else {
 			// delete all fandom by circle id
-			err := tx.Where("circle_id = ?", circleID).Delete(&entity.CircleFandom{}).Error
+			err := tx.Where("circle_id = ?", payload.ID).Delete(&entity.CircleFandom{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -145,7 +145,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			var circleFandomArgs []interface{}
 			for _, fandomID := range *body.FandomIDs {
 				circleFandomIDs = append(circleFandomIDs, "(?,?)")
-				circleFandomArgs = append(circleFandomArgs, circleID, fandomID)
+				circleFandomArgs = append(circleFandomArgs, payload.ID, fandomID)
 			}
 
 			query := fmt.Sprintf(
@@ -166,7 +166,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 	if body.WorkTypeIDs != nil {
 		if len(*body.WorkTypeIDs) == 0 {
 			// delete all work type by circle id
-			err := tx.Where("circle_id = ?", circleID).Delete(&entity.CircleWorkType{}).Error
+			err := tx.Where("circle_id = ?", payload.ID).Delete(&entity.CircleWorkType{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -177,7 +177,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 		} else {
 
 			// delete all work type by circle id
-			err := tx.Where("circle_id = ?", circleID).Delete(&entity.CircleWorkType{}).Error
+			err := tx.Where("circle_id = ?", payload.ID).Delete(&entity.CircleWorkType{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -187,7 +187,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 			var circleWorkTypeArgs []interface{}
 			for _, workTypeID := range *body.WorkTypeIDs {
 				circleWorkTypeIDs = append(circleWorkTypeIDs, "(?,?)")
-				circleWorkTypeArgs = append(circleWorkTypeArgs, circleID, workTypeID)
+				circleWorkTypeArgs = append(circleWorkTypeArgs, payload.ID, workTypeID)
 			}
 
 			query := fmt.Sprintf(`
@@ -206,7 +206,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 	if body.Products != nil {
 		if len(*body.Products) == 0 {
 			// delete all products by circle id
-			err := tx.Where("circle_id = ?", circleID).Delete(&entity.Product{}).Error
+			err := tx.Where("circle_id = ?", payload.ID).Delete(&entity.Product{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -221,13 +221,13 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 					ID:       product.ID,
 					Name:     product.Name,
 					ImageURL: product.ImageURL,
-					CircleID: circleID,
+					CircleID: payload.ID,
 				})
 
 			}
 
 			var existingProducts []entity.Product
-			err := tx.Where("circle_id = ?", circleID).Find(&existingProducts).Error
+			err := tx.Where("circle_id = ?", payload.ID).Find(&existingProducts).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
@@ -277,7 +277,7 @@ func (c *circleRepo) UpdateCircleAndAllRelation(circleID int, payload *entity.Ci
 
 	tx.Commit()
 
-	rows, err := c.FindOneBySlugAndRelatedTables(payload.Slug, 0)
+	rows, err := c.FindOneBySlugAndRelatedTables(payload.Slug, userID)
 	if err != nil {
 		tx.Rollback()
 		return nil, domain.NewError(err.Code, err.Err, nil)
@@ -296,6 +296,7 @@ func NewCircleRepo(
 
 // FindOneBySlugAndRelatedTables implements CircleRepo.
 func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error) {
+
 	query := `
 		SELECT
 			c.*,
@@ -345,7 +346,7 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 		LEFT JOIN product p on c.id = p.circle_id
 		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)
 		LEFT JOIN "event" e ON c.event_id = e.id
-		LEFT JOIN block_event be on c.id = be.circle_id
+		LEFT JOIN block_event be on c.id = be.circle_id AND be.event_id = c.event_id
 		WHERE
 				c.deleted_at IS NULL AND
 				c.slug = ?
@@ -384,7 +385,7 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
 		LEFT JOIN
-			block_event be on c.id = be.circle_id
+			block_event be on c.id = be.circle_id AND be.event_id = c.event_id
 		%s
 	`, whereClause)
 
@@ -452,7 +453,7 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 		LEFT JOIN
 			work_type wt on wt.id = cwt.work_type_id
 		LEFT JOIN
-			block_event be on c.id = be.circle_id
+			block_event be on c.id = be.circle_id AND be.event_id = c.event_id
 		%s
 		ORDER by
 			ub.created_at desc
@@ -543,7 +544,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
 			LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
 				AND ub.user_id = COALESCE(?, ub.user_id)
-			LEFT JOIN block_event be ON c.id = be.circle_id
+			LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id
 		%s
 		ORDER BY
 				c.created_at desc
@@ -576,7 +577,7 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 		LEFT JOIN work_type wt ON wt.id = cwt.work_type_id
 		LEFT JOIN user_bookmark ub ON c.id = ub.circle_id
 			AND ub.user_id = COALESCE(0, ub.user_id)
-		LEFT JOIN block_event be ON c.id = be.circle_id
+		LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id
 		%s
 	`, whereClause)
 

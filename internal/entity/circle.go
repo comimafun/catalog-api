@@ -32,7 +32,7 @@ type Circle struct {
 	UpdatedAt    *time.Time     `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `json:"deleted_at"`
 
-	EventID *int `json:"-"`
+	EventID *int `json:"event_id"`
 
 	Day *Day `json:"day"`
 }

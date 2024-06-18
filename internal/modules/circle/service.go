@@ -22,7 +22,7 @@ type CircleService interface {
 	PublishCircleByID(circleID int) (*string, *domain.Error)
 	FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error)
 	FindCircleByID(circleID int) (*entity.Circle, *domain.Error)
-	UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
+	UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
 	transformCircleRawToCircleResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse
 	transformCircleRawToCircleOneForPaginationResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse
@@ -160,6 +160,8 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 					UpdatedAt:    row.UpdatedAt,
 					DeletedAt:    row.DeletedAt,
 					Day:          row.Day,
+					URL:          row.URL,
+					EventID:      row.EventID,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
@@ -216,7 +218,7 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 }
 
 // UpdateCircleByID implements CircleService.
-func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
 	if body.Name != nil && *body.Name == "" {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
@@ -278,7 +280,7 @@ func (c *circleService) UpdateCircleByID(circleID int, body *circle_dto.UpdateCi
 		circle.EventID = body.EventID
 	}
 
-	rows, err := c.circleRepo.UpdateCircleAndAllRelation(circleID, circle, body)
+	rows, err := c.circleRepo.UpdateCircleAndAllRelation(userID, circle, body)
 	if err != nil {
 		return nil, err
 	}
@@ -405,6 +407,8 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 					UpdatedAt:    row.UpdatedAt,
 					DeletedAt:    row.DeletedAt,
 					Day:          row.Day,
+					URL:          row.URL,
+					EventID:      row.EventID,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
