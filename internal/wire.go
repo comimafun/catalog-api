@@ -19,6 +19,7 @@ import (
 	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
+	"catalog-be/internal/validation"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
@@ -71,6 +72,7 @@ func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
 		event.NewEventRepo,
 		event.NewEventService,
 
+		validation.NewSanitizer,
 		middlewares.NewAuthMiddleware,
 
 		router.NewHTTP,
