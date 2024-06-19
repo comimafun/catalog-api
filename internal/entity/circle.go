@@ -19,7 +19,7 @@ type Circle struct {
 	ID           int            `json:"id"`
 	Name         string         `json:"name"`
 	Slug         string         `json:"slug"`
-	URL          string         `json:"url"`
+	URL          *string        `json:"url"`
 	PictureURL   *string        `json:"picture_url"`
 	FacebookURL  *string        `json:"facebook_url"`
 	InstagramURL *string        `json:"instagram_url"`
@@ -116,4 +116,41 @@ type UserUpvote struct {
 
 func (UserUpvote) TableName() string {
 	return "user_upvote"
+}
+
+type CircleRawNew struct {
+	Circle
+
+	FandomID        int            `json:"fandom.id" gorm:"column:fandom.id"`
+	FandomName      string         `json:"fandom.name" gorm:"column:fandom.name"`
+	FandomVisible   bool           `json:"fandom.visible" gorm:"column:fandom.visible"`
+	FandomCreatedAt *time.Time     `json:"fandom.created_at"  gorm:"column:fandom.created_at"`
+	FandomUpdatedAt *time.Time     `json:"fandom.updated_at" gorm:"column:fandom.updated_at"`
+	FandomDeletedAt gorm.DeletedAt `json:"-"`
+
+	WorkTypeID        int            `json:"work_type.id" gorm:"column:work_type.id"`
+	WorkTypeName      string         `json:"work_type.name" gorm:"column:work_type.name"`
+	WorkTypeCreatedAt *time.Time     `json:"work_type.created_at" gorm:"column:work_type.created_at"`
+	WorkTypeUpdatedAt *time.Time     `json:"work_type.updated_at" gorm:"column:work_type.updated_at"`
+	WorkTypeDeletedAt gorm.DeletedAt `json:"-"`
+
+	Bookmarked   bool       `json:"bookmarked"`
+	BookmarkedAt *time.Time `json:"bookmarked_at"`
+
+	ProductID        int        `json:"product.id" gorm:"column:product.id"`
+	ProductName      string     `json:"product.name" gorm:"column:product.name"`
+	ProductImageURL  string     `json:"product.image_url" gorm:"column:product.image_url"`
+	ProductCreatedAt *time.Time `json:"product.created_at" gorm:"column:product.created_at"`
+	ProductUpdatedAt *time.Time `json:"product.updated_at" gorm:"column:product.updated_at"`
+
+	EventName        string     `json:"event.name" gorm:"column:event.name"`
+	EventSlug        string     `json:"event.slug" gorm:"column:event.slug"`
+	EventDescription string     `json:"event.description" gorm:"column:event.description"`
+	EventStartedAt   *time.Time `json:"event.started_at" gorm:"column:event.started_at"`
+	EventEndedAt     *time.Time `json:"event.ended_at" gorm:"column:event.ended_at"`
+
+	BlockEventID      int    `json:"block_event.id" gorm:"column:block_event.id"`
+	BlockEventPrefix  string `json:"block_event.prefix" gorm:"column:block_event.prefix"`
+	BlockEventPostfix string `json:"block_event.postfix" gorm:"column:block_event.postfix"`
+	BlockEventName    string `json:"block_event.name" gorm:"column:block_event.name"`
 }

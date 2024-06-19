@@ -38,7 +38,7 @@ type UpdateCircleRequestBody struct {
 	CircleBlock *string     `json:"circle_block" validate:"omitempty"`
 	Description *string     `json:"description" validate:"omitempty"`
 	Batch       *int        `json:"batch" validate:"omitempty"`
-	Day         *entity.Day `json:"day" validate:"omitempty,oneof=first second both"`
+	Day         *entity.Day `json:"day" validate:"omitempty,day_or_empty"`
 
 	EventID *int `json:"event_id" validate:"omitempty"`
 

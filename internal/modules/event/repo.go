@@ -21,16 +21,11 @@ type eventRepo struct {
 
 // FindAllCount implements EventRepo.
 func (e *eventRepo) FindAllCount(filter event_dto.GetEventFilter) (int, *domain.Error) {
-	query := `
-        SELECT
-            COUNT(*)
-        FROM
-            event
-        WHERE
-            deleted_at IS NULL
-    `
+
 	var count int64
-	err := e.db.Raw(query).Count(&count).Error
+	err := e.db.
+		Model(&entity.Event{}).
+		Count(&count).Error
 	if err != nil {
 		return 0, domain.NewError(500, err, nil)
 	}
@@ -40,19 +35,13 @@ func (e *eventRepo) FindAllCount(filter event_dto.GetEventFilter) (int, *domain.
 
 // FindAll implements EventRepo.
 func (e *eventRepo) FindAll(filter event_dto.GetEventFilter) ([]entity.Event, *domain.Error) {
-	query := `
-       	SELECT
-			e.*
-		FROM
-			"event" e
-		WHERE
-			e.deleted_at IS NULL
-		ORDER BY
-			e.started_at DESC
-		LIMIT ? OFFSET ?
-    `
 	var events []entity.Event
-	err := e.db.Raw(query, filter.Limit, filter.Limit*(filter.Page-1)).Find(&events).Error
+	err := e.db.
+		Limit(filter.Limit).
+		Offset(filter.Limit * (filter.Page - 1)).
+		Order("started_at DESC").
+		Find(&events).Error
+
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}

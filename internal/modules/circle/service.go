@@ -15,6 +15,8 @@ import (
 	"catalog-be/internal/utils"
 	"errors"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 type CircleService interface {
@@ -244,8 +246,8 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		circle.Slug = strings.ToLower(slug + "-" + c.utils.GenerateRandomCode(2))
 	}
 
-	if body.URL != nil && *body.URL != circle.URL {
-		circle.URL = *body.URL
+	if body.URL != nil && body.URL != circle.URL {
+		circle.URL = body.URL
 	}
 
 	if body.PictureURL != nil && *body.PictureURL != *circle.PictureURL {
@@ -273,11 +275,19 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 	}
 
 	if body.Day != nil && body.Day != circle.Day {
-		circle.Day = body.Day
+		if *body.Day == "" {
+			circle.Day = nil
+		} else {
+			circle.Day = body.Day
+		}
 	}
 
 	if body.EventID != nil && body.EventID != circle.EventID {
-		circle.EventID = body.EventID
+		if *body.EventID == 0 {
+			circle.EventID = nil
+		} else {
+			circle.EventID = body.EventID
+		}
 	}
 
 	rows, err := c.circleRepo.UpdateCircleAndAllRelation(userID, circle, body)
@@ -571,26 +581,28 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 	if slugErr != nil {
 		return nil, domain.NewError(500, slugErr, nil)
 	}
+
+	user, userErr := c.userService.FindOneByID(userID)
+	if userErr != nil {
+		if errors.Is(userErr.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(404, errors.New("USER_NOT_FOUND"), nil)
+		}
+		return nil, userErr
+	}
+
 	slug = slug + "-" + c.utils.GenerateRandomCode(2)
-	circle, err := c.circleRepo.CreateOne(entity.Circle{
+	circle, err := c.circleRepo.OnboardNewCircle(&entity.Circle{
 		Name:         body.Name,
-		Slug:         slug,
+		Slug:         strings.ToLower(slug),
 		PictureURL:   &body.PictureURL,
 		FacebookURL:  &body.FacebookURL,
 		InstagramURL: &body.InstagramURL,
 		TwitterURL:   &body.TwitterURL,
-	})
+		URL:          &body.URL,
+	}, user)
 
 	if err != nil {
 		return nil, err
-	}
-
-	_, updateErr := c.userService.UpdateOneByID(entity.User{
-		ID:       userID,
-		CircleID: &circle.ID,
-	})
-	if updateErr != nil {
-		return nil, updateErr
 	}
 
 	return &circle_dto.CircleResponse{
