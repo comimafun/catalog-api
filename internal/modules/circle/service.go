@@ -13,6 +13,7 @@ import (
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
+	"catalog-be/internal/validation"
 	"errors"
 	"strings"
 
@@ -45,6 +46,7 @@ type circleService struct {
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	productService        product.ProductService
+	sanitizer             *validation.Sanitizer
 }
 
 func NewCircleService(
@@ -56,6 +58,7 @@ func NewCircleService(
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
 	product product.ProductService,
+	sanitizer *validation.Sanitizer,
 ) CircleService {
 	return &circleService{
 		circleRepo:            circleRepo,
@@ -66,6 +69,7 @@ func NewCircleService(
 		circleFandomService:   circleFandomService,
 		bookmark:              bookmark,
 		productService:        product,
+		sanitizer:             sanitizer,
 	}
 }
 
@@ -267,7 +271,8 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 	}
 
 	if body.Description != nil && body.Description != circle.Description {
-		circle.Description = body.Description
+		sanitized := c.sanitizer.Sanitize(*body.Description)
+		circle.Description = &sanitized
 	}
 
 	if body.Batch != nil && body.Batch != circle.Batch {

@@ -22,6 +22,7 @@ import (
 	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
+	"catalog-be/internal/validation"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
@@ -44,7 +45,8 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	circleBookmarkService := bookmark.NewCircleBookmarkService(circleBookmarkRepo)
 	productRepo := product.NewProductRepo(db)
 	productService := product.NewProductService(productRepo)
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService)
+	sanitizer := validation.NewSanitizer()
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService, sanitizer)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils, circleService)
 	authHandler := auth.NewAuthHandler(authService, validator2)
 	authMiddleware := middlewares.NewAuthMiddleware(userService)
