@@ -295,6 +295,17 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		}
 	}
 
+	if body.CircleBlock != nil {
+		trimmedBlock := strings.TrimSpace(*body.CircleBlock)
+		if trimmedBlock != "" && body.EventID == nil {
+			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
+		}
+
+		if trimmedBlock != "" {
+			body.CircleBlock = &trimmedBlock
+		}
+	}
+
 	rows, err := c.circleRepo.UpdateCircleAndAllRelation(userID, circle, body)
 	if err != nil {
 		return nil, err

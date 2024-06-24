@@ -24,6 +24,7 @@ func (a *AuthHandler) GetAuthURL(c *fiber.Ctx) error {
 }
 
 func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt string) error {
+
 	expiredAtTime, err := time.Parse(time.RFC3339, expiredAt)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))

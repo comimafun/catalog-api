@@ -110,15 +110,14 @@ func (c *circleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circ
 	}
 
 	if body.CircleBlock != nil && payload.EventID != nil {
-		trimmedBlockString := strings.TrimSpace(*body.CircleBlock)
-		if trimmedBlockString == "" {
+		if *body.CircleBlock == "" {
 			err := tx.Table("block_event").Where("circle_id = ?", payload.ID).Unscoped().Delete(&entity.BlockEvent{}).Error
 			if err != nil {
 				tx.Rollback()
 				return nil, domain.NewError(500, err, nil)
 			}
 		} else {
-			block, err := c.transformBlockStringIntoBlockEvent(trimmedBlockString)
+			block, err := c.transformBlockStringIntoBlockEvent(*body.CircleBlock)
 			if err != nil {
 				tx.Rollback()
 				return nil, err

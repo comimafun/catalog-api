@@ -29,7 +29,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP {
+func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
 	userRepo := user.NewUserRepo(db)
 	userService := user.NewUserService(userRepo)
 	config := internal_config.NewConfig()
@@ -48,18 +48,18 @@ func InitializeServer(db *gorm.DB, validator2 *validator.Validate) *router.HTTP 
 	sanitizer := validation.NewSanitizer()
 	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService, sanitizer)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils, circleService)
-	authHandler := auth.NewAuthHandler(authService, validator2)
+	authHandler := auth.NewAuthHandler(authService, validate)
 	authMiddleware := middlewares.NewAuthMiddleware(userService)
 	fandomRepo := fandom.NewFandomRepo(db)
 	fandomService := fandom.NewFandomService(fandomRepo)
-	fandomHandler := fandom.NewFandomHandler(fandomService, validator2)
+	fandomHandler := fandom.NewFandomHandler(fandomService, validate)
 	workTypeRepo := work_type.NewWorkTypeRepo(db)
 	workTypeService := work_type.NewWorkTypeService(workTypeRepo)
 	workTypeHandler := work_type.NewWorkTypeHandler(workTypeService)
-	circleHandler := circle.NewCircleHandler(circleService, validator2, userService, circleBookmarkService)
+	circleHandler := circle.NewCircleHandler(circleService, validate, userService, circleBookmarkService)
 	eventRepo := event.NewEventRepo(db)
 	eventService := event.NewEventService(eventRepo, utilsUtils)
-	eventHandler := event.NewEventHandler(eventService, validator2)
+	eventHandler := event.NewEventHandler(eventService, validate)
 	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler)
 	return http
 }

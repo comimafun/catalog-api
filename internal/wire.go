@@ -26,7 +26,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitializeServer(db *gorm.DB, validator *validator.Validate) *router.HTTP {
+func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
 	wire.Build(
 		internal_config.NewConfig,
 

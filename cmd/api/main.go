@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal"
 	"catalog-be/internal/server"
 	"catalog-be/internal/utils"
+	"catalog-be/internal/validation"
 	"catalog-be/seed"
 	"fmt"
 	"os"
@@ -17,8 +18,8 @@ import (
 )
 
 func main() {
-
 	server := server.New()
+	validation.NewCustomValidation(server.Validator).Init()
 
 	seed := seed.NewSeed(server.Pg)
 	seed.Run()
