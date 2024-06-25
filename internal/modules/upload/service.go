@@ -78,6 +78,7 @@ func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeade
 	if openErr != nil {
 		return "", domain.NewError(500, openErr, nil)
 	}
+	defer f.Close()
 
 	_, uploadErr := u.s3.PutObject(
 		context.TODO(),
