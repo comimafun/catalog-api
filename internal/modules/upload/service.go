@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/domain"
 	"context"
 	"errors"
+	"fmt"
 	"mime/multipart"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -93,7 +94,9 @@ func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeade
 		return "", domain.NewError(500, uploadErr, nil)
 	}
 
-	return "", nil
+	path := fmt.Sprintf("/%s/%s", bucketName, name)
+
+	return path, nil
 }
 
 func NewUploadService(
