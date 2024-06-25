@@ -18,18 +18,20 @@ import (
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/refresh_token"
+	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
 	"catalog-be/internal/validation"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
 )
 
 // Injectors from wire.go:
 
-func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
+func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client) *router.HTTP {
 	userRepo := user.NewUserRepo(db)
 	userService := user.NewUserService(userRepo)
 	config := internal_config.NewConfig()
@@ -60,6 +62,8 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
 	eventRepo := event.NewEventRepo(db)
 	eventService := event.NewEventService(eventRepo, utilsUtils)
 	eventHandler := event.NewEventHandler(eventService, validate)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler)
+	uploadService := upload.NewUploadService(s3_2)
+	uploadHandler := upload.NewUploadHandler(validate, uploadService)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler)
 	return http
 }

@@ -40,7 +40,11 @@ func main() {
 		Format:     "${locals:requestid} | ${time}WIB | ${status} | ${latency} | ${ip} | ${method} | ${path} | ${error}\n",
 	}))
 
-	internal.InitializeServer(server.Pg, server.Validator).RegisterRoutes(server.App)
+	internal.InitializeServer(
+		server.Pg,
+		server.Validator,
+		server.S3,
+	).RegisterRoutes(server.App)
 
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	err := server.App.Listen(fmt.Sprintf(":%d", port))

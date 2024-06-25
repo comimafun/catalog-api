@@ -6,6 +6,7 @@ import (
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/work_type"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,6 +19,7 @@ type HTTP struct {
 	workType       *work_type.WorkTypeHandler
 	circle         *circle.CircleHandler
 	event          *event.EventHandler
+	upload         *upload.UploadHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -67,6 +69,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	// TODO: ADMIN ONLY
 	event.Post("/", h.event.CreateOne)
 	event.Get("/", h.event.GetPaginatedEvents)
+
+	upload := v1.Group("/upload")
+	upload.Post("/image", h.authMiddleware.Init, h.upload.UploadImage)
 }
 
 func NewHTTP(
@@ -76,6 +81,7 @@ func NewHTTP(
 	workType *work_type.WorkTypeHandler,
 	circle *circle.CircleHandler,
 	event *event.EventHandler,
+	upload *upload.UploadHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -84,5 +90,6 @@ func NewHTTP(
 		workType,
 		circle,
 		event,
+		upload,
 	}
 }
