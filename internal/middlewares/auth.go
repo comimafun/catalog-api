@@ -82,7 +82,9 @@ func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 	accessToken := c.Get("Authorization")
 	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
 	if accessToken == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
+		return c.
+			Status(fiber.StatusUnauthorized).
+			JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
 	}
 
 	claims, err := a.parseToken(accessToken)

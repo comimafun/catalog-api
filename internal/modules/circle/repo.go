@@ -24,6 +24,7 @@ type CircleRepo interface {
 	transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error)
 
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
+
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 
@@ -489,7 +490,18 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	cte := c.db.Table("circle").Where("deleted_at IS NULL").Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
-	err := c.db.Table("(?) as c", cte).
+	joins := c.db.
+		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
+		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
+		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
+		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
+		Joins("LEFT JOIN product p ON c.id = p.circle_id").
+		Joins("LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)", userID).
+		Joins("LEFT JOIN event e ON c.event_id = e.id").
+		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
+
+	db := joins.
+		Table("(?) as c", cte).
 		Select(`
 			c.*,
 			f.id as fandom_id,
@@ -526,16 +538,10 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS bookmarked
 		`).
-		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
-		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
-		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
-		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
-		Joins("LEFT JOIN product p ON c.id = p.circle_id").
-		Joins("LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)", userID).
-		Joins("LEFT JOIN event e ON c.event_id = e.id").
-		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
 		Where(whereClause, args...).
-		Order("c.created_at desc").Find(&circles).Error
+		Order("c.created_at desc")
+
+	err := db.Find(&circles).Error
 
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)

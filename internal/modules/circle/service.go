@@ -529,20 +529,19 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 	if err != nil {
 		return nil, err
 	}
-
-	response := c.transformCircleRawToCircleOneForPaginationResponse(rows)
-
-	count, countErr := c.circleRepo.FindAllCount(filter)
-	if countErr != nil {
-		return nil, countErr
+	count, err := c.circleRepo.FindAllCount(filter)
+	if err != nil {
+		return nil, err
 	}
 
+	response := c.transformCircleRawToCircleOneForPaginationResponse(rows)
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
 	return &dto.Pagination[[]circle_dto.CircleOneForPaginationResponse]{
 		Data:     response,
 		Metadata: *metadata,
 	}, nil
+
 }
 
 // FindCircleBySlug implements CircleService.

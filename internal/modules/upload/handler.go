@@ -24,15 +24,8 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 		))
 	}
 
-	bucketType := c.FormValue("type")
-	if bucketType == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(
-			c,
-			domain.NewError(fiber.StatusBadRequest, errors.New("TYPE_IS_REQUIRED"), nil),
-		))
-	}
-
-	errs := h.validator.Var(bucketType, "required,oneof=products circles")
+	bucketName := c.FormValue("type")
+	errs := h.validator.Var(bucketName, "required,oneof=covers products profiles")
 	if errs != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(
 			c,
@@ -56,7 +49,7 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 		))
 	}
 
-	path, uploadErr := h.uploadService.UploadImage(bucketType, file)
+	path, uploadErr := h.uploadService.UploadImage(bucketName, file)
 	if uploadErr != nil {
 		return c.Status(uploadErr.Code).JSON(domain.NewErrorFiber(c, uploadErr))
 	}

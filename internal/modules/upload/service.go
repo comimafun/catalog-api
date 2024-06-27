@@ -11,17 +11,17 @@ import (
 	"github.com/google/uuid"
 )
 
-var ACCEPTED_IMAGE_TYPES = []string{
-	".png",
-	".jpg",
-	".jpeg",
-	".gif",
-	".heic",
-	"image/png",
-	"image/jpeg",
-	"image/jpeg",
-	"image/heic",
-	"image/gif",
+var ACCEPTED_IMAGE_TYPES = map[string]bool{
+	".png":       true,
+	".jpg":       true,
+	".jpeg":      true,
+	".gif":       true,
+	".heic":      true,
+	"image/png":  true,
+	"image/jpeg": true,
+	"image/jpg":  true,
+	"image/heic": true,
+	"image/gif":  true,
 }
 
 type UploadService interface {
@@ -54,10 +54,10 @@ func (u *uploadService) validateImage(file *multipart.FileHeader) *domain.Error 
 		return domain.NewError(400, errors.New("FILE_TYPE_INVALID"), nil)
 	}
 
-	for _, v := range ACCEPTED_IMAGE_TYPES {
-		if file.Header.Get("Content-Type") != v {
-			return domain.NewError(400, errors.New("FILE_TYPE_INVALID"), nil)
-		}
+	mimeType := file.Header.Get("Content-Type")
+
+	if !ACCEPTED_IMAGE_TYPES[mimeType] {
+		return domain.NewError(400, errors.New("FILE_TYPE_INVALID"), nil)
 	}
 
 	return nil
@@ -72,7 +72,7 @@ func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeade
 
 	name, err := u.randomizedFilename()
 	if err != nil {
-		return "", domain.NewError(400, errors.New("FILE_NAME_FAILED_TO_GENERATE"), nil)
+		return "", domain.NewError(500, errors.New("FILE_NAME_FAILED_TO_GENERATE"), nil)
 	}
 
 	f, openErr := file.Open()
