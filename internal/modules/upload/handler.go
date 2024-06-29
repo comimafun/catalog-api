@@ -3,7 +3,6 @@ package upload
 import (
 	"catalog-be/internal/domain"
 	"errors"
-	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -44,13 +43,10 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 	if uploadErr != nil {
 		return c.Status(uploadErr.Code).JSON(domain.NewErrorFiber(c, uploadErr))
 	}
-	cdn := os.Getenv("CDN_URL")
-
-	url := cdn + path
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"code": fiber.StatusCreated,
-		"data": url,
+		"data": path,
 	})
 }
 
