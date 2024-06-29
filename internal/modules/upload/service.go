@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ var ACCEPTED_IMAGE_TYPES = map[string]bool{
 }
 
 type UploadService interface {
-	randomizedFilename() (string, *domain.Error)
+	randomizedFilename(currentName string) (string, *domain.Error)
 	validateImage(file *multipart.FileHeader) *domain.Error
 	UploadImage(bucketName string, file *multipart.FileHeader) (string, *domain.Error)
 }
@@ -36,12 +37,19 @@ type uploadService struct {
 }
 
 // randomizedFilename implements UploadService.
-func (u *uploadService) randomizedFilename() (string, *domain.Error) {
+func (u *uploadService) randomizedFilename(currentName string) (string, *domain.Error) {
 	uuid, err := uuid.NewV7()
 	if err != nil {
 		return "", domain.NewError(500, err, nil)
 	}
-	return uuid.String(), nil
+
+	ext := filepath.Ext(currentName)
+
+	uuidString := uuid.String()
+
+	newName := fmt.Sprintf("%s%s", uuidString, ext)
+
+	return newName, nil
 }
 
 // validateImage implements UploadService.
@@ -72,7 +80,7 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 		return "", err
 	}
 
-	name, err := u.randomizedFilename()
+	name, err := u.randomizedFilename(file.Filename)
 	if err != nil {
 		return "", domain.NewError(500, errors.New("FILE_NAME_FAILED_TO_GENERATE"), nil)
 	}
