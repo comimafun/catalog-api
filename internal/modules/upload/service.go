@@ -19,11 +19,13 @@ var ACCEPTED_IMAGE_TYPES = map[string]bool{
 	".jpeg":      true,
 	".gif":       true,
 	".heic":      true,
+	".webp":      true,
 	"image/png":  true,
 	"image/jpeg": true,
 	"image/jpg":  true,
 	"image/heic": true,
 	"image/gif":  true,
+	"image/webp": true,
 }
 
 type UploadService interface {
