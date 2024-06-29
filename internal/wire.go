@@ -15,18 +15,20 @@ import (
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
+	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/modules/work_type"
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
 	"catalog-be/internal/validation"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )
 
-func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
+func InitializeServer(db *gorm.DB, validate *validator.Validate, s3 *s3.Client) *router.HTTP {
 	wire.Build(
 		internal_config.NewConfig,
 
@@ -71,6 +73,9 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate) *router.HTTP {
 		event.NewEventHandler,
 		event.NewEventRepo,
 		event.NewEventService,
+
+		upload.NewUploadHandler,
+		upload.NewUploadService,
 
 		validation.NewSanitizer,
 		middlewares.NewAuthMiddleware,

@@ -25,7 +25,7 @@ func main() {
 	seed.Run()
 
 	server.App.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",
+		AllowOrigins:     os.Getenv("ALLOWED_ORIGINS"),
 		AllowCredentials: true,
 	}))
 	server.App.Use(requestid.New(requestid.Config{
@@ -40,7 +40,11 @@ func main() {
 		Format:     "${locals:requestid} | ${time}WIB | ${status} | ${latency} | ${ip} | ${method} | ${path} | ${error}\n",
 	}))
 
-	internal.InitializeServer(server.Pg, server.Validator).RegisterRoutes(server.App)
+	internal.InitializeServer(
+		server.Pg,
+		server.Validator,
+		server.S3,
+	).RegisterRoutes(server.App)
 
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	err := server.App.Listen(fmt.Sprintf(":%d", port))
