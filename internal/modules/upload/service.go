@@ -44,13 +44,9 @@ func (u *uploadService) randomizedFilename(currentName string) (string, *domain.
 	if err != nil {
 		return "", domain.NewError(500, err, nil)
 	}
-
 	ext := filepath.Ext(currentName)
-
 	uuidString := uuid.String()
-
 	newName := fmt.Sprintf("%s%s", uuidString, ext)
-
 	return newName, nil
 }
 
@@ -93,14 +89,16 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 	}
 	defer f.Close()
 
+	contentType := file.Header.Get("Content-Type")
 	objectKey := fmt.Sprintf("%s/%s", folderName, name)
 
 	_, uploadErr := u.s3.PutObject(
 		context.TODO(),
 		&s3.PutObjectInput{
-			Bucket: &bucket,
-			Key:    &objectKey,
-			Body:   f,
+			Bucket:      &bucket,
+			Key:         &objectKey,
+			Body:        f,
+			ContentType: &contentType,
 		},
 	)
 
