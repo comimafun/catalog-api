@@ -3,6 +3,7 @@ package upload
 import (
 	"catalog-be/internal/domain"
 	"errors"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -14,14 +15,6 @@ type UploadHandler struct {
 }
 
 func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
-	// webDomain := os.Getenv("DOMAIN")
-	// if webDomain == "" {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(
-	// 		c,
-	// 		domain.NewError(fiber.StatusInternalServerError, errors.New("DOMAIN_IS_REQUIRED"), nil),
-	// 	))
-	// }
-
 	folder := c.FormValue("type")
 	errs := h.validator.Var(folder, "required,oneof=covers products profiles")
 	if errs != nil {
@@ -51,12 +44,13 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 	if uploadErr != nil {
 		return c.Status(uploadErr.Code).JSON(domain.NewErrorFiber(c, uploadErr))
 	}
+	cdn := os.Getenv("CDN_URL")
 
-	// url := fmt.Sprintf("%s", path)
+	url := cdn + path
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"code": fiber.StatusCreated,
-		"data": path,
+		"data": url,
 	})
 }
 
