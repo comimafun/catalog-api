@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
@@ -64,7 +65,8 @@ func (u *uploadService) validateImage(file *multipart.FileHeader) *domain.Error 
 }
 
 // Upload implements UploadService.
-func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeader) (string, *domain.Error) {
+func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeader) (string, *domain.Error) {
+	bucket := os.Getenv("BUCKET_NAME")
 	err := u.validateImage(file)
 	if err != nil {
 		return "", err
@@ -81,11 +83,13 @@ func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeade
 	}
 	defer f.Close()
 
+	objectKey := fmt.Sprintf("%s/%s", folderName, name)
+
 	_, uploadErr := u.s3.PutObject(
 		context.TODO(),
 		&s3.PutObjectInput{
-			Bucket: &bucketName,
-			Key:    &name,
+			Bucket: &bucket,
+			Key:    &objectKey,
 			Body:   f,
 		},
 	)
@@ -94,7 +98,7 @@ func (u *uploadService) UploadImage(bucketName string, file *multipart.FileHeade
 		return "", domain.NewError(500, uploadErr, nil)
 	}
 
-	path := fmt.Sprintf("/%s/%s", bucketName, name)
+	path := fmt.Sprintf("/%s/%s", folderName, name)
 
 	return path, nil
 }

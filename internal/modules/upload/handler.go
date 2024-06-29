@@ -3,8 +3,6 @@ package upload
 import (
 	"catalog-be/internal/domain"
 	"errors"
-	"fmt"
-	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -16,16 +14,16 @@ type UploadHandler struct {
 }
 
 func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
-	webDomain := os.Getenv("DOMAIN")
-	if webDomain == "" {
-		return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(
-			c,
-			domain.NewError(fiber.StatusInternalServerError, errors.New("DOMAIN_IS_REQUIRED"), nil),
-		))
-	}
+	// webDomain := os.Getenv("DOMAIN")
+	// if webDomain == "" {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(
+	// 		c,
+	// 		domain.NewError(fiber.StatusInternalServerError, errors.New("DOMAIN_IS_REQUIRED"), nil),
+	// 	))
+	// }
 
-	bucketName := c.FormValue("type")
-	errs := h.validator.Var(bucketName, "required,oneof=covers products profiles")
+	folder := c.FormValue("type")
+	errs := h.validator.Var(folder, "required,oneof=covers products profiles")
 	if errs != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(
 			c,
@@ -49,16 +47,16 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 		))
 	}
 
-	path, uploadErr := h.uploadService.UploadImage(bucketName, file)
+	path, uploadErr := h.uploadService.UploadImage(folder, file)
 	if uploadErr != nil {
 		return c.Status(uploadErr.Code).JSON(domain.NewErrorFiber(c, uploadErr))
 	}
 
-	url := fmt.Sprintf("https://cdn.%s%s", webDomain, path)
+	// url := fmt.Sprintf("%s", path)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"code": fiber.StatusCreated,
-		"data": url,
+		"data": path,
 	})
 }
 
