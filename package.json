@@ -4,18 +4,18 @@
   "description": "only used for versioning",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "release": "release-it"
+    "release": "release-it --ci"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "release-it": {
     "git": {
-      "commitMessage": "chore(release): v${version}",
+      "commitMessage": "chore: release v${version}",
       "tagName": "v${version}"
     },
     "github": {
-      "release": false
+      "release": true
     },
     "npm": {
       "publish": false
