@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://www.conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/comimafun/catalog-api/compare/v0.2.1...v0.2.2) (2024-06-30)
+
+
+### 📝 Documentation
+
+* change license to MIT ([a37e3c6](https://github.com/comimafun/catalog-api/commit/a37e3c6fb6e84d327d94b9ad13aad6afe8f479c8))
+
+
+### 🏃 Continuous Integration
+
+* add pr checklist linter ([#22](https://github.com/comimafun/catalog-api/issues/22)) ([36db62c](https://github.com/comimafun/catalog-api/commit/36db62cecc11bfd1d4c845af42c9e5704fe22f3f))
+
 ## [0.2.1](https://github.com/comimafun/catalog-api/compare/v0.2.0...v0.2.1) (2024-06-30)
 
 # Release v${version}
