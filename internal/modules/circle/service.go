@@ -151,23 +151,24 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 		if !found {
 			latestRow := circle_dto.CircleOneForPaginationResponse{
 				Circle: entity.Circle{
-					ID:           row.ID,
-					Name:         row.Name,
-					Slug:         row.Slug,
-					PictureURL:   row.PictureURL,
-					FacebookURL:  row.FacebookURL,
-					InstagramURL: row.InstagramURL,
-					TwitterURL:   row.TwitterURL,
-					Description:  row.Description,
-					Batch:        row.Batch,
-					Verified:     row.Verified,
-					Published:    row.Published,
-					CreatedAt:    row.CreatedAt,
-					UpdatedAt:    row.UpdatedAt,
-					DeletedAt:    row.DeletedAt,
-					Day:          row.Day,
-					URL:          row.URL,
-					EventID:      row.EventID,
+					ID:              row.ID,
+					Name:            row.Name,
+					Slug:            row.Slug,
+					PictureURL:      row.PictureURL,
+					FacebookURL:     row.FacebookURL,
+					InstagramURL:    row.InstagramURL,
+					TwitterURL:      row.TwitterURL,
+					Description:     row.Description,
+					Batch:           row.Batch,
+					Verified:        row.Verified,
+					Published:       row.Published,
+					CreatedAt:       row.CreatedAt,
+					UpdatedAt:       row.UpdatedAt,
+					DeletedAt:       row.DeletedAt,
+					Day:             row.Day,
+					URL:             row.URL,
+					EventID:         row.EventID,
+					CoverPictureURL: row.CoverPictureURL,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
@@ -306,6 +307,14 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		}
 	}
 
+	if body.CoverPictureURL != nil && *body.CoverPictureURL != *circle.CoverPictureURL {
+		if *body.CoverPictureURL == "" {
+			circle.CoverPictureURL = nil
+		} else {
+			circle.CoverPictureURL = body.CoverPictureURL
+		}
+	}
+
 	rows, err := c.circleRepo.UpdateCircleAndAllRelation(userID, circle, body)
 	if err != nil {
 		return nil, err
@@ -418,23 +427,24 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 		if !found {
 			latestRow := circle_dto.CircleResponse{
 				Circle: entity.Circle{
-					ID:           row.ID,
-					Name:         row.Name,
-					Slug:         row.Slug,
-					PictureURL:   row.PictureURL,
-					FacebookURL:  row.FacebookURL,
-					InstagramURL: row.InstagramURL,
-					TwitterURL:   row.TwitterURL,
-					Description:  row.Description,
-					Batch:        row.Batch,
-					Verified:     row.Verified,
-					Published:    row.Published,
-					CreatedAt:    row.CreatedAt,
-					UpdatedAt:    row.UpdatedAt,
-					DeletedAt:    row.DeletedAt,
-					Day:          row.Day,
-					URL:          row.URL,
-					EventID:      row.EventID,
+					ID:              row.ID,
+					Name:            row.Name,
+					Slug:            row.Slug,
+					PictureURL:      row.PictureURL,
+					FacebookURL:     row.FacebookURL,
+					InstagramURL:    row.InstagramURL,
+					TwitterURL:      row.TwitterURL,
+					Description:     row.Description,
+					Batch:           row.Batch,
+					Verified:        row.Verified,
+					Published:       row.Published,
+					CreatedAt:       row.CreatedAt,
+					UpdatedAt:       row.UpdatedAt,
+					DeletedAt:       row.DeletedAt,
+					Day:             row.Day,
+					URL:             row.URL,
+					EventID:         row.EventID,
+					CoverPictureURL: row.CoverPictureURL,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
