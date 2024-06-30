@@ -1,0 +1,15 @@
+{
+  "name": "catalog-be",
+  "version": "0.0.0",
+  "description": "used only for versioning",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
