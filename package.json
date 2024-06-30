@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "release-it": {
     "git": {
       "commitMessage": "chore(release): v${version}",
