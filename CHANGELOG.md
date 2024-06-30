@@ -1,4 +1,11 @@
+# Release v${version}
 
+## [0.2.0](https://github.com/comimafun/catalog-api/compare/v0.1.0...v0.2.0) (2024-06-30)
+
+
+### 🔥 Features
+
+* adding emojis and header in changelog, feeling cute ([0a832b2](https://github.com/comimafun/catalog-api/commit/0a832b2a42a40d67670c9685a8932b318b5023b3))
 
 ## [0.1.0](https://github.com/comimafun/catalog-api/compare/81219b4d9924ef14b7fb0156d76a3b5fe415eafc...0.1.0) (2024-06-30)
 
