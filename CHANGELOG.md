@@ -1,3 +1,9 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [Conventional Commits](https://www.conventionalcommits.org) for commit guidelines.
+
+## [0.2.1](https://github.com/comimafun/catalog-api/compare/v0.2.0...v0.2.1) (2024-06-30)
+
 # Release v${version}
 
 ## [0.2.0](https://github.com/comimafun/catalog-api/compare/v0.1.0...v0.2.0) (2024-06-30)
