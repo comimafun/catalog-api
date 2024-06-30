@@ -43,7 +43,7 @@ jobs:
           subjectPatternError: |
             The pull request title "{title}" didn't match the required format.
             This format won't affect build or deployment (for now).
-            But it helps maintainers understand changes and commit history in a big monorepo.
+            But it helps maintainers understand changes and commit history in this repo.
 
             Valid formats:
             `type: subject`
