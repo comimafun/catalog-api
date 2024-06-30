@@ -1,6 +1,6 @@
 {
   "name": "catalog-be",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "only used for versioning",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +11,8 @@
   "license": "ISC",
   "release-it": {
     "git": {
-      "commitMessage": "chore(release): v${version}"
+      "commitMessage": "chore(release): v${version}",
+      "tagName": "v${version}"
     },
     "github": {
       "release": false
