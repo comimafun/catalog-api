@@ -45,10 +45,8 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	circleFandomService := circle_fandom.NewCircleFandomService(circleFandomRepo)
 	circleBookmarkRepo := bookmark.NewCircleBookmarkRepo(db)
 	circleBookmarkService := bookmark.NewCircleBookmarkService(circleBookmarkRepo)
-	productRepo := product.NewProductRepo(db)
-	productService := product.NewProductService(productRepo)
 	sanitizer := validation.NewSanitizer()
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, productService, sanitizer)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, sanitizer)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils, circleService)
 	authHandler := auth.NewAuthHandler(authService, validate)
 	authMiddleware := middlewares.NewAuthMiddleware(userService)
@@ -64,7 +62,9 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	eventHandler := event.NewEventHandler(eventService, validate)
 	uploadService := upload.NewUploadService(s3_2)
 	uploadHandler := upload.NewUploadHandler(validate, uploadService)
-	productHandler := product.NewProductHandler(productService)
+	productRepo := product.NewProductRepo(db)
+	productService := product.NewProductService(productRepo)
+	productHandler := product.NewProductHandler(productService, validate)
 	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler)
 	return http
 }

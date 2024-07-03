@@ -9,7 +9,6 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
-	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
@@ -45,7 +44,6 @@ type circleService struct {
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
-	productService        product.ProductService
 	sanitizer             *validation.Sanitizer
 }
 
@@ -57,7 +55,6 @@ func NewCircleService(
 	circleWorkTypeService circle_work_type.CircleWorkTypeService,
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
-	product product.ProductService,
 	sanitizer *validation.Sanitizer,
 ) CircleService {
 	return &circleService{
@@ -68,7 +65,6 @@ func NewCircleService(
 		circleWorkTypeService: circleWorkTypeService,
 		circleFandomService:   circleFandomService,
 		bookmark:              bookmark,
-		productService:        product,
 		sanitizer:             sanitizer,
 	}
 }

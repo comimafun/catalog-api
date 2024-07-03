@@ -1,0 +1,22 @@
+meta {
+  name: Update One Product
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{hostnamev1}}/circle/13/product/2
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
+
+body:json {
+  {
+    "name": "yahallost? ganti",
+    "image_url": "https://pub-3edbda22ada445d086b21416d66c81c1.r2.dev/profiles/01907416-2a00-739d-b6d3-fd62ebddc70e.jpg"
+  }
+}
