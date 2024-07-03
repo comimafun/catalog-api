@@ -57,12 +57,6 @@ type CircleRaw struct {
 	Bookmarked   bool       `json:"bookmarked"`
 	BookmarkedAt *time.Time `json:"bookmarked_at"`
 
-	ProductID        int        `json:"product_id"`
-	ProductName      string     `json:"product_name"`
-	ProductImageURL  string     `json:"product_image_url"`
-	ProductCreatedAt *time.Time `json:"product_created_at"`
-	ProductUpdatedAt *time.Time `json:"product_updated_at"`
-
 	EventName        string     `json:"event_name"`
 	EventSlug        string     `json:"event_slug"`
 	EventDescription string     `json:"event_description"`

@@ -65,6 +65,7 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3 *s3.Client) 
 
 		product.NewProductRepo,
 		product.NewProductService,
+		product.NewProductHandler,
 
 		circle.NewCircleHandler,
 		circle.NewCircleRepo,

@@ -27,12 +27,6 @@ type CreateWorkTypeCircleRelation struct {
 	Name string `json:"name" validate:"required,min=3,max=255"`
 }
 
-type ProductBody struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name" validate:"required,min=3,max=255"`
-	ImageURL string `json:"image_url" validate:"required,url"`
-}
-
 type UpdateCircleRequestBody struct {
 	Name        *string     `json:"name" validate:"omitempty,min=3,max=255"`
 	CircleBlock *string     `json:"circle_block" validate:"omitempty"`
@@ -48,10 +42,9 @@ type UpdateCircleRequestBody struct {
 	InstagramURL *string `json:"instagram_url" validate:"omitempty,url_or_empty,max=255"`
 	TwitterURL   *string `json:"twitter_url" validate:"omitempty,url_or_empty,max=255"`
 
-	EventID     *int           `json:"event_id" validate:"omitempty"`
-	FandomIDs   *[]int         `json:"fandom_ids" validate:"omitempty,dive"`
-	WorkTypeIDs *[]int         `json:"work_type_ids" validate:"omitempty,dive"`
-	Products    *[]ProductBody `json:"products" validate:"omitempty,dive"`
+	EventID     *int   `json:"event_id" validate:"omitempty"`
+	FandomIDs   *[]int `json:"fandom_ids" validate:"omitempty,dive"`
+	WorkTypeIDs *[]int `json:"work_type_ids" validate:"omitempty,dive"`
 }
 
 type BlockResponse struct {
@@ -63,7 +56,6 @@ type CircleResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
 	WorkType []entity.WorkType `json:"work_type"`
-	Product  []entity.Product  `json:"product"`
 
 	Bookmarked bool `json:"bookmarked"`
 
@@ -76,7 +68,6 @@ type CircleOneForPaginationResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
 	WorkType []entity.WorkType `json:"work_type"`
-	Product  []entity.Product  `json:"product"`
 
 	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`

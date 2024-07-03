@@ -64,6 +64,7 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	eventHandler := event.NewEventHandler(eventService, validate)
 	uploadService := upload.NewUploadService(s3_2)
 	uploadHandler := upload.NewUploadHandler(validate, uploadService)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler)
+	productHandler := product.NewProductHandler(productService)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler)
 	return http
 }

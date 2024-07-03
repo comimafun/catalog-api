@@ -6,10 +6,15 @@ meta {
 
 post {
   url: {{hostnamev1}}/upload/image
-  body: none
+  body: multipartForm
   auth: none
 }
 
 headers {
   Authorization: {{at}}
+}
+
+body:multipart-form {
+  type: covers
+  file: @file(/Users/althafdemiandra/Downloads/banner-urgently-hiring-juli-2024-desktop.png)
 }
