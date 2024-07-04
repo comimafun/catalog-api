@@ -6,6 +6,7 @@ import (
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/work_type"
 
@@ -20,6 +21,7 @@ type HTTP struct {
 	circle         *circle.CircleHandler
 	event          *event.EventHandler
 	upload         *upload.UploadHandler
+	product        *product.ProductHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -65,6 +67,11 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)
 	circle.Delete("/:id/bookmark", h.authMiddleware.Init, h.circle.UnsaveCircle)
 
+	circle.Get("/:id/product", h.product.GetAllProductByCircleID)
+	circle.Post("/:id/product", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.product.CreateOneProduct)
+	circle.Put("/:id/product/:productid", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.product.UpdateOneProduct)
+	circle.Delete("/:id/product/:productid", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.product.DeleteOneProduct)
+
 	event := v1.Group("/event")
 	// TODO: ADMIN ONLY
 	// event.Post("/", h.event.CreateOne)
@@ -82,6 +89,7 @@ func NewHTTP(
 	circle *circle.CircleHandler,
 	event *event.EventHandler,
 	upload *upload.UploadHandler,
+	product *product.ProductHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -91,5 +99,6 @@ func NewHTTP(
 		circle,
 		event,
 		upload,
+		product,
 	}
 }

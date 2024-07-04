@@ -9,7 +9,6 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
-	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
@@ -45,7 +44,6 @@ type circleService struct {
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
-	productService        product.ProductService
 	sanitizer             *validation.Sanitizer
 }
 
@@ -57,7 +55,6 @@ func NewCircleService(
 	circleWorkTypeService circle_work_type.CircleWorkTypeService,
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
-	product product.ProductService,
 	sanitizer *validation.Sanitizer,
 ) CircleService {
 	return &circleService{
@@ -68,7 +65,6 @@ func NewCircleService(
 		circleWorkTypeService: circleWorkTypeService,
 		circleFandomService:   circleFandomService,
 		bookmark:              bookmark,
-		productService:        product,
 		sanitizer:             sanitizer,
 	}
 }
@@ -124,26 +120,6 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 					})
 				}
 
-				productExist := false
-
-				for _, product := range response[i].Product {
-					if product.ID == row.ProductID {
-						productExist = true
-						break
-					}
-				}
-
-				if !productExist && row.ProductID != 0 {
-					response[i].Product = append(response[i].Product, entity.Product{
-						ID:        row.ProductID,
-						Name:      row.ProductName,
-						ImageURL:  row.ProductImageURL,
-						CircleID:  row.ID,
-						CreatedAt: row.ProductCreatedAt,
-						UpdatedAt: row.ProductUpdatedAt,
-					})
-				}
-
 			}
 
 		}
@@ -195,19 +171,6 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 				})
 			} else {
 				latestRow.WorkType = []entity.WorkType{}
-			}
-
-			if row.ProductID != 0 {
-				latestRow.Product = append(latestRow.Product, entity.Product{
-					ID:        row.ProductID,
-					Name:      row.ProductName,
-					ImageURL:  row.ProductImageURL,
-					CircleID:  row.ID,
-					CreatedAt: row.ProductCreatedAt,
-					UpdatedAt: row.ProductUpdatedAt,
-				})
-			} else {
-				latestRow.Product = []entity.Product{}
 			}
 
 			if row.BlockEventID != 0 {
@@ -307,11 +270,17 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		}
 	}
 
-	if body.CoverPictureURL != nil && *body.CoverPictureURL != *circle.CoverPictureURL {
-		if *body.CoverPictureURL == "" {
-			circle.CoverPictureURL = nil
-		} else {
+	if body.CoverPictureURL != nil {
+		if circle.CoverPictureURL == nil && *body.CoverPictureURL != "" {
 			circle.CoverPictureURL = body.CoverPictureURL
+		}
+
+		if circle.CoverPictureURL != nil && *circle.CoverPictureURL != *body.CoverPictureURL {
+			if *body.CoverPictureURL == "" {
+				circle.CoverPictureURL = nil
+			} else {
+				circle.CoverPictureURL = body.CoverPictureURL
+			}
 		}
 	}
 
@@ -400,26 +369,6 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 					})
 				}
 
-				productExist := false
-
-				for _, product := range response[i].Product {
-					if product.ID == row.ProductID {
-						productExist = true
-						break
-					}
-				}
-
-				if !productExist && row.ProductID != 0 {
-					response[i].Product = append(response[i].Product, entity.Product{
-						ID:        row.ProductID,
-						Name:      row.ProductName,
-						ImageURL:  row.ProductImageURL,
-						CircleID:  row.ID,
-						CreatedAt: row.ProductCreatedAt,
-						UpdatedAt: row.ProductUpdatedAt,
-					})
-				}
-
 			}
 
 		}
@@ -471,19 +420,6 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 				})
 			} else {
 				latestRow.WorkType = []entity.WorkType{}
-			}
-
-			if row.ProductID != 0 {
-				latestRow.Product = append(latestRow.Product, entity.Product{
-					ID:        row.ProductID,
-					Name:      row.ProductName,
-					ImageURL:  row.ProductImageURL,
-					CircleID:  row.ID,
-					CreatedAt: row.ProductCreatedAt,
-					UpdatedAt: row.ProductUpdatedAt,
-				})
-			} else {
-				latestRow.Product = []entity.Product{}
 			}
 
 			if row.EventID != nil {
@@ -634,7 +570,6 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		Circle:   *circle,
 		Fandom:   []entity.Fandom{},
 		WorkType: []entity.WorkType{},
-		Product:  []entity.Product{},
 	}, nil
 
 }

@@ -1,0 +1,15 @@
+meta {
+  name: Delete One Product
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{hostnamev1}}/circle/13/product/7
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
