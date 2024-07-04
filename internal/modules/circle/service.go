@@ -270,11 +270,17 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		}
 	}
 
-	if body.CoverPictureURL != nil && *body.CoverPictureURL != *circle.CoverPictureURL {
-		if *body.CoverPictureURL == "" {
-			circle.CoverPictureURL = nil
-		} else {
+	if body.CoverPictureURL != nil {
+		if circle.CoverPictureURL == nil && *body.CoverPictureURL != "" {
 			circle.CoverPictureURL = body.CoverPictureURL
+		}
+
+		if circle.CoverPictureURL != nil && *circle.CoverPictureURL != *body.CoverPictureURL {
+			if *body.CoverPictureURL == "" {
+				circle.CoverPictureURL = nil
+			} else {
+				circle.CoverPictureURL = body.CoverPictureURL
+			}
 		}
 	}
 
