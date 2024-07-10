@@ -47,6 +47,12 @@ type UpdateCircleRequestBody struct {
 	WorkTypeIDs *[]int `json:"work_type_ids" validate:"omitempty,dive"`
 }
 
+type UpdateCircleAttendingEvent struct {
+	CircleBlock string      `json:"circle_block" validate:"omitempty"`
+	Day         *entity.Day `json:"day" validate:"omitempty,day_or_empty"`
+	EventID     int         `json:"event_id" validate:"omitempty"`
+}
+
 type BlockResponse struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
