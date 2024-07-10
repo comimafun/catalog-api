@@ -26,6 +26,9 @@ type CircleService interface {
 	FindCircleByID(circleID int) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
+	UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error)
+	DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error)
+
 	transformCircleRawToCircleResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse
 	transformCircleRawToCircleOneForPaginationResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse
 
@@ -45,6 +48,66 @@ type circleService struct {
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	sanitizer             *validation.Sanitizer
+}
+
+// DeleteCircleEventAttendingByID implements CircleService.
+func (c *circleService) DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+	circle, err := c.FindCircleByID(circleID)
+	if err != nil {
+		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
+		}
+		return nil, err
+	}
+
+	err = c.circleRepo.ResetAttendingEvent(circle)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedCircle, updatedErr := c.circleRepo.FindOneBySlugAndRelatedTables(circle.Slug, userID)
+	if updatedErr != nil {
+		return nil, updatedErr
+	}
+	response := c.transformCircleRawToCircleResponse(updatedCircle)
+
+	return &response[0], nil
+}
+
+// UpdateCircleAttendingEventByID implements CircleService.
+func (c *circleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error) {
+	circle, err := c.FindCircleByID(circleID)
+	if err != nil {
+		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
+		}
+		return nil, err
+	}
+
+	body.CircleBlock = strings.TrimSpace(body.CircleBlock)
+
+	if body.EventID == 0 {
+		return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
+	}
+
+	circle.EventID = &body.EventID
+	if body.Day != nil && *body.Day == "" {
+		circle.Day = nil
+	} else {
+		circle.Day = body.Day
+	}
+	err = c.circleRepo.UpdateAttendingEvent(circle, body)
+	if err != nil {
+		return nil, err
+	}
+	updated, updatedErr := c.circleRepo.FindOneBySlugAndRelatedTables(circle.Slug, 0)
+	if updatedErr != nil {
+		return nil, updatedErr
+	}
+	response := c.transformCircleRawToCircleResponse(updated)
+
+	return &response[0], nil
+
 }
 
 func NewCircleService(
@@ -193,13 +256,6 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
 
-	if body.EventID == nil {
-		if body.Day != nil || body.CircleBlock != nil {
-			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
-		}
-
-	}
-
 	circle, err := c.FindCircleByID(circleID)
 	if err != nil {
 		return nil, err
@@ -243,44 +299,11 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		circle.Batch = body.Batch
 	}
 
-	if body.Day != nil && body.Day != circle.Day {
-		if *body.Day == "" {
-			circle.Day = nil
-		} else {
-			circle.Day = body.Day
-		}
-	}
-
-	if body.EventID != nil && body.EventID != circle.EventID {
-		if *body.EventID == 0 {
-			circle.EventID = nil
-		} else {
-			circle.EventID = body.EventID
-		}
-	}
-
-	if body.CircleBlock != nil {
-		trimmedBlock := strings.TrimSpace(*body.CircleBlock)
-		if trimmedBlock != "" && body.EventID == nil {
-			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
-		}
-
-		if trimmedBlock != "" {
-			body.CircleBlock = &trimmedBlock
-		}
-	}
-
 	if body.CoverPictureURL != nil {
-		if circle.CoverPictureURL == nil && *body.CoverPictureURL != "" {
+		if *body.CoverPictureURL == "" {
+			circle.CoverPictureURL = nil
+		} else {
 			circle.CoverPictureURL = body.CoverPictureURL
-		}
-
-		if circle.CoverPictureURL != nil && *circle.CoverPictureURL != *body.CoverPictureURL {
-			if *body.CoverPictureURL == "" {
-				circle.CoverPictureURL = nil
-			} else {
-				circle.CoverPictureURL = body.CoverPictureURL
-			}
 		}
 	}
 

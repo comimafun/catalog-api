@@ -72,6 +72,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Put("/:id/product/:productid", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.product.UpdateOneProduct)
 	circle.Delete("/:id/product/:productid", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.product.DeleteOneProduct)
 
+	circle.Put("/:id/event", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.UpdateCircleEventAttending)
+	circle.Delete("/:id/event", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.DeleteCircleEventAttending)
+
 	event := v1.Group("/event")
 	// TODO: ADMIN ONLY
 	// event.Post("/", h.event.CreateOne)

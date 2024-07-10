@@ -234,6 +234,69 @@ func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
 	})
 }
 
+func (h *CircleHandler) UpdateCircleEventAttending(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+
+	if user.CircleID != nil {
+		if *user.CircleID != circleID {
+			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
+		}
+	} else {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
+	}
+
+	var body circle_dto.UpdateCircleAttendingEvent
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	if err := h.validator.Struct(body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	circle, circleErr := h.circleService.UpdateCircleAttendingEventByID(circleID, user.UserID, &body)
+	if circleErr != nil {
+		return c.Status(circleErr.Code).JSON(domain.NewErrorFiber(c, circleErr))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": circle,
+		"code": fiber.StatusOK,
+	})
+}
+
+func (h *CircleHandler) DeleteCircleEventAttending(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
+	user := c.Locals("user").(*auth_dto.ATClaims)
+
+	if user.CircleID != nil {
+		if *user.CircleID != circleID {
+			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
+		}
+	} else {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
+	}
+
+	circle, circleErr := h.circleService.DeleteCircleEventAttendingByID(circleID, user.UserID)
+	if circleErr != nil {
+		return c.Status(circleErr.Code).JSON(domain.NewErrorFiber(c, circleErr))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": circle,
+		"code": fiber.StatusOK,
+	})
+}
+
 func NewCircleHandler(
 	circleService CircleService,
 	validator *validator.Validate,

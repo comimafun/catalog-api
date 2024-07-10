@@ -28,11 +28,9 @@ type CreateWorkTypeCircleRelation struct {
 }
 
 type UpdateCircleRequestBody struct {
-	Name        *string     `json:"name" validate:"omitempty,min=3,max=255"`
-	CircleBlock *string     `json:"circle_block" validate:"omitempty"`
-	Description *string     `json:"description" validate:"omitempty"`
-	Batch       *int        `json:"batch" validate:"omitempty"`
-	Day         *entity.Day `json:"day" validate:"omitempty,day_or_empty"`
+	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
+	Description *string `json:"description" validate:"omitempty"`
+	Batch       *int    `json:"batch" validate:"omitempty"`
 
 	PictureURL      *string `json:"picture_url" validate:"omitempty,max=255"`
 	CoverPictureURL *string `json:"cover_picture_url" validate:"omitempty,max=255"`
@@ -42,9 +40,14 @@ type UpdateCircleRequestBody struct {
 	InstagramURL *string `json:"instagram_url" validate:"omitempty,url_or_empty,max=255"`
 	TwitterURL   *string `json:"twitter_url" validate:"omitempty,url_or_empty,max=255"`
 
-	EventID     *int   `json:"event_id" validate:"omitempty"`
 	FandomIDs   *[]int `json:"fandom_ids" validate:"omitempty,dive"`
 	WorkTypeIDs *[]int `json:"work_type_ids" validate:"omitempty,dive"`
+}
+
+type UpdateCircleAttendingEvent struct {
+	CircleBlock string      `json:"circle_block" validate:"omitempty"`
+	Day         *entity.Day `json:"day" validate:"omitempty,day_or_empty"`
+	EventID     int         `json:"event_id" validate:"omitempty"`
 }
 
 type BlockResponse struct {
