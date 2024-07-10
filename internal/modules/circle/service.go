@@ -256,13 +256,6 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
 
-	if body.EventID == nil {
-		if body.Day != nil || body.CircleBlock != nil {
-			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
-		}
-
-	}
-
 	circle, err := c.FindCircleByID(circleID)
 	if err != nil {
 		return nil, err
@@ -304,33 +297,6 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 
 	if body.Batch != nil && body.Batch != circle.Batch {
 		circle.Batch = body.Batch
-	}
-
-	if body.Day != nil && body.Day != circle.Day {
-		if *body.Day == "" {
-			circle.Day = nil
-		} else {
-			circle.Day = body.Day
-		}
-	}
-
-	if body.EventID != nil && body.EventID != circle.EventID {
-		if *body.EventID == 0 {
-			circle.EventID = nil
-		} else {
-			circle.EventID = body.EventID
-		}
-	}
-
-	if body.CircleBlock != nil {
-		trimmedBlock := strings.TrimSpace(*body.CircleBlock)
-		if trimmedBlock != "" && body.EventID == nil {
-			return nil, domain.NewError(400, errors.New("EVENT_ID_CANNOT_BE_EMPTY"), nil)
-		}
-
-		if trimmedBlock != "" {
-			body.CircleBlock = &trimmedBlock
-		}
 	}
 
 	if body.CoverPictureURL != nil {

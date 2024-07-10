@@ -207,50 +207,6 @@ func (c *circleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circ
 		return nil, domain.NewError(500, tx.Error, nil)
 	}
 
-	if body.CircleBlock != nil && payload.EventID != nil {
-		if *body.CircleBlock == "" {
-			err := tx.Table("block_event").Where("circle_id = ?", payload.ID).Unscoped().Delete(&entity.BlockEvent{}).Error
-			if err != nil {
-				tx.Rollback()
-				return nil, domain.NewError(500, err, nil)
-			}
-		} else {
-			block, err := c.transformBlockStringIntoBlockEvent(*body.CircleBlock)
-			if err != nil {
-				tx.Rollback()
-				return nil, err
-			}
-
-			existingBlock := new(entity.BlockEvent)
-			existingErr := tx.Where("prefix = ? AND postfix = ? AND circle_id = ? AND event_id = ?", block.Prefix, block.Postfix, payload.ID, payload.EventID).First(&existingBlock).Error
-			if existingErr != nil && !errors.Is(existingErr, gorm.ErrRecordNotFound) {
-				tx.Rollback()
-				return nil, domain.NewError(500, existingErr, nil)
-			}
-
-			if existingBlock.ID != 0 {
-				tx.Rollback()
-				return nil, domain.NewError(400, errors.New("BLOCK_ALREADY_EXIST"), nil)
-			}
-
-			// delete block
-			deleteErr := tx.Table("block_event").Where("circle_id = ?", payload.ID).Unscoped().Delete(&entity.BlockEvent{}).Error
-			if deleteErr != nil {
-				tx.Rollback()
-				return nil, domain.NewError(500, deleteErr, nil)
-			}
-
-			block.CircleID = payload.ID
-			block.EventID = *payload.EventID
-
-			createErr := tx.Create(block).Error
-			if createErr != nil {
-				return nil, domain.NewError(500, createErr, nil)
-			}
-		}
-
-	}
-
 	if body.FandomIDs != nil {
 		if len(*body.FandomIDs) == 0 {
 			// delete all fandom by circle id
