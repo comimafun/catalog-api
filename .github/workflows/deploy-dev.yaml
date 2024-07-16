@@ -55,6 +55,6 @@ jobs:
         with:
           service: catalog-api-dev
           image: ${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-${{ github.run_id }}
-          region: asian-southeast2
+          region: asia-southeast2
 
-          flags: '--allow-unauthenticated --port=8080 --memory=256Mi --cpu=1 --min-instances=0 --max-instances=1 --region=asian-southeast2 --cpu-throttling'
+          flags: '--allow-unauthenticated --port=8080 --memory=256Mi --cpu=1 --min-instances=0 --max-instances=1 --cpu-throttling'
