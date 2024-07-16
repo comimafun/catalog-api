@@ -24,7 +24,6 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-
       - name: Login to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -33,17 +32,9 @@ jobs:
       - name: Docker auth
         run: |
           gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }} --quiet
-
-      - name: Build  image
+      - name: Build and push Docker image
         run: |
-          docker buildx build --tag ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }} --platform=linux/amd64 .
-      - name: Prune docker cache
-        run: docker buildx prune -a -f
-
-      - name: Push image
-        run: |
-          docker push ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }}
-
+          docker buildx build --tag ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }} --push --no-cache --no-cache-filters .
   deploy:
     needs: [build]
     runs-on: ubuntu-latest
