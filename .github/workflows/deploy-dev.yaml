@@ -7,39 +7,7 @@ on:
       - COM-52
 
   jobs:
-    # build:
-    #   runs-on: ubuntu-latest
-
-    #   steps:
-    #     - name: Checkout code
-    #       uses: actions/checkout@v4
-
-    #     - name: Setup Docker Buildx
-    #       uses: docker/setup-buildx-action@v3
-
-    #     - name: Cache docker layers
-    #       uses: actions/cache@v2
-    #       with:
-    #         path: /tmp/.buildx-cache
-    #         key: ${{ runner.os }}-buildx-${{ github.sha }}
-    #         restore-keys: |
-    #           ${{ runner.os }}-buildx-
-
-    #     - name: Login to Google Cloud
-    #       uses: google-github-actions/auth@v2
-    #       with:
-    #         credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
-
-    #     - name: Docker auth
-    #       run: |
-    #         gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }} --quiet
-
-    #     - name: Build and push Docker image
-    #       run: |
-    #         docker buildx build --tag ${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-${{ github.run_id }} --push .
-
     deploy:
-        # needs: [build]
         runs-on: ubuntu-latest
         steps:
         - name: Checkout repo
