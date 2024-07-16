@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - COM-52
 
 jobs:
   build:
@@ -54,7 +53,7 @@ jobs:
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: catalog-api-dev
-          image: ${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-${{ github.run_id }}
+          image: ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }}
           region: asia-southeast2
 
           flags: '--allow-unauthenticated --port=8080 --memory=256Mi --cpu=1 --min-instances=0 --max-instances=1 --cpu-throttling'
