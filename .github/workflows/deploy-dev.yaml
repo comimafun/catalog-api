@@ -30,6 +30,9 @@ jobs:
         with:
           credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
+      - name: Verify Authentication
+        run: gcloud auth list
+
       - name: Configure docker to use the gcloud command-line tool as a credential helper
         run: gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }}
 
