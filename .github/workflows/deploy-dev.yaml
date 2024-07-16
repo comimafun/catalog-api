@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - COM-52
 
 jobs:
   build:
