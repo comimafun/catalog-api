@@ -30,11 +30,15 @@ jobs:
         with:
           credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
-      - name: Verify Authentication
-        run: gcloud auth list
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Configure docker to use the gcloud command-line tool as a credential helper
-        run: gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }}
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
+
+      - name: Docker auth
+        run: |
+          gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }} --quiet
 
       - name: Build and push Docker image
         run: |
