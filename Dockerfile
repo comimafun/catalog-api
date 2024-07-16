@@ -1,5 +1,5 @@
 ## Build
-FROM golang:1.21.10-alpine as build
+FROM golang:1.21.10-alpine AS build
 WORKDIR /app
 COPY . .
 RUN go mod download
