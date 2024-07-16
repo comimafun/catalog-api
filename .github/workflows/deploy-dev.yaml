@@ -34,9 +34,12 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ vars.DOCKER_REGISTRY_LOCATION }} --quiet
 
-      - name: Build and push Docker image
+      - name: Build  image
         run: |
-          docker buildx build --tag ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }} --platform=linux/amd64 --push .
+          docker buildx build --tag ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }} --platform=linux/amd64 .
+      - name: Push image
+        run: |
+          docker push ${{ vars.DOCKER_REGISTRY_LOCATION }}/${{ secrets.GOOGLE_PROJECT }}/inner-catalog/catalog-api:dev-${{ github.run_id }}
 
   deploy:
     needs: [build]
