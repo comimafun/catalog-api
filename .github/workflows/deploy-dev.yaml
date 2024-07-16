@@ -44,10 +44,10 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-    -   name: 'Deploy to Cloud Run'
+
+      - name: 'Deploy to Cloud Run'
         uses: 'google-github-actions/deploy-cloudrun@v2'
         with:
-            service: 'catalog-api-dev'
-            image: '${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-${{ github.run_id }}'
-            flags: '--allow-unauthenticated --port=8080 --memory=256Mi --cpu=1 --min-instances=0 --max-instances=1 --region=asian-southeast2 --cpu-throttling'
-   
+          service: 'catalog-api-dev'
+          image: '${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-${{ github.run_id }}'
+          flags: '--allow-unauthenticated --port=8080 --memory=256Mi --cpu=1 --min-instances=0 --max-instances=1 --region=asian-southeast2 --cpu-throttling'
