@@ -8,19 +8,19 @@ on:
 
   jobs:
     deploy:
-        runs-on: ubuntu-latest
-        steps:
+      runs-on: ubuntu-latest
+      steps:
         - name: Checkout repo
-            uses: actions/checkout@v4
+          uses: actions/checkout@v4
 
         - name: Login to google cloud
-            uses: google-github-actions/auth@v2
-            with:
+          uses: google-github-actions/auth@v2
+          with:
             credentials_json: ${{ secrets.SERVICE_ACCOUNT }}
 
         - name: Deploy to Cloud Run
-            uses: google-github-actions/deploy-cloudrun@v2
-            with:
+          uses: google-github-actions/deploy-cloudrun@v2
+          with:
             service: catalog-api-dev
             image: ${{ vars.DOCKER_REGISTRY }}/catalog-api:dev-9958178894
             region: asian-southeast2
