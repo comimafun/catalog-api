@@ -170,8 +170,17 @@ func (a *authService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity
 
 // generateNewJWTAndRefreshToken implements AuthService.
 func (a *authService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error) {
+	appStage := os.Getenv("APP_STAGE")
 	secret := os.Getenv("JWT_SECRET")
-	expiredAt := time.Now().Add(time.Minute * 60)
+	var duration time.Duration
+
+	if appStage == "local" {
+		duration = time.Minute * 60
+	} else {
+		duration = time.Minute * 15
+	}
+
+	expiredAt := time.Now().Add(duration)
 	claims := auth_dto.ATClaims{
 		BasicClaims: auth_dto.BasicClaims{
 			UserID:   user.ID,

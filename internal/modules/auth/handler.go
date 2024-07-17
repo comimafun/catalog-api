@@ -31,14 +31,12 @@ func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt str
 	}
 
 	appStage := os.Getenv("APP_STAGE")
-	domain := os.Getenv("DOMAIN")
 
 	cookie := new(fiber.Cookie)
 	cookie.Name = "refresh_token"
 	cookie.Value = refreshToken
 	cookie.Expires = expiredAtTime
 	cookie.HTTPOnly = true
-	cookie.Domain = domain
 	cookie.SameSite = "None"
 
 	if appStage == "local" {
@@ -52,13 +50,20 @@ func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt str
 }
 
 func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
+	appStage := os.Getenv("APP_STAGE")
+
 	cookie := new(fiber.Cookie)
 	cookie.Name = "refresh_token"
 	cookie.Expires = time.Now().Add(-time.Hour)
 	cookie.HTTPOnly = true
-	cookie.Domain = "localhost"
+
 	cookie.SameSite = "None"
-	cookie.Secure = false
+
+	if appStage == "local" {
+		cookie.Secure = false
+	} else {
+		cookie.Secure = true
+	}
 
 	c.Cookie(cookie)
 }
