@@ -30,14 +30,22 @@ func (a *AuthHandler) setCookie(c *fiber.Ctx, refreshToken string, expiredAt str
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
+	appStage := os.Getenv("APP_STAGE")
+	domain := os.Getenv("DOMAIN")
+
 	cookie := new(fiber.Cookie)
 	cookie.Name = "refresh_token"
 	cookie.Value = refreshToken
 	cookie.Expires = expiredAtTime
 	cookie.HTTPOnly = true
-	cookie.Domain = "localhost"
+	cookie.Domain = domain
 	cookie.SameSite = "None"
-	cookie.Secure = false
+
+	if appStage == "local" {
+		cookie.Secure = false
+	} else {
+		cookie.Secure = true
+	}
 
 	c.Cookie(cookie)
 	return nil
