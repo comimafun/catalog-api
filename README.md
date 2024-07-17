@@ -1,17 +1,18 @@
-# Project catalog-be
+# Project catalog-be 📚
 
-Monolith REST-API service for `Inner Catalog` project.
+Monolith REST API service for `Inner Catalog` project.
 
-# Community
+## Community
 
 - Should i make a discord server?
-
-## Getting Started
 
 ## Docs
 
 - Use [Bruno](https://www.usebruno.com/)
   - Import collection form `./docs/catalog-circle-api/bruno.json`
+- ERD Diagram (Soon)
+
+## Getting Started
 
 ### Requirements
 
@@ -44,6 +45,11 @@ make docker-run
 ```bash
 make watch
 ```
+
+## Environment
+
+- dev - development environment [https://api-dev.innercatalog.com](https://api-dev.innercatalog.com)
+- prod - production environment [https://api.innercatalog.com](https://api.innercatalog.com) (SOON)
 
 ## Available Make Commands
 
