@@ -17,7 +17,7 @@ If you find a bug in the source code or a mistake in the documentation, you can 
 Format that includes a **type** and a **subject**:
 
 ```text
-<type>(<scope>): <subject>
+<type>: <subject>
 ```
 
 ### Type
