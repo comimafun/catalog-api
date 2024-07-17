@@ -1,49 +1,74 @@
 # Project catalog-be
 
-One Paragraph of project description goes here
+Monolith REST-API service for `Inner Catalog` project.
+
+# Community
+
+- Should i make a discord server?
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## Docs
 
-## MakeFile
+- Use [Bruno](https://www.usebruno.com/)
+  - Import collection form `./docs/catalog-circle-api/bruno.json`
 
-run all make commands with clean tests
+### Requirements
+
+- Go 1.21.1
+- PostgreSQL:latest
+- air (for live reload)
+- Cloudflare R2 / Object Storage
+- Google Client ID & Secret (for oauth2)
+- Docker
+
+### Installation
+
+1. Fork the repository
+2. Clone the repository from your fork
+3. Create `.env` file in the root dir based on `.env.example`
+4. Install dependencies
+
 ```bash
-make all build
+go mod download
 ```
 
-build the application
-```bash
-make build
-```
+5. Run DB container
 
-run the application
-```bash
-make run
-```
-
-Create DB container
 ```bash
 make docker-run
 ```
 
-Shutdown DB container
-```bash
-make docker-down
-```
+6. Run the application locally
 
-live reload the application
 ```bash
 make watch
 ```
 
-run the test suite
-```bash
-make test
-```
+## Available Make Commands
 
-clean up binary from the last build
 ```bash
+# run all make commands with clean tests
+make all build
+
+# build the application
+make build
+
+# run the application
+make run
+
+# Create DB container
+make docker-run
+
+# Shutdown DB container
+make docker-down
+
+# live reload the application
+make watch
+
+# run the test suite
+make test
+
+# clean up binary from the last build
 make clean
 ```
