@@ -5,7 +5,6 @@ import (
 	"catalog-be/internal/server"
 	"catalog-be/internal/utils"
 	"catalog-be/internal/validation"
-	"catalog-be/seed"
 	"fmt"
 	"os"
 	"strconv"
@@ -20,9 +19,6 @@ import (
 func main() {
 	server := server.New()
 	validation.NewCustomValidation(server.Validator).Init()
-
-	seed := seed.NewSeed(server.Pg)
-	seed.Run()
 
 	server.App.Use(cors.New(cors.Config{
 		AllowOrigins:     os.Getenv("ALLOWED_ORIGINS"),

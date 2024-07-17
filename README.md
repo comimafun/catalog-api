@@ -1,49 +1,97 @@
-# Project catalog-be
+# Project catalog-be 📚
 
-One Paragraph of project description goes here
+Monolith REST API service for `Inner Catalog` project.
+
+## Community
+
+- Just use github discusson for now
+- Should i make a discord server?
+
+## Docs
+
+- Use [Bruno](https://www.usebruno.com/)
+  - Import collection form `./docs/catalog-circle-api/bruno.json`
+- ERD Diagram (Soon)
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+### Requirements
 
-## MakeFile
+- Go 1.21.1
+- PostgreSQL:latest
+- Go Migrate v4 [link](https://github.com/golang-migrate/migrate)
+- Docker
+- air (for live reload)
+- Google Client ID & Secret (for oauth2)
+- Cloudflare R2 / Object Storage
 
-run all make commands with clean tests
+### Installation
+
+1. Fork the repository
+2. Clone the repository from your fork
+3. Create `.env` file in the root dir based on `.env.example`
+4. Install dependencies
+
 ```bash
-make all build
+go mod download
 ```
 
-build the application
-```bash
-make build
-```
+5. Run DB container
 
-run the application
-```bash
-make run
-```
-
-Create DB container
 ```bash
 make docker-run
 ```
 
-Shutdown DB container
+6. Run the migration
+
 ```bash
-make docker-down
+make migrate-up
 ```
 
-live reload the application
+6. Run the application locally
+
 ```bash
 make watch
 ```
 
-run the test suite
-```bash
-make test
-```
+## Environment
 
-clean up binary from the last build
+- dev - development environment [https://api-dev.innercatalog.com](https://api-dev.innercatalog.com)
+- prod - production environment [https://api.innercatalog.com](https://api.innercatalog.com) (SOON)
+
+## Available Make Commands
+
 ```bash
+# run all make commands with clean tests
+make all build
+
+# build the application
+make build
+
+# run the application
+make run
+
+# Create DB container
+make docker-run
+
+# Shutdown DB container
+make docker-down
+
+# live reload the application
+make watch
+
+# create new migration file
+make migrate-create
+
+# run the migration
+make migrate-up
+
+# rollback the migration
+make migrate-down
+
+# run the test suite
+make test
+
+# clean up binary from the last build
 make clean
 ```
