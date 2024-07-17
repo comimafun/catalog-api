@@ -4,6 +4,7 @@ Monolith REST API service for `Inner Catalog` project.
 
 ## Community
 
+- Just use github discusson for now
 - Should i make a discord server?
 
 ## Docs
@@ -18,10 +19,11 @@ Monolith REST API service for `Inner Catalog` project.
 
 - Go 1.21.1
 - PostgreSQL:latest
-- air (for live reload)
-- Cloudflare R2 / Object Storage
-- Google Client ID & Secret (for oauth2)
+- Go Migrate v4 [link](https://github.com/golang-migrate/migrate)
 - Docker
+- air (for live reload)
+- Google Client ID & Secret (for oauth2)
+- Cloudflare R2 / Object Storage
 
 ### Installation
 
@@ -38,6 +40,12 @@ go mod download
 
 ```bash
 make docker-run
+```
+
+6. Run the migration
+
+```bash
+make migrate-up
 ```
 
 6. Run the application locally
@@ -71,6 +79,15 @@ make docker-down
 
 # live reload the application
 make watch
+
+# create new migration file
+make migrate-create
+
+# run the migration
+make migrate-up
+
+# rollback the migration
+make migrate-down
 
 # run the test suite
 make test
