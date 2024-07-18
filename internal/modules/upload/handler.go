@@ -15,6 +15,15 @@ type UploadHandler struct {
 }
 
 func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
+	appStage := os.Getenv("APP_STAGE")
+
+	if appStage == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(
+			c,
+			domain.NewError(fiber.StatusInternalServerError, errors.New("ENV_APP_STAGE_NOT_FOUND"), nil),
+		))
+	}
+
 	folder := c.FormValue("type")
 	errs := h.validator.Var(folder, "required,oneof=covers products profiles descriptions")
 	if errs != nil {

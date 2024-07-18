@@ -103,10 +103,7 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 
 	contentType := file.Header.Get("Content-Type")
 
-	objectKey := folderName + "/" + name
-	if appStage == "production" {
-		objectKey = appStage + "/" + objectKey
-	}
+	objectKey := appStage + "/" + folderName + "/" + name
 
 	_, uploadErr := u.s3.PutObject(
 		context.TODO(),
@@ -122,18 +119,12 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 		return "", domain.NewError(500, uploadErr, nil)
 	}
 
-	path := fmt.Sprintf("/%s/%s", folderName, name)
-
-	if appStage == "production" {
-		path = "/" + appStage + path
-	}
+	path := fmt.Sprintf("/%s/%s/%s", appStage, folderName, name)
 
 	// Final path format
-	// format: /[appStage?]/[foldername]/uuid.[fileExt]
-	// example: /production/products/uuid.jpg
-	// example: /production/profiles/uuid.jpg
-	// example: /production/covers/uuid.jpg
-	// example: /production/descriptions/uuid.jpg
+	// format: /[appStage]/[foldername]/uuid.[fileExt]
+	// example: /local/products/uuid.jpg
+	// example: /development/profiles/uuid.jpg
 	return path, nil
 }
 
