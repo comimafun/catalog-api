@@ -16,7 +16,7 @@ type UploadHandler struct {
 
 func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 	folder := c.FormValue("type")
-	errs := h.validator.Var(folder, "required,oneof=covers products profiles")
+	errs := h.validator.Var(folder, "required,oneof=covers products profiles descriptions")
 	if errs != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(
 			c,
