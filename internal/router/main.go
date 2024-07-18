@@ -81,7 +81,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	event.Get("/", h.event.GetPaginatedEvents)
 
 	upload := v1.Group("/upload")
-	upload.Post("/image", h.authMiddleware.Init, h.upload.UploadImage)
+	upload.Post("/image", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.upload.UploadImage)
 }
 
 func NewHTTP(
