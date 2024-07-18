@@ -84,6 +84,7 @@ func (u *uploadService) validateImage(folderName string, file *multipart.FileHea
 // Upload implements UploadService.
 func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeader) (string, *domain.Error) {
 	bucket := os.Getenv("BUCKET_NAME")
+	appStage := os.Getenv("APP_STAGE")
 	err := u.validateImage(folderName, file)
 	if err != nil {
 		return "", err
@@ -101,7 +102,11 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 	defer f.Close()
 
 	contentType := file.Header.Get("Content-Type")
-	objectKey := fmt.Sprintf("%s/%s", folderName, name)
+
+	objectKey := folderName + "/" + name
+	if appStage == "production" {
+		objectKey = appStage + "/" + objectKey
+	}
 
 	_, uploadErr := u.s3.PutObject(
 		context.TODO(),
@@ -119,6 +124,16 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 
 	path := fmt.Sprintf("/%s/%s", folderName, name)
 
+	if appStage == "production" {
+		path = "/" + appStage + path
+	}
+
+	// Final path format
+	// format: /[appStage?]/[foldername]/uuid.[fileExt]
+	// example: /production/products/uuid.jpg
+	// example: /production/profiles/uuid.jpg
+	// example: /production/covers/uuid.jpg
+	// example: /production/descriptions/uuid.jpg
 	return path, nil
 }
 
