@@ -16,6 +16,15 @@ type AuthMiddleware struct {
 	userService user.UserService
 }
 
+func (a *AuthMiddleware) AdminOnly(c *fiber.Ctx) error {
+	user := c.Locals("user").(*auth_dto.ATClaims)
+	if user.UserID != 1 {
+		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+	}
+
+	return c.Next()
+}
+
 func (a *AuthMiddleware) CircleOnly(c *fiber.Ctx) error {
 	user := c.Locals("user").(*auth_dto.ATClaims)
 	if user.CircleID == nil {
