@@ -19,11 +19,15 @@ Monolith REST API service for `Inner Catalog` project.
 
 - Go 1.21.1
 - PostgreSQL:latest
+  - Docker (local)
+  - Supabase
 - Go Migrate v4 [link](https://github.com/golang-migrate/migrate)
+- wire
 - Docker
 - air (for live reload)
 - Google Client ID & Secret (for oauth2)
-- Cloudflare R2 / Object Storage
+- Object Storage
+  - Cloudflare R2
 
 ### Installation
 
