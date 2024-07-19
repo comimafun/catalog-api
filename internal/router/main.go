@@ -62,7 +62,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Post("/:circleid/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishUnpublishCircle)
 
 	circle.Get("/", h.authMiddleware.IfAuthed, h.circle.GetPaginatedCircle)
-	circle.Get("/bookmark", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
+	circle.Get("/bookmarked", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
 	circle.Get("/:slug", h.authMiddleware.IfAuthed, h.circle.FindCircleBySlug)
 
 	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)

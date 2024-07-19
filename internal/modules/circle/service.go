@@ -243,6 +243,17 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 				}
 			}
 
+			if row.EventID != nil {
+				latestRow.Event = &entity.Event{
+					ID:          *row.EventID,
+					Name:        row.EventName,
+					Slug:        row.EventSlug,
+					Description: row.EventDescription,
+					StartedAt:   *row.EventStartedAt,
+					EndedAt:     *row.EventEndedAt,
+				}
+			}
+
 			response = append(response, latestRow)
 		}
 	}

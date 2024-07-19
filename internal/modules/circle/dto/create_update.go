@@ -74,4 +74,5 @@ type CircleOneForPaginationResponse struct {
 
 	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`
+	Event      *entity.Event  `json:"event"`
 }
