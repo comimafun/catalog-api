@@ -66,26 +66,27 @@ func (c *circleRepo) UpdateAttendingEvent(circle *entity.Circle, body *circle_dt
 			return domain.NewError(500, existingErr, nil)
 		}
 
-		if existingBlock.ID != 0 && existingBlock.CircleID != circle.ID {
+		if existingBlock.ID == 0 {
+			// delete previous block
+			deleteErr := tx.Table("block_event").Where("circle_id = ? AND event_id = ?", circle.ID, body.EventID).Unscoped().Delete(&entity.BlockEvent{}).Error
+			if deleteErr != nil {
+				tx.Rollback()
+				return domain.NewError(500, deleteErr, nil)
+			}
+
+			block.CircleID = circle.ID
+			block.EventID = body.EventID
+
+			createErr := tx.Create(block).Error
+			if createErr != nil {
+				tx.Rollback()
+				return domain.NewError(500, createErr, nil)
+			}
+		} else if existingBlock.CircleID != circle.ID {
 			tx.Rollback()
 			return domain.NewError(400, errors.New("BLOCK_ALREADY_EXIST"), nil)
 		}
 
-		// delete previous block
-		deleteErr := tx.Table("block_event").Where("circle_id = ? AND event_id = ?", circle.ID, body.EventID).Unscoped().Delete(&entity.BlockEvent{}).Error
-		if deleteErr != nil {
-			tx.Rollback()
-			return domain.NewError(500, deleteErr, nil)
-		}
-
-		block.CircleID = circle.ID
-		block.EventID = body.EventID
-
-		createErr := tx.Create(block).Error
-		if createErr != nil {
-			tx.Rollback()
-			return domain.NewError(500, createErr, nil)
-		}
 	} else {
 		// delete block
 		err := tx.Table("block_event").Where("circle_id = ? AND event_id = ?", circle.ID, body.EventID).Unscoped().Delete(&entity.BlockEvent{}).Error
