@@ -44,8 +44,7 @@ type NewTokenResponse struct {
 }
 
 type SelfResponse struct {
-	User                  entity.User    `json:"user"`
-	Circle                *entity.Circle `json:"circle"`
-	AccessTokenExpiredAt  string         `json:"access_token_expired_at"`
-	RefreshTokenExpiredAt string         `json:"refresh_token_expired_at"`
+	User                 entity.User    `json:"user"`
+	Circle               *entity.Circle `json:"circle"`
+	AccessTokenExpiredAt string         `json:"access_token_expired_at"`
 }
