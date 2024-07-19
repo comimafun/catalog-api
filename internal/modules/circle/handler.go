@@ -169,7 +169,6 @@ func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
 }
 
 func (h *CircleHandler) GetPaginatedBookmarkedCircle(c *fiber.Ctx) error {
-
 	var query circle_dto.FindAllCircleFilter
 	if err := c.QueryParser(&query); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))

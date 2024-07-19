@@ -103,14 +103,6 @@ func (a *authService) RefreshToken(refreshToken string) (*auth_dto.NewTokenRespo
 
 // Self implements AuthService.
 func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error) {
-	refresh, err := a.refreshTokenService.FindOneByAccessToken(accessToken)
-	if err != nil {
-		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
-			return nil, domain.NewError(fiber.StatusNotFound, errors.New("RECORD_NOT_FOUND"), nil)
-		}
-		return nil, err
-	}
-
 	checkUser, checkUserErr := a.userService.FindOneByID(user.UserID)
 	if checkUserErr != nil {
 		if errors.Is(checkUserErr.Err, gorm.ErrRecordNotFound) {
@@ -137,10 +129,9 @@ func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 	}
 
 	return &auth_dto.SelfResponse{
-		User:                  *checkUser,
-		Circle:                myCircle,
-		AccessTokenExpiredAt:  user.ExpiresAt.Time.Format(time.RFC3339),
-		RefreshTokenExpiredAt: refresh.ExpiredAt.Format(time.RFC3339),
+		User:                 *checkUser,
+		Circle:               myCircle,
+		AccessTokenExpiredAt: user.ExpiresAt.Time.Format(time.RFC3339),
 	}, nil
 }
 
@@ -170,8 +161,17 @@ func (a *authService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity
 
 // generateNewJWTAndRefreshToken implements AuthService.
 func (a *authService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error) {
+	appStage := os.Getenv("APP_STAGE")
 	secret := os.Getenv("JWT_SECRET")
-	expiredAt := time.Now().Add(time.Minute * 60)
+	var duration time.Duration
+
+	if appStage == "local" {
+		duration = time.Minute * 60
+	} else {
+		duration = time.Minute * 15
+	}
+
+	expiredAt := time.Now().Add(duration)
 	claims := auth_dto.ATClaims{
 		BasicClaims: auth_dto.BasicClaims{
 			UserID:   user.ID,

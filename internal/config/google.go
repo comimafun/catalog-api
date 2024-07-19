@@ -87,12 +87,13 @@ func (c *config) getUserInfoFromGoogle(token string) (*auth_dto.GoogleUserData, 
 func (c *config) googleOauthInit() *oauth2.Config {
 	client_id := os.Getenv("GOOGLE_CLIENT_ID")
 	client_secret := os.Getenv("GOOGLE_CLIENT_SECRET")
+	redicrectURL := os.Getenv("GOOGLE_REDIRECT_URL_DOMAIN")
 
 	return &oauth2.Config{
 		ClientID:     client_id,
 		ClientSecret: client_secret,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  "http://localhost:3000",
+		RedirectURL:  redicrectURL,
 		Scopes: []string{"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile"},
 	}

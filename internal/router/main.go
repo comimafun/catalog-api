@@ -50,9 +50,10 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	workType := v1.Group("/worktype")
 	// For admin only account
-	// workType.Post("/", h.workType.CreateOne)
-	// workType.Put("/:id", h.workType.UpdateOne)
-	// workType.Delete("/:id", h.workType.DeleteByID)
+	workType.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.workType.CreateOne)
+	workType.Put("/:id", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.workType.UpdateOne)
+	workType.Delete("/:id", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.workType.DeleteByID)
+
 	workType.Get("/all", h.workType.GetAll)
 
 	circle := v1.Group("/circle")
@@ -61,7 +62,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Post("/:circleid/publish", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PublishUnpublishCircle)
 
 	circle.Get("/", h.authMiddleware.IfAuthed, h.circle.GetPaginatedCircle)
-	circle.Get("/bookmark", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
+	circle.Get("/bookmarked", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
 	circle.Get("/:slug", h.authMiddleware.IfAuthed, h.circle.FindCircleBySlug)
 
 	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)
@@ -76,12 +77,11 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Delete("/:id/event", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.DeleteCircleEventAttending)
 
 	event := v1.Group("/event")
-	// TODO: ADMIN ONLY
-	// event.Post("/", h.event.CreateOne)
+	event.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.event.CreateOne)
 	event.Get("/", h.event.GetPaginatedEvents)
 
 	upload := v1.Group("/upload")
-	upload.Post("/image", h.authMiddleware.Init, h.upload.UploadImage)
+	upload.Post("/image", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.upload.UploadImage)
 }
 
 func NewHTTP(
