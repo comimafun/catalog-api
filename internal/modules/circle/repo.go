@@ -66,7 +66,7 @@ func (c *circleRepo) UpdateAttendingEvent(circle *entity.Circle, body *circle_dt
 			return domain.NewError(500, existingErr, nil)
 		}
 
-		if existingBlock.ID != 0 {
+		if existingBlock.ID != 0 && existingBlock.CircleID != circle.ID {
 			tx.Rollback()
 			return domain.NewError(400, errors.New("BLOCK_ALREADY_EXIST"), nil)
 		}
