@@ -482,7 +482,7 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
 	whereClause, args := c.findAllWhereSQL(filter)
 
-	cte := c.db.Table("circle").Where("deleted_at IS NULL").Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
+	cte := c.db.Table("circle").Where("deleted_at IS NULL and verified IS TRUE").Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
 	joins := c.db.
@@ -561,6 +561,7 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
 		Where(whereClause, args...).
+		Where("c.deleted_at is null and c.verified IS TRUE").
 		Count(&count).Error
 
 	if err != nil {

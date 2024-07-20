@@ -594,6 +594,7 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		InstagramURL: &body.InstagramURL,
 		TwitterURL:   &body.TwitterURL,
 		URL:          &body.URL,
+		Verified:     true,
 	}, user)
 
 	if err != nil {
