@@ -11,7 +11,7 @@ Monolith REST API service for `Inner Catalog` project.
 
 - Use [Bruno](https://www.usebruno.com/)
   - Import collection form `./docs/catalog-circle-api/bruno.json`
-- ERD Diagram (Soon)
+- [ERD Diagram](./docs/erd/README.md)
 
 ## Getting Started
 
@@ -27,7 +27,7 @@ Monolith REST API service for `Inner Catalog` project.
 - air (for live reload)
 - Google Client ID & Secret (for oauth2)
 - Object Storage
-  - Cloudflare R2
+  - AWS S3 with Cloudflare R2
 
 ### Installation
 

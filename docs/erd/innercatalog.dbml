@@ -1,0 +1,163 @@
+Table fandom {
+  id int [pk]
+  name varchar(255)
+  visible bool [default: false]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+
+  indexes {
+    visible [name: "idx_fandom_visible"]
+  }
+}
+
+Table work_type {
+  id int [pk]
+  name varchar(255)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+}
+
+Table user {
+  id serial [pk]
+  email varchar(255) [not null, unique]
+  hash varchar(255) [not null]
+  profile_picutre_url varchar(255)
+  circle_id int [ref: > circle.id]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+}
+
+
+Table refresh_token {
+  id serial [pk]
+  token varchar(255) [not null, unique]
+  access_token varchar(255) [not null, unique]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+
+  user_id int [not null, ref: >user.id]
+
+  indexes {
+    user_id [name: "idx_refresh_token_user_id"]
+  }
+}
+
+
+Enum day {
+  first
+  second
+  both
+}
+
+Table circle {
+  id serial [pk]
+  name varchar(255) [not null]
+  slug varchar(255) [not null, unique]
+  picture_url varchar(255)
+  cover_picture_url varchar(255)
+  url varchar(255) 
+  facebook_url varchar(255) 
+  twitter_url varchar(255) 
+  instagram_url varchar(255) 
+  description text
+  day day
+  published bool [default:  false]
+  verified bool [default: false]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+
+  event_id int [ref: - event.id]
+
+  indexes {
+    verified [name: "idx_circle_verified"]
+    published [name: "idx_circle_published"]
+    day [name: "idx_circle_day"]
+    event_id [name: "idx_circle_event_id"]
+  }
+}
+
+Table user_bookmark {
+  user_id integer [not null, ref: <> user.id]
+  circle_id integer [not null, ref:<> circle.id]
+  created_at timestamp [not null]
+
+  indexes {
+    (user_id,circle_id) [pk]
+    user_id [name: "idx_user_bookmark_user_id"]
+    user_id [name: "idx_user_bookmark_circle_id"]
+  }
+}
+
+
+Table product {
+  id serial [pk]
+  name varchar(255) [not null]
+  image_url varchar(255) [not null]
+  circle_id int [not null, ref: > circle.id ]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+
+  indexes {
+    circle_id [name: "idx_product_circle_id"]
+  }
+}
+
+
+Table circle_fandom {
+  circle_id int [not null, ref: <> circle.id]
+  fandom_id int [not null, ref: <> fandom.id]
+  created_at timestamp [not null]
+
+  indexes {
+    (circle_id, fandom_id) [pk]
+  }
+}
+
+Table circle_work_type {
+  circle_id int [not null, ref: <> circle.id]
+  work_type_id int [not null, ref: <> work_type.id]
+  created_at timestamp [not null]
+
+  indexes {
+    (circle_id, work_type_id) [pk]
+  }
+}
+
+Table event {
+  id serial [pk]
+  name varchar(255) [not null]
+  slug varchar(255) [not null, unique]
+  description text
+  started_at timestamp [not null]
+  ended_at timestamp [not null]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+}
+
+Table block_event {
+  id serial [pk]
+  prefix varchar(10) [not null]
+  postfix varchar(10) [not null]
+  name varchar(20) [not null]
+
+  event_id int [not null, ref: > event.id]
+  circle_id int [not null, unique , ref: - circle.id]
+
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+  deleted_at timestamp
+
+  indexes {
+    (prefix, postfix, event_id) [unique]
+    event_id [name: "idx_block_event_event_id"]
+    circle_id [name: "idx_block_event_circle_id"]
+    (prefix, postfix, event_id) [name: "idx_block_event_prefix_postfix_event_id"]
+  }
+}
