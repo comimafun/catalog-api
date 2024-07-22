@@ -27,6 +27,7 @@ type Circle struct {
 	TwitterURL      *string        `json:"twitter_url"`
 	Description     *string        `json:"description"`
 	Batch           *int           `json:"batch"`
+	Rating          *string        `json:"rating"` // enum GA, PG, M
 	Verified        bool           `json:"verified"`
 	Published       bool           `json:"published"`
 	CreatedAt       *time.Time     `json:"created_at"`
