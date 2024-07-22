@@ -302,7 +302,7 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		circle.TwitterURL = body.TwitterURL
 	}
 
-	if body.Rating != nil && *body.Rating != *circle.Rating {
+	if body.Rating != nil && body.Rating != circle.Rating {
 		circle.Rating = body.Rating
 	}
 
