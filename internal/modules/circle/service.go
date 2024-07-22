@@ -208,6 +208,7 @@ func (c *circleService) transformCircleRawToCircleOneForPaginationResponse(rows 
 					URL:             row.URL,
 					EventID:         row.EventID,
 					CoverPictureURL: row.CoverPictureURL,
+					Rating:          row.Rating,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
@@ -299,6 +300,10 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 
 	if body.TwitterURL != nil && *body.TwitterURL != *circle.TwitterURL {
 		circle.TwitterURL = body.TwitterURL
+	}
+
+	if body.Rating != nil && *body.Rating != *circle.Rating {
+		circle.Rating = body.Rating
 	}
 
 	if body.Description != nil && body.Description != circle.Description {
@@ -428,6 +433,7 @@ func (c *circleService) transformCircleRawToCircleResponse(rows []entity.CircleR
 					URL:             row.URL,
 					EventID:         row.EventID,
 					CoverPictureURL: row.CoverPictureURL,
+					Rating:          row.Rating,
 				},
 				Fandom:     []entity.Fandom{},
 				WorkType:   []entity.WorkType{},
@@ -594,6 +600,7 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		InstagramURL: &body.InstagramURL,
 		TwitterURL:   &body.TwitterURL,
 		URL:          &body.URL,
+		Rating:       &body.Rating,
 		Verified:     true,
 	}, user)
 
