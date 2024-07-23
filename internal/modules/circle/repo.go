@@ -442,6 +442,7 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			e.started_at as event_started_at,
 			e.ended_at as event_ended_at
 		`).
+		Order("c.bookmarked_at desc").
 		Find(&circleRaw).Error
 
 	if err != nil {
@@ -546,7 +547,8 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS bookmarked
-		`)
+		`).
+		Order("c.created_at desc")
 
 	err := joins.Find(&circles).Error
 
