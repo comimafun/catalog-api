@@ -29,7 +29,6 @@ type CircleRepo interface {
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
 
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
-	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 
 	FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
@@ -366,7 +365,6 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 
 // findAllBookmarkedCount implements CircleRepo.
 func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
 
 	var count int64
 
@@ -381,7 +379,6 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
-		Where(whereClause, args...).
 		Count(&count).Error
 
 	if err != nil {
@@ -393,8 +390,6 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 
 // FindBookmarkedCircleByUserID implements CircleRepo.
 func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
-
 	cte := c.db.
 		Select(`
 			c.*,
@@ -445,42 +440,12 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			e.started_at as event_started_at,
 			e.ended_at as event_ended_at
 		`).
-		Where(whereClause, args...).
 		Find(&circleRaw).Error
 
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
 	return circleRaw, nil
-}
-
-// findAllWhereSQL implements CircleRepo.
-func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{}) {
-	whereClause := `1 = 1`
-	args := make([]interface{}, 0)
-
-	if filter.Search != "" {
-		whereClause += " and (c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?)"
-		searchClause := fmt.Sprintf("%%%s%%", filter.Search)
-		args = append(args, searchClause, searchClause, searchClause, searchClause)
-	}
-
-	if len(filter.FandomIDs) > 0 {
-		whereClause += " and f.id in (?)"
-		args = append(args, filter.FandomIDs)
-	}
-
-	if len(filter.WorkTypeIDs) > 0 {
-		whereClause += " and wt.id in (?)"
-		args = append(args, filter.WorkTypeIDs)
-	}
-
-	if len(filter.Rating) > 0 {
-		whereClause += " and c.rating in (?)"
-		args = append(args, filter.Rating)
-	}
-
-	return whereClause, args
 }
 
 // FindAll implements CircleRepo.
