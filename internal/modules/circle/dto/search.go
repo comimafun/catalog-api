@@ -7,4 +7,5 @@ type FindAllCircleFilter struct {
 	Limit       int      `query:"limit" validate:"required,min=1,max=20"`
 	FandomIDs   []int    `query:"fandom_id" validate:"omitempty,dive"`
 	Rating      []string `query:"rating" validate:"omitempty,dive,oneof=GA PG M"`
+	Event       string   `query:"event" validate:"omitempty"`
 }
