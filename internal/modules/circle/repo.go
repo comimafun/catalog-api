@@ -475,6 +475,11 @@ func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (st
 		args = append(args, filter.WorkTypeIDs)
 	}
 
+	if len(filter.Rating) > 0 {
+		whereClause += " and c.rating in (?)"
+		args = append(args, filter.Rating)
+	}
+
 	return whereClause, args
 }
 
