@@ -3,6 +3,7 @@ package circle
 import (
 	"catalog-be/internal/domain"
 	"errors"
+	"os"
 	"strings"
 
 	"catalog-be/internal/entity"
@@ -29,7 +30,6 @@ type CircleRepo interface {
 	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
 
 	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
-	findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{})
 
 	FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
 	FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
@@ -366,11 +366,9 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 
 // findAllBookmarkedCount implements CircleRepo.
 func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
-
 	var count int64
 
-	err := c.db.
+	dbs := c.db.
 		Select("count(DISTINCT c.id)").
 		Table("circle c").
 		Joins("JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)", userID).
@@ -380,8 +378,9 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
 		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
-		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
-		Where(whereClause, args...).
+		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
+
+	err := dbs.
 		Count(&count).Error
 
 	if err != nil {
@@ -393,8 +392,6 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 
 // FindBookmarkedCircleByUserID implements CircleRepo.
 func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
-
 	cte := c.db.
 		Select(`
 			c.*,
@@ -445,7 +442,6 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			e.started_at as event_started_at,
 			e.ended_at as event_ended_at
 		`).
-		Where(whereClause, args...).
 		Find(&circleRaw).Error
 
 	if err != nil {
@@ -454,35 +450,53 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 	return circleRaw, nil
 }
 
-// findAllWhereSQL implements CircleRepo.
-func (c *circleRepo) findAllWhereSQL(filter *circle_dto.FindAllCircleFilter) (string, []interface{}) {
-	whereClause := `1 = 1`
-	args := make([]interface{}, 0)
+// FindAll implements CircleRepo.
+func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
+	appStage := os.Getenv("APP_STAGE")
 
-	if filter.Search != "" {
-		whereClause += " and (c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?)"
-		searchClause := fmt.Sprintf("%%%s%%", filter.Search)
-		args = append(args, searchClause, searchClause, searchClause, searchClause)
+	cte := c.db.
+		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
+		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
+		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
+		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
+		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
+		Joins("LEFT JOIN event e ON c.event_id = e.id")
+
+	cte = cte.Table("circle c").
+		Where("c.deleted_at IS NULL").
+		Where("c.verified IS TRUE")
+
+	if len(filter.Rating) > 0 {
+		cte = cte.Where("c.rating IN (?)", filter.Rating)
+	}
+	if filter.Event != "" {
+		cte = cte.Where("e.slug = ?", filter.Event)
 	}
 
 	if len(filter.FandomIDs) > 0 {
-		whereClause += " and f.id in (?)"
-		args = append(args, filter.FandomIDs)
+		cte = cte.Where("f.id in (?)", filter.FandomIDs)
 	}
 
 	if len(filter.WorkTypeIDs) > 0 {
-		whereClause += " and wt.id in (?)"
-		args = append(args, filter.WorkTypeIDs)
+		cte = cte.Where("wt.id in (?)", filter.WorkTypeIDs)
 	}
 
-	return whereClause, args
-}
+	if filter.Search != "" {
+		searchQuery := fmt.Sprintf("%%%s%%", filter.Search)
+		cte = cte.Where("c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?",
+			searchQuery,
+			searchQuery,
+			searchQuery,
+			searchQuery)
+	}
 
-// FindAll implements CircleRepo.
-func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
+	if appStage == "production" {
+		cte = cte.Where("c.published IS TRUE")
+	}
 
-	cte := c.db.Table("circle").Where("deleted_at IS NULL and verified IS TRUE").Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
+	cte = cte.Select("c.*").
+		Order("c.created_at desc")
+	cte = cte.Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
 	joins := c.db.
@@ -495,7 +509,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
 
-	db := joins.
+	joins = joins.
 		Table("(?) as c", cte).
 		Select(`
 			c.*,
@@ -532,11 +546,9 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS bookmarked
-		`).
-		Where(whereClause, args...).
-		Order("c.created_at desc")
+		`)
 
-	err := db.Find(&circles).Error
+	err := joins.Find(&circles).Error
 
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -546,10 +558,9 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 
 // FindAllCount implements CircleRepo.
 func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
-	whereClause, args := c.findAllWhereSQL(filter)
-
+	appStage := os.Getenv("APP_STAGE")
 	var count int64
-	err := c.db.
+	joins := c.db.
 		Select("count(DISTINCT c.id)").
 		Table("circle c").
 		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
@@ -559,8 +570,28 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 		Joins("LEFT JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)", 0).
 		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
-		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
-		Where(whereClause, args...).
+		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
+
+	if len(filter.Rating) > 0 {
+		joins = joins.Where("c.rating IN (?)", filter.Rating)
+	}
+	if filter.Event != "" {
+		joins = joins.Where("e.slug = ?", filter.Event)
+	}
+
+	if len(filter.FandomIDs) > 0 {
+		joins = joins.Where("f.id in (?)", filter.FandomIDs)
+	}
+
+	if len(filter.WorkTypeIDs) > 0 {
+		joins = joins.Where("wt.id in (?)", filter.WorkTypeIDs)
+	}
+
+	if appStage == "production" {
+		joins = joins.Where("c.published IS TRUE")
+	}
+
+	err := joins.
 		Where("c.deleted_at is null and c.verified IS TRUE").
 		Count(&count).Error
 
