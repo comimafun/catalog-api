@@ -3,6 +3,7 @@ package circle
 import (
 	"catalog-be/internal/domain"
 	"errors"
+	"os"
 	"strings"
 
 	"catalog-be/internal/entity"
@@ -365,10 +366,9 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 
 // findAllBookmarkedCount implements CircleRepo.
 func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
-
 	var count int64
 
-	err := c.db.
+	dbs := c.db.
 		Select("count(DISTINCT c.id)").
 		Table("circle c").
 		Joins("JOIN user_bookmark ub ON c.id = ub.circle_id AND ub.user_id = COALESCE(?, ub.user_id)", userID).
@@ -378,7 +378,9 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
 		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
-		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
+		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
+
+	err := dbs.
 		Count(&count).Error
 
 	if err != nil {
@@ -450,6 +452,8 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 
 // FindAll implements CircleRepo.
 func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
+	appStage := os.Getenv("APP_STAGE")
+
 	cte := c.db.
 		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
 		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
@@ -484,6 +488,10 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			searchQuery,
 			searchQuery,
 			searchQuery)
+	}
+
+	if appStage == "production" {
+		cte = cte.Where("c.published IS TRUE")
 	}
 
 	cte = cte.Select("c.*").
@@ -550,6 +558,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 
 // FindAllCount implements CircleRepo.
 func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
+	appStage := os.Getenv("APP_STAGE")
 	var count int64
 	joins := c.db.
 		Select("count(DISTINCT c.id)").
@@ -576,6 +585,10 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 
 	if len(filter.WorkTypeIDs) > 0 {
 		joins = joins.Where("wt.id in (?)", filter.WorkTypeIDs)
+	}
+
+	if appStage == "production" {
+		joins = joins.Where("c.published IS TRUE")
 	}
 
 	err := joins.
