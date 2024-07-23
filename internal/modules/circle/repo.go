@@ -10,6 +10,7 @@ import (
 	circle_dto "catalog-be/internal/modules/circle/dto"
 	"fmt"
 
+	"github.com/WinterYukky/gorm-extra-clause-plugin/exclause"
 	"gorm.io/gorm"
 )
 
@@ -405,7 +406,9 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 		Limit(filter.Limit).
 		Offset((filter.Page - 1) * filter.Limit)
 
-	join := c.db.Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
+	join := c.db.Clauses(exclause.NewWith("cte", cte)).Table("cte as c")
+
+	join = join.Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
 		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
 		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
 		Joins("LEFT JOIN work_type wt ON wt.id = cwt.work_type_id").
@@ -414,7 +417,7 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
 
 	var circleRaw []entity.CircleRaw
-	err := join.Table("(?) as c", cte).
+	err := join.
 		Select(`
 			c.*,
 
@@ -500,7 +503,8 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	cte = cte.Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
-	joins := c.db.
+	joins := c.db.Clauses(exclause.NewWith("cte", cte)).Table("cte as c")
+	joins = joins.
 		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
 		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
 		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
@@ -511,7 +515,6 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
 
 	joins = joins.
-		Table("(?) as c", cte).
 		Select(`
 			c.*,
 			f.id as fandom_id,
