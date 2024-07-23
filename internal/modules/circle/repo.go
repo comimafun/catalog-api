@@ -326,13 +326,6 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 			wt.updated_at as work_type_updated_at,
 			wt.deleted_at as work_type_deleted_at,
 
-			p.id as product_id,
-			p.name as product_name,
-			p.image_url as product_image_url,
-			p.created_at as product_created_at,
-			p.updated_at as product_updated_at,
-			p.deleted_at as product_deleted_at,
-
 			e.name as event_name,
 			e.slug as event_slug,
 			e.description as event_description,
@@ -352,7 +345,6 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 		Joins("LEFT JOIN fandom f ON cf.fandom_id = f.id").
 		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
 		Joins("LEFT JOIN work_type wt ON cwt.work_type_id = wt.id").
-		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN user_bookmark ON c.id = user_bookmark.circle_id AND user_bookmark.user_id = COALESCE(?, user_bookmark.user_id)", userID).
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id").
@@ -393,9 +385,26 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 
 // FindBookmarkedCircleByUserID implements CircleRepo.
 func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+
 	cte := c.db.
 		Select(`
-			c.*,
+			c.id as id,
+			c.name as name,
+			c.slug as slug,
+			c.picture_url as picture_url,
+			c.url as url,
+			c.facebook_url as facebook_url,
+			c.twitter_url as twitter_url,
+			c.instagram_url as instagram_url,
+			c.verified as verified,
+			c.published as published,
+			c.created_at as created_at,
+			c.updated_at as updated_at,
+			c.deleted_at as deleted_at,
+			c.day as day,
+			c.event_id as event_id,
+			c.cover_picture_url as cover_picture_url,
+			c.rating as rating,
 			ub.created_at as bookmarked_at,
 			true as bookmarked
 		`).
@@ -424,15 +433,10 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 			f."name" as fandom_name,
 			f.id as fandom_id,
 			f.visible as fandom_visible,
-			f.created_at as fandom_created_at,
-			f.updated_at as fandom_updated_at,
-			f.deleted_at as fandom_updated_at,
 
 			wt."name" as work_type_name,
 			wt.id as work_type_id,
-			wt.created_at as work_type_created_at,
-			wt.updated_at as work_type_updated_at,
-			wt.deleted_at as work_type_updated_at,
+		
 
 			be.id as block_event_id,
 			be.prefix as block_event_prefix,
@@ -441,7 +445,6 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 
 			e.name as event_name,
 			e.slug as event_slug,
-			e.description as event_description,
 			e.started_at as event_started_at,
 			e.ended_at as event_ended_at
 		`).
@@ -497,10 +500,31 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	if appStage == "production" {
 		cte = cte.Where("c.published IS TRUE")
 	}
+	// dont pick c.description
+	cte = cte.Select(`
+		c.id as id,
+		c.name as name,
+		c.slug as slug,
+		c.picture_url as picture_url,
+		c.url as url,
+		c.facebook_url as facebook_url,
+		c.twitter_url as twitter_url,
+		c.instagram_url as instagram_url,
+		c.verified as verified,
+		c.published as published,
+		c.created_at as created_at,
+		c.updated_at as updated_at,
+		c.deleted_at as deleted_at,
+		c.day as day,
+		c.event_id as event_id,
+		c.cover_picture_url as cover_picture_url,
+		c.rating as rating
+	`)
 
-	cte = cte.Select("c.*").
-		Order("c.created_at desc")
-	cte = cte.Limit(filter.Limit).Offset((filter.Page - 1) * filter.Limit)
+	cte = cte.
+		Order("c.created_at desc").
+		Limit(filter.Limit).
+		Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
 	joins := c.db.Clauses(exclause.NewWith("cte", cte)).Table("cte as c")
@@ -517,29 +541,16 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	joins = joins.
 		Select(`
 			c.*,
+
 			f.id as fandom_id,
 			f.name as fandom_name,
 			f.visible as fandom_visible,
-			f.created_at as fandom_created_at,
-			f.updated_at as fandom_updated_at,
-			f.deleted_at as fandom_deleted_at,
 
 			wt.id as work_type_id,
 			wt.name as work_type_name,
-			wt.created_at as work_type_created_at,
-			wt.updated_at as work_type_updated_at,
-			wt.deleted_at as work_type_deleted_at,
-
-			p.id as product_id,
-			p.name as product_name,
-			p.image_url as product_image_url,
-			p.created_at as product_created_at,
-			p.updated_at as product_updated_at,
-			p.deleted_at as product_deleted_at,
 
 			e.name as event_name,
 			e.slug as event_slug,
-			e.description as event_description,
 			e.started_at as event_started_at,
 			e.ended_at as event_ended_at,
 

@@ -31,7 +31,6 @@ type CreateWorkTypeCircleRelation struct {
 type UpdateCircleRequestBody struct {
 	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
 	Description *string `json:"description" validate:"omitempty"`
-	Batch       *int    `json:"batch" validate:"omitempty"`
 	Rating      *string `json:"rating" validate:"omitempty,oneof=GA PG M"`
 
 	PictureURL      *string `json:"picture_url" validate:"omitempty,max=255"`
