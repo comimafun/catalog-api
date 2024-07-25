@@ -27,6 +27,8 @@ type CircleService interface {
 	FindCircleByID(circleID int) (*entity.Circle, *domain.Error)
 	UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
 
+	FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error)
+
 	UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error)
 	DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error)
 
@@ -50,6 +52,11 @@ type circleService struct {
 	bookmark              bookmark.CircleBookmarkService
 	sanitizer             *validation.Sanitizer
 	referralService       referral.ReferralService
+}
+
+// FindReferralCodeByCircleID implements CircleService.
+func (c *circleService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
+	return c.referralService.FindReferralCodeByCircleID(circleID)
 }
 
 // DeleteCircleEventAttendingByID implements CircleService.

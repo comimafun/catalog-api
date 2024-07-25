@@ -12,10 +12,25 @@ import (
 type ReferralService interface {
 	CreateNewReferral(dto referral_dto.CreateReferralBody) (*entity.Referral, *domain.Error)
 	FindReferralByCode(referralCode string) (*entity.Referral, *domain.Error)
+	FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error)
 }
 
 type referralService struct {
 	repo ReferralRepo
+}
+
+// FindReferralCodeByCircleID implements ReferralService.
+func (r *referralService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
+	ref, err := r.repo.FindOneReferralByCircleID(circleID)
+	if err != nil {
+		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewError(404, errors.New("NOT_FOUND"), nil)
+		}
+
+		return nil, err
+	}
+
+	return ref, nil
 }
 
 // FindReferralByCode implements ReferralService.
