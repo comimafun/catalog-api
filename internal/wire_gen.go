@@ -14,6 +14,7 @@ import (
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
+	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
@@ -46,7 +47,9 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	circleBookmarkRepo := bookmark.NewCircleBookmarkRepo(db)
 	circleBookmarkService := bookmark.NewCircleBookmarkService(circleBookmarkRepo)
 	sanitizer := validation.NewSanitizer()
-	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, sanitizer)
+	referralRepo := referral.NewReferralRepo(db)
+	referralService := referral.NewReferralService(referralRepo)
+	circleService := circle.NewCircleService(circleRepo, userService, utilsUtils, refreshTokenService, circleWorkTypeService, circleFandomService, circleBookmarkService, sanitizer, referralService)
 	authService := auth.NewAuthService(userService, config, refreshTokenService, utilsUtils, circleService)
 	authHandler := auth.NewAuthHandler(authService, validate)
 	authMiddleware := middlewares.NewAuthMiddleware(userService)
@@ -65,6 +68,7 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	productRepo := product.NewProductRepo(db)
 	productService := product.NewProductService(productRepo)
 	productHandler := product.NewProductHandler(productService, validate)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler)
+	referralHandler := referral.NewReferralHandler(referralService, validate)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler)
 	return http
 }
