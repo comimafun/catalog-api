@@ -569,7 +569,7 @@ func (c *circleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 
 // OnboardNewCircle implements CircleService.
 func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
-	referralID := new(int)
+	referralID := 0
 	if body.ReferralCode != "" {
 		ref, err := c.referralService.FindReferralByCode(body.ReferralCode)
 		if err != nil {
@@ -579,9 +579,7 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 			return nil, err
 		}
 
-		if ref.ID != 0 {
-			referralID = &ref.ID
-		}
+		referralID = ref.ID
 	}
 
 	slug, slugErr := c.utils.Slugify(body.Name)
@@ -596,20 +594,26 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		}
 		return nil, userErr
 	}
-
 	slug = slug + "-" + c.utils.GenerateRandomCode(2)
-	circle, err := c.circleRepo.OnboardNewCircle(&entity.Circle{
-		Name:               body.Name,
-		Slug:               strings.ToLower(slug),
-		PictureURL:         &body.PictureURL,
-		FacebookURL:        &body.FacebookURL,
-		InstagramURL:       &body.InstagramURL,
-		TwitterURL:         &body.TwitterURL,
-		URL:                &body.URL,
-		Rating:             &body.Rating,
-		Verified:           true,
-		UsedReferralCodeID: referralID,
-	}, user)
+	payload := entity.Circle{
+		Name:         body.Name,
+		Slug:         strings.ToLower(slug),
+		PictureURL:   &body.PictureURL,
+		FacebookURL:  &body.FacebookURL,
+		InstagramURL: &body.InstagramURL,
+		TwitterURL:   &body.TwitterURL,
+		URL:          &body.URL,
+		Rating:       &body.Rating,
+		Verified:     true,
+	}
+
+	if referralID != 0 {
+		payload.UsedReferralCodeID = &referralID
+	} else {
+		payload.UsedReferralCodeID = nil
+	}
+
+	circle, err := c.circleRepo.OnboardNewCircle(&payload, user)
 
 	if err != nil {
 		return nil, err
