@@ -16,6 +16,7 @@ type OnboardNewCircleRequestBody struct {
 	Name   string `json:"name" validate:"required,min=3,max=255"`
 	Rating string `json:"rating" validate:"required,oneof=GA PG M"`
 	ImageURLs
+	ReferralCode string `json:"referral_code" validate:"omitempty"`
 }
 
 type CreateFandomCircleRelation struct {

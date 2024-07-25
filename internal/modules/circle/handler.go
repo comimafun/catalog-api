@@ -98,6 +98,7 @@ func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 	}
 
 	body.Name = strings.TrimSpace(body.Name)
+	body.ReferralCode = strings.ToUpper(strings.TrimSpace(body.ReferralCode))
 
 	if err := h.validator.Struct(body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))

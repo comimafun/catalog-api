@@ -9,6 +9,7 @@ import (
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	circle_dto "catalog-be/internal/modules/circle/dto"
+	"catalog-be/internal/modules/circle/referral"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
@@ -48,6 +49,7 @@ type circleService struct {
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	sanitizer             *validation.Sanitizer
+	referralService       referral.ReferralService
 }
 
 // DeleteCircleEventAttendingByID implements CircleService.
@@ -119,6 +121,7 @@ func NewCircleService(
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
 	sanitizer *validation.Sanitizer,
+	referralService referral.ReferralService,
 ) CircleService {
 	return &circleService{
 		circleRepo:            circleRepo,
@@ -129,6 +132,7 @@ func NewCircleService(
 		circleFandomService:   circleFandomService,
 		bookmark:              bookmark,
 		sanitizer:             sanitizer,
+		referralService:       referralService,
 	}
 }
 
@@ -565,6 +569,21 @@ func (c *circleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 
 // OnboardNewCircle implements CircleService.
 func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+	referralID := new(int)
+	if body.ReferralCode != "" {
+		ref, err := c.referralService.FindReferralByCode(body.ReferralCode)
+		if err != nil {
+			if err.Code == 404 {
+				return nil, domain.NewError(404, errors.New("REFERRAL_CODE_NOT_FOUND"), nil)
+			}
+			return nil, err
+		}
+
+		if ref.ID != 0 {
+			referralID = &ref.ID
+		}
+	}
+
 	slug, slugErr := c.utils.Slugify(body.Name)
 	if slugErr != nil {
 		return nil, domain.NewError(500, slugErr, nil)
@@ -580,15 +599,16 @@ func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 
 	slug = slug + "-" + c.utils.GenerateRandomCode(2)
 	circle, err := c.circleRepo.OnboardNewCircle(&entity.Circle{
-		Name:         body.Name,
-		Slug:         strings.ToLower(slug),
-		PictureURL:   &body.PictureURL,
-		FacebookURL:  &body.FacebookURL,
-		InstagramURL: &body.InstagramURL,
-		TwitterURL:   &body.TwitterURL,
-		URL:          &body.URL,
-		Rating:       &body.Rating,
-		Verified:     true,
+		Name:               body.Name,
+		Slug:               strings.ToLower(slug),
+		PictureURL:         &body.PictureURL,
+		FacebookURL:        &body.FacebookURL,
+		InstagramURL:       &body.InstagramURL,
+		TwitterURL:         &body.TwitterURL,
+		URL:                &body.URL,
+		Rating:             &body.Rating,
+		Verified:           true,
+		UsedReferralCodeID: referralID,
 	}, user)
 
 	if err != nil {
