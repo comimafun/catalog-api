@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
+	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
@@ -22,6 +23,7 @@ type HTTP struct {
 	event          *event.EventHandler
 	upload         *upload.UploadHandler
 	product        *product.ProductHandler
+	referral       *referral.ReferralHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -93,6 +95,7 @@ func NewHTTP(
 	event *event.EventHandler,
 	upload *upload.UploadHandler,
 	product *product.ProductHandler,
+	referral *referral.ReferralHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -103,5 +106,6 @@ func NewHTTP(
 		event,
 		upload,
 		product,
+		referral,
 	}
 }
