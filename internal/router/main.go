@@ -84,6 +84,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	upload := v1.Group("/upload")
 	upload.Post("/image", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.upload.UploadImage)
+
+	referral := v1.Group("/referral")
+	referral.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.referral.CreateReferral)
 }
 
 func NewHTTP(
