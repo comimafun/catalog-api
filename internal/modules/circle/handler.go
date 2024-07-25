@@ -140,6 +140,31 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 	})
 }
 
+func (h *CircleHandler) GetCircleReferral(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("circleid")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("CIRCLE_ID_SHOULD_BE_NUMBER"), nil)))
+	}
+
+	referral, refErr := h.circleService.FindReferralCodeByCircleID(circleID)
+
+	if refErr != nil {
+		if refErr.Code == 404 {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{
+				"data": nil,
+				"code": fiber.StatusOK,
+			})
+		} else {
+			return c.Status(refErr.Code).JSON(domain.NewErrorFiber(c, refErr))
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": referral.ReferralCode,
+		"code": fiber.StatusOK,
+	})
+}
+
 func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
 	var query circle_dto.FindAllCircleFilter
 	if err := c.QueryParser(&query); err != nil {
