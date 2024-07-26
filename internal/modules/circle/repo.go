@@ -488,6 +488,10 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 		cte = cte.Where("wt.id in (?)", filter.WorkTypeIDs)
 	}
 
+	if filter.Day != nil {
+		cte = cte.Where("c.day = ?", filter.Day)
+	}
+
 	if filter.Search != "" {
 		searchQuery := fmt.Sprintf("%%%s%%", filter.Search)
 		cte = cte.Where("c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?",
@@ -610,6 +614,10 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 
 	if len(filter.WorkTypeIDs) > 0 {
 		joins = joins.Where("wt.id in (?)", filter.WorkTypeIDs)
+	}
+
+	if filter.Day != nil {
+		joins = joins.Where("c.day = ?", filter.Day)
 	}
 
 	if appStage == "production" {
