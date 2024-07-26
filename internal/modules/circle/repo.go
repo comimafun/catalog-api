@@ -522,7 +522,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	`)
 
 	cte = cte.
-		Order("c.created_at desc").
+		Order("c.id desc").
 		Limit(filter.Limit).
 		Offset((filter.Page - 1) * filter.Limit)
 
@@ -562,7 +562,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 			ub.created_at as bookmarked_at,
 			CASE WHEN ub.user_id IS NOT NULL THEN TRUE ELSE FALSE END AS bookmarked
 		`).
-		Order("c.created_at desc")
+		Order("c.id desc")
 
 	err := joins.Find(&circles).Error
 
@@ -587,6 +587,15 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 		Joins("LEFT JOIN product p ON c.id = p.circle_id").
 		Joins("LEFT JOIN event e ON c.event_id = e.id").
 		Joins("LEFT JOIN block_event be ON c.id = be.circle_id AND be.event_id = c.event_id")
+
+	if filter.Search != "" {
+		searchQuery := fmt.Sprintf("%%%s%%", filter.Search)
+		joins = joins.Where("c.name ILIKE ? OR f.name ILIKE ? OR wt.name ILIKE ? OR be.name ILIKE ?",
+			searchQuery,
+			searchQuery,
+			searchQuery,
+			searchQuery)
+	}
 
 	if len(filter.Rating) > 0 {
 		joins = joins.Where("c.rating IN (?)", filter.Rating)
