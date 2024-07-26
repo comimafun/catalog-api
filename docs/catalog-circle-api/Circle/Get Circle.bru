@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{hostnamev1}}/circle?page=1&limit=20&day=first
+  url: {{hostnamev1}}/circle?page=1&limit=20
   body: none
   auth: none
 }
@@ -13,7 +13,6 @@ get {
 query {
   page: 1
   limit: 20
-  day: first
 }
 
 body:json {

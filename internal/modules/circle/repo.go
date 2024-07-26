@@ -504,35 +504,18 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 	if appStage == "production" {
 		cte = cte.Where("c.published IS TRUE")
 	}
-	// dont pick c.description
-	cte = cte.Select(`
-		c.id as id,
-		c.name as name,
-		c.slug as slug,
-		c.picture_url as picture_url,
-		c.url as url,
-		c.facebook_url as facebook_url,
-		c.twitter_url as twitter_url,
-		c.instagram_url as instagram_url,
-		c.verified as verified,
-		c.published as published,
-		c.created_at as created_at,
-		c.updated_at as updated_at,
-		c.deleted_at as deleted_at,
-		c.day as day,
-		c.event_id as event_id,
-		c.cover_picture_url as cover_picture_url,
-		c.rating as rating
-	`)
 
+	cte = cte.Select("c.id")
 	cte = cte.
+		Distinct("c.id").
 		Order("c.id desc").
 		Limit(filter.Limit).
 		Offset((filter.Page - 1) * filter.Limit)
 
 	var circles []entity.CircleRaw
-	joins := c.db.Clauses(exclause.NewWith("cte", cte)).Table("cte as c")
+	joins := c.db.Clauses(exclause.NewWith("cte", cte)).Table("cte as cte")
 	joins = joins.
+		Joins("INNER JOIN circle c ON cte.id = c.id").
 		Joins("LEFT JOIN circle_fandom cf ON c.id = cf.circle_id").
 		Joins("LEFT JOIN fandom f ON f.id = cf.fandom_id").
 		Joins("LEFT JOIN circle_work_type cwt ON c.id = cwt.circle_id").
@@ -544,7 +527,23 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 
 	joins = joins.
 		Select(`
-			c.*,
+			c.id as id,
+			c.name as name,
+			c.slug as slug,
+			c.picture_url as picture_url,
+			c.url as url,
+			c.facebook_url as facebook_url,
+			c.twitter_url as twitter_url,
+			c.instagram_url as instagram_url,
+			c.verified as verified,
+			c.published as published,
+			c.created_at as created_at,
+			c.updated_at as updated_at,
+			c.deleted_at as deleted_at,
+			c.day as day,
+			c.event_id as event_id,
+			c.cover_picture_url as cover_picture_url,
+			c.rating as rating,
 
 			f.id as fandom_id,
 			f.name as fandom_name,
@@ -568,7 +567,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 		`).
 		Order("c.id desc")
 
-	err := joins.Find(&circles).Error
+	err := joins.Unscoped().Find(&circles).Error
 
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
