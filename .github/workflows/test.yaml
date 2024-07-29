@@ -21,10 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up dummy env
-        run: |
-          echo "DUMMY_ENV=1" >> $GITHUB_ENV
-
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
