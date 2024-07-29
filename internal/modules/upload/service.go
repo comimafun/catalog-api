@@ -35,18 +35,12 @@ var MAX_FILE_SIZE_BASED_ON_NAME = map[string]int64{
 	"descriptions": 2.5 * 1024 * 1024,
 }
 
-type UploadService interface {
-	randomizedFilename(currentName string) (string, *domain.Error)
-	validateImage(folderName string, file *multipart.FileHeader) *domain.Error
-	UploadImage(bucketName string, file *multipart.FileHeader) (string, *domain.Error)
-}
-
-type uploadService struct {
+type UploadService struct {
 	s3 *s3.Client
 }
 
 // randomizedFilename implements UploadService.
-func (u *uploadService) randomizedFilename(currentName string) (string, *domain.Error) {
+func (u *UploadService) randomizedFilename(currentName string) (string, *domain.Error) {
 	uuid, err := uuid.NewV7()
 	if err != nil {
 		return "", domain.NewError(500, err, nil)
@@ -58,7 +52,7 @@ func (u *uploadService) randomizedFilename(currentName string) (string, *domain.
 }
 
 // validateImage implements UploadService.
-func (u *uploadService) validateImage(folderName string, file *multipart.FileHeader) *domain.Error {
+func (u *UploadService) validateImage(folderName string, file *multipart.FileHeader) *domain.Error {
 	var MAX_FILE_SIZE = int64(5 * 1024 * 1024)
 	if MAX_FILE_SIZE_BASED_ON_NAME[folderName] != 0 {
 		MAX_FILE_SIZE = MAX_FILE_SIZE_BASED_ON_NAME[folderName]
@@ -82,7 +76,7 @@ func (u *uploadService) validateImage(folderName string, file *multipart.FileHea
 }
 
 // Upload implements UploadService.
-func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeader) (string, *domain.Error) {
+func (u *UploadService) UploadImage(folderName string, file *multipart.FileHeader) (string, *domain.Error) {
 	bucket := os.Getenv("BUCKET_NAME")
 	appStage := os.Getenv("APP_STAGE")
 	err := u.validateImage(folderName, file)
@@ -130,8 +124,8 @@ func (u *uploadService) UploadImage(folderName string, file *multipart.FileHeade
 
 func NewUploadService(
 	s3 *s3.Client,
-) UploadService {
-	return &uploadService{
+) *UploadService {
+	return &UploadService{
 		s3,
 	}
 }

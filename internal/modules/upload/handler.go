@@ -11,7 +11,7 @@ import (
 
 type UploadHandler struct {
 	validator     *validator.Validate
-	uploadService UploadService
+	uploadService *UploadService
 }
 
 func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
@@ -63,7 +63,7 @@ func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
 
 func NewUploadHandler(
 	validator *validator.Validate,
-	uploadService UploadService,
+	uploadService *UploadService,
 ) *UploadHandler {
 	return &UploadHandler{
 		validator,
