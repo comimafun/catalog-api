@@ -46,7 +46,7 @@ type circleService struct {
 	circleRepo            CircleRepo
 	userService           *user.UserService
 	utils                 utils.Utils
-	refreshTokenService   refreshtoken.RefreshTokenService
+	refreshTokenService   *refreshtoken.RefreshTokenService
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
@@ -123,7 +123,7 @@ func NewCircleService(
 	circleRepo CircleRepo,
 	userService *user.UserService,
 	utils utils.Utils,
-	refreshTokenService refreshtoken.RefreshTokenService,
+	refreshTokenService *refreshtoken.RefreshTokenService,
 	circleWorkTypeService circle_work_type.CircleWorkTypeService,
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
