@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	extraClausePlugin "github.com/WinterYukky/gorm-extra-clause-plugin"
@@ -11,8 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func New() *gorm.DB {
-	dsn := os.Getenv("DB_URL")
+func New(dsn string) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		TranslateError: true,
 	})
