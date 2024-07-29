@@ -2,6 +2,7 @@ package server
 
 import (
 	"catalog-be/internal/database"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-playground/validator/v10"
@@ -17,12 +18,13 @@ type FiberServer struct {
 }
 
 func New() *FiberServer {
+	dsn := os.Getenv("DB_URL")
 	server := &FiberServer{
 		App: fiber.New(fiber.Config{
 			ServerHeader: "catalog-be",
 			AppName:      "catalog-be",
 		}),
-		Pg:        database.New(),
+		Pg:        database.New(dsn),
 		Validator: validator.New(),
 		S3:        database.NewS3(),
 	}
