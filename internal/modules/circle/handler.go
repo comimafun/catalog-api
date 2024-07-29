@@ -326,7 +326,7 @@ func NewCircleHandler(
 	circleService CircleService,
 	validator *validator.Validate,
 	userService *user.UserService,
-	circleBookmarkService bookmark.CircleBookmarkService,
+	circleBookmarkService *bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
 		circleService: circleService,
