@@ -8,7 +8,7 @@ import (
 )
 
 type WorkTypeHandler struct {
-	workTypeService WorkTypeService
+	workTypeService *WorkTypeService
 }
 
 type createUpdateRequestBody struct {
@@ -90,7 +90,7 @@ func (h *WorkTypeHandler) GetAll(c *fiber.Ctx) error {
 }
 
 func NewWorkTypeHandler(
-	workTypeService WorkTypeService,
+	workTypeService *WorkTypeService,
 ) *WorkTypeHandler {
 	return &WorkTypeHandler{
 		workTypeService: workTypeService,
