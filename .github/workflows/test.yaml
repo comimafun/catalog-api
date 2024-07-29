@@ -28,3 +28,9 @@ jobs:
       - name: Run tests
         run: |
           make test
+      - name: Remove label
+        uses: actions-ecosystem/action-remove-labels@v1
+        if: ${{always()}}
+        with:
+          label: run-test
+          fail_on_error: false
