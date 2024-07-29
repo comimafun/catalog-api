@@ -1,4 +1,4 @@
-# Project catalog-be 📚
+# Project catalog-api 📚
 
 Monolith REST API service for `Inner Catalog` project.
 
