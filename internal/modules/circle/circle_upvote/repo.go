@@ -6,18 +6,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleUpvoteRepo interface {
-	CreateUpvote(circleID int, userID int) *domain.Error
-	DeleteUpvote(circleID int, userID int) *domain.Error
-	FindUpvoteByCircleIDAndUserID(circleID int, userID int) (bool, *domain.Error)
-}
-
-type circleUpvoteRepo struct {
+type CircleUpvoteRepo struct {
 	db *gorm.DB
 }
 
 // FindUpvoteByCircleIDAndUserID implements CircleUpvoteRepo.
-func (c *circleUpvoteRepo) FindUpvoteByCircleIDAndUserID(circleID int, userID int) (bool, *domain.Error) {
+func (c *CircleUpvoteRepo) FindUpvoteByCircleIDAndUserID(circleID int, userID int) (bool, *domain.Error) {
 	var isUpvoted bool
 	err := c.db.Raw("SELECT EXISTS(SELECT 1 FROM user_upvote WHERE user_id = ? AND circle_id = ?) as is_upvoted", userID, circleID).Scan(&isUpvoted).Error
 	if err != nil {
@@ -28,7 +22,7 @@ func (c *circleUpvoteRepo) FindUpvoteByCircleIDAndUserID(circleID int, userID in
 }
 
 // CreateUpvote implements CircleUpvoteRepo.
-func (c *circleUpvoteRepo) CreateUpvote(circleID int, userID int) *domain.Error {
+func (c *CircleUpvoteRepo) CreateUpvote(circleID int, userID int) *domain.Error {
 	err := c.db.Exec("INSERT INTO user_upvote (user_id, circle_id) VALUES (?, ?)", userID, circleID).Error
 
 	if err != nil {
@@ -39,7 +33,7 @@ func (c *circleUpvoteRepo) CreateUpvote(circleID int, userID int) *domain.Error 
 }
 
 // DeleteUpvote implements CircleUpvoteRepo.
-func (c *circleUpvoteRepo) DeleteUpvote(circleID int, userID int) *domain.Error {
+func (c *CircleUpvoteRepo) DeleteUpvote(circleID int, userID int) *domain.Error {
 	err := c.db.Exec("DELETE FROM user_upvote WHERE user_id = ? AND circle_id = ?", userID, circleID).Error
 	if err != nil {
 		return domain.NewError(500, err, nil)
@@ -47,6 +41,6 @@ func (c *circleUpvoteRepo) DeleteUpvote(circleID int, userID int) *domain.Error 
 	return nil
 }
 
-func NewCircleUpvoteRepo(db *gorm.DB) CircleUpvoteRepo {
-	return &circleUpvoteRepo{db}
+func NewCircleUpvoteRepo(db *gorm.DB) *CircleUpvoteRepo {
+	return &CircleUpvoteRepo{db}
 }

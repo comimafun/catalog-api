@@ -9,18 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleWorkTypeRepo interface {
-	deleteWorkTypeRelationByCircleID(circleID int) *domain.Error
-	BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error
-	FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error)
-}
-
-type circleWorkTypeRepo struct {
+type CircleWorkTypeRepo struct {
 	db *gorm.DB
 }
 
 // BatchInsertCircleWorkTypeRelation implements CircleWorkTypeRepo.
-func (c *circleWorkTypeRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error {
+func (c *CircleWorkTypeRepo) BatchInsertCircleWorkTypeRelation(circleID int, workTypeIDs []int) *domain.Error {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return domain.NewError(500, tx.Error, nil)
@@ -61,7 +55,7 @@ func (c *circleWorkTypeRepo) BatchInsertCircleWorkTypeRelation(circleID int, wor
 }
 
 // FindAllCircleRelationWorkType implements CircleWorkTypeRepo.
-func (c *circleWorkTypeRepo) FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error) {
+func (c *CircleWorkTypeRepo) FindAllCircleRelationWorkType(circleID int) ([]entity.WorkType, *domain.Error) {
 	var workTypes []entity.WorkType
 	err := c.db.Raw(`
 		select
@@ -79,7 +73,7 @@ func (c *circleWorkTypeRepo) FindAllCircleRelationWorkType(circleID int) ([]enti
 }
 
 // deleteWorkTypeRelationByCircleID implements CircleWorkTypeRepo.
-func (c *circleWorkTypeRepo) deleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
+func (c *CircleWorkTypeRepo) deleteWorkTypeRelationByCircleID(circleID int) *domain.Error {
 	err := c.db.Exec(`
     delete from circle_work_type where circle_id = ?
     `, circleID).Error
@@ -89,6 +83,6 @@ func (c *circleWorkTypeRepo) deleteWorkTypeRelationByCircleID(circleID int) *dom
 	return nil
 }
 
-func NewCircleWorkTypeRepo(db *gorm.DB) CircleWorkTypeRepo {
-	return &circleWorkTypeRepo{db: db}
+func NewCircleWorkTypeRepo(db *gorm.DB) *CircleWorkTypeRepo {
+	return &CircleWorkTypeRepo{db: db}
 }
