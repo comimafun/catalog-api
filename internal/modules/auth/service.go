@@ -32,7 +32,7 @@ type AuthService interface {
 }
 
 type authService struct {
-	userService         user.UserService
+	userService         *user.UserService
 	config              internal_config.Config
 	refreshTokenService refreshtoken.RefreshTokenService
 	utils               utils.Utils
@@ -267,7 +267,7 @@ func (a *authService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 }
 
 func NewAuthService(
-	userService user.UserService,
+	userService *user.UserService,
 	config internal_config.Config,
 	refreshToken refreshtoken.RefreshTokenService,
 	utils utils.Utils,

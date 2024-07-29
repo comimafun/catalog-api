@@ -44,7 +44,7 @@ type CircleService interface {
 
 type circleService struct {
 	circleRepo            CircleRepo
-	userService           user.UserService
+	userService           *user.UserService
 	utils                 utils.Utils
 	refreshTokenService   refreshtoken.RefreshTokenService
 	circleWorkTypeService circle_work_type.CircleWorkTypeService
@@ -121,7 +121,7 @@ func (c *circleService) UpdateCircleAttendingEventByID(circleID int, userID int,
 
 func NewCircleService(
 	circleRepo CircleRepo,
-	userService user.UserService,
+	userService *user.UserService,
 	utils utils.Utils,
 	refreshTokenService refreshtoken.RefreshTokenService,
 	circleWorkTypeService circle_work_type.CircleWorkTypeService,

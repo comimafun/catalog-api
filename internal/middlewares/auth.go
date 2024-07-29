@@ -13,7 +13,7 @@ import (
 )
 
 type AuthMiddleware struct {
-	userService user.UserService
+	userService *user.UserService
 }
 
 func (a *AuthMiddleware) AdminOnly(c *fiber.Ctx) error {
@@ -108,7 +108,7 @@ func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 }
 
 func NewAuthMiddleware(
-	userService user.UserService,
+	userService *user.UserService,
 ) *AuthMiddleware {
 	return &AuthMiddleware{
 		userService: userService,
