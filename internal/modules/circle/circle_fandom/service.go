@@ -5,25 +5,20 @@ import (
 	"catalog-be/internal/entity"
 )
 
-type CircleFandomService interface {
-	FindAllCircleFandomTypeRelated(circleID int) ([]entity.Fandom, *domain.Error)
-	BulkDeleteAndInsertCircleFandomType(circleID int, fandomIDs []int) *domain.Error
-}
-
-type circleFandomService struct {
-	repo CircleFandomRepo
+type CircleFandomService struct {
+	repo *CircleFandomRepo
 }
 
 // BulkDeleteAndInsertCircleFandomType implements CircleFandomService.
-func (c *circleFandomService) BulkDeleteAndInsertCircleFandomType(circleID int, fandomIDs []int) *domain.Error {
+func (c *CircleFandomService) BulkDeleteAndInsertCircleFandomType(circleID int, fandomIDs []int) *domain.Error {
 	return c.repo.BatchInsertFandomCircleRelation(circleID, fandomIDs)
 }
 
 // FindAllCircleFandomTypeRelated implements CircleFandomService.
-func (c *circleFandomService) FindAllCircleFandomTypeRelated(circleID int) ([]entity.Fandom, *domain.Error) {
+func (c *CircleFandomService) FindAllCircleFandomTypeRelated(circleID int) ([]entity.Fandom, *domain.Error) {
 	return c.repo.FindAllCircleRelationFandom(circleID)
 }
 
-func NewCircleFandomService(repo CircleFandomRepo) CircleFandomService {
-	return &circleFandomService{repo: repo}
+func NewCircleFandomService(repo *CircleFandomRepo) *CircleFandomService {
+	return &CircleFandomService{repo: repo}
 }

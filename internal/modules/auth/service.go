@@ -18,29 +18,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthService interface {
-	AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error)
-	GetAuthURL() string
-	RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error)
-	Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error)
-	login(user *entity.User) (*auth_dto.NewTokenResponse, *domain.Error)
-	LogoutByAccessToken(userID int) *domain.Error
-	LogoutByRefreshToken(refreshToken string) *domain.Error
-	generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error)
-	registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error)
-	generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error)
-}
-
-type authService struct {
-	userService         user.UserService
+type AuthService struct {
+	userService         *user.UserService
 	config              internal_config.Config
-	refreshTokenService refreshtoken.RefreshTokenService
+	refreshTokenService *refreshtoken.RefreshTokenService
 	utils               utils.Utils
-	circleService       circle.CircleService
+	circleService       *circle.CircleService
 }
 
 // LogoutByAccessToken implements AuthService.
-func (a *authService) LogoutByAccessToken(userID int) *domain.Error {
+func (a *AuthService) LogoutByAccessToken(userID int) *domain.Error {
 	err := a.refreshTokenService.DeleteAllRecordsByUserID(userID)
 	if err != nil {
 		return err
@@ -49,7 +36,7 @@ func (a *authService) LogoutByAccessToken(userID int) *domain.Error {
 }
 
 // LogoutByRefreshToken implements AuthService.
-func (a *authService) LogoutByRefreshToken(refreshToken string) *domain.Error {
+func (a *AuthService) LogoutByRefreshToken(refreshToken string) *domain.Error {
 	err := a.refreshTokenService.DeleteByRefreshToken(refreshToken)
 	if err != nil {
 		return err
@@ -58,7 +45,7 @@ func (a *authService) LogoutByRefreshToken(refreshToken string) *domain.Error {
 }
 
 // generateAndUpdateToken implements AuthService.
-func (a *authService) generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error) {
+func (a *AuthService) generateAndUpdateToken(user *entity.User, refreshTokenID int) (*auth_dto.NewTokenResponse, *domain.Error) {
 	token, tokenErr := a.generateNewJWTAndRefreshToken(user)
 	if tokenErr != nil {
 		return nil, tokenErr
@@ -83,7 +70,7 @@ func (a *authService) generateAndUpdateToken(user *entity.User, refreshTokenID i
 }
 
 // RefreshToken implements AuthService.
-func (a *authService) RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
+func (a *AuthService) RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
 	refresh, refreshErr := a.refreshTokenService.CheckValidityByRefreshToken(refreshToken)
 	if refreshErr != nil {
 		return nil, refreshErr
@@ -102,7 +89,7 @@ func (a *authService) RefreshToken(refreshToken string) (*auth_dto.NewTokenRespo
 }
 
 // Self implements AuthService.
-func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error) {
+func (a *AuthService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_dto.SelfResponse, *domain.Error) {
 	checkUser, checkUserErr := a.userService.FindOneByID(user.UserID)
 	if checkUserErr != nil {
 		if errors.Is(checkUserErr.Err, gorm.ErrRecordNotFound) {
@@ -136,12 +123,12 @@ func (a *authService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 }
 
 // GetAuthURL implements AuthService.
-func (a *authService) GetAuthURL() string {
+func (a *AuthService) GetAuthURL() string {
 	return a.config.AuthCodeURL()
 }
 
 // registerWithGoogle implements AuthService.
-func (a *authService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error) {
+func (a *AuthService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error) {
 	randString := a.utils.GenerateRandomCode(10)
 	hash, hashingErr := a.utils.HashPassword(randString)
 	if hashingErr != nil {
@@ -160,7 +147,7 @@ func (a *authService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity
 }
 
 // generateNewJWTAndRefreshToken implements AuthService.
-func (a *authService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error) {
+func (a *AuthService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dto.NewToken, *domain.Error) {
 	appStage := os.Getenv("APP_STAGE")
 	secret := os.Getenv("JWT_SECRET")
 	var duration time.Duration
@@ -202,7 +189,7 @@ func (a *authService) generateNewJWTAndRefreshToken(user *entity.User) (*auth_dt
 }
 
 // login implements AuthService.
-func (a *authService) login(user *entity.User) (*auth_dto.NewTokenResponse, *domain.Error) {
+func (a *AuthService) login(user *entity.User) (*auth_dto.NewTokenResponse, *domain.Error) {
 	newToken, newTokenErr := a.generateNewJWTAndRefreshToken(user)
 	if newTokenErr != nil {
 		return nil, newTokenErr
@@ -227,7 +214,7 @@ func (a *authService) login(user *entity.User) (*auth_dto.NewTokenResponse, *dom
 }
 
 // AuthWithGoogle implements AuthService.
-func (a *authService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
+func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
 	user, err := a.config.ParseCodeToUserData(code)
 	if err != nil {
 		return nil, err
@@ -267,13 +254,13 @@ func (a *authService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 }
 
 func NewAuthService(
-	userService user.UserService,
+	userService *user.UserService,
 	config internal_config.Config,
-	refreshToken refreshtoken.RefreshTokenService,
+	refreshToken *refreshtoken.RefreshTokenService,
 	utils utils.Utils,
-	circleService circle.CircleService,
-) AuthService {
-	return &authService{
+	circleService *circle.CircleService,
+) *AuthService {
+	return &AuthService{
 		userService,
 		config,
 		refreshToken,

@@ -7,20 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepo interface {
-	CreateOne(user entity.User) (*entity.User, *domain.Error)
-	DeleteOneByID(id int) *domain.Error
-	FindOneByID(id int) (*entity.User, *domain.Error)
-	FindOneByEmail(email string) (*entity.User, *domain.Error)
-	UpdateOneByID(id int, user entity.User) (*entity.User, *domain.Error)
-}
-
-type userRepo struct {
+type UserRepo struct {
 	db *gorm.DB
 }
 
 // DeleteOneByID implements UserRepo.
-func (u *userRepo) DeleteOneByID(id int) *domain.Error {
+func (u *UserRepo) DeleteOneByID(id int) *domain.Error {
 	err := u.db.Delete(&entity.User{}, id).Error
 	if err != nil {
 		return domain.NewError(500, err, nil)
@@ -29,7 +21,7 @@ func (u *userRepo) DeleteOneByID(id int) *domain.Error {
 }
 
 // FindOneByEmail implements UserRepo.
-func (u *userRepo) FindOneByEmail(email string) (*entity.User, *domain.Error) {
+func (u *UserRepo) FindOneByEmail(email string) (*entity.User, *domain.Error) {
 	var user entity.User
 	if err := u.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -38,7 +30,7 @@ func (u *userRepo) FindOneByEmail(email string) (*entity.User, *domain.Error) {
 }
 
 // FindOneByID implements UserRepo.
-func (u *userRepo) FindOneByID(id int) (*entity.User, *domain.Error) {
+func (u *UserRepo) FindOneByID(id int) (*entity.User, *domain.Error) {
 	var user entity.User
 	if err := u.db.First(&user, id).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -47,7 +39,7 @@ func (u *userRepo) FindOneByID(id int) (*entity.User, *domain.Error) {
 }
 
 // UpdateOneByID implements UserRepo.
-func (u *userRepo) UpdateOneByID(id int, user entity.User) (*entity.User, *domain.Error) {
+func (u *UserRepo) UpdateOneByID(id int, user entity.User) (*entity.User, *domain.Error) {
 	var updated entity.User
 	if err := u.db.Model(&entity.User{}).Where("id = ?", id).Updates(&user).Scan(&updated).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -56,15 +48,15 @@ func (u *userRepo) UpdateOneByID(id int, user entity.User) (*entity.User, *domai
 }
 
 // CreateOne implements UserRepo.
-func (u *userRepo) CreateOne(user entity.User) (*entity.User, *domain.Error) {
+func (u *UserRepo) CreateOne(user entity.User) (*entity.User, *domain.Error) {
 	if err := u.db.Create(&user).Error; err != nil {
 		return nil, domain.NewError(500, err, nil)
 	}
 	return &user, nil
 }
 
-func NewUserRepo(db *gorm.DB) UserRepo {
-	return &userRepo{
+func NewUserRepo(db *gorm.DB) *UserRepo {
+	return &UserRepo{
 		db,
 	}
 }

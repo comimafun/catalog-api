@@ -7,24 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type ProductRepo interface {
-	FindAllByCircleID(circleID int) ([]entity.Product, *domain.Error)
-	FindOneByID(id int) (*entity.Product, *domain.Error)
-	DeleteOneByID(circleID int, id int) *domain.Error
-	DeleteAllByCircleID(circleID int) *domain.Error
-	CreateOne(product entity.Product) (*entity.Product, *domain.Error)
-	UpdateOneByID(id int, product entity.Product) (*entity.Product, *domain.Error)
-	BatchUpsertByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error)
-	CreateOneOneByCircleID(circleID int, product entity.Product) (*entity.Product, *domain.Error)
-	CountProductsByCircleID(circleID int) (int, *domain.Error)
-}
-
-type productRepo struct {
+type ProductRepo struct {
 	db *gorm.DB
 }
 
 // FindOneByID implements ProductRepo.
-func (p *productRepo) FindOneByID(id int) (*entity.Product, *domain.Error) {
+func (p *ProductRepo) FindOneByID(id int) (*entity.Product, *domain.Error) {
 	var product entity.Product
 	err := p.db.First(&product, id).Error
 	if err != nil {
@@ -35,7 +23,7 @@ func (p *productRepo) FindOneByID(id int) (*entity.Product, *domain.Error) {
 }
 
 // CountProductsByCircleID implements ProductRepo.
-func (p *productRepo) CountProductsByCircleID(circleID int) (int, *domain.Error) {
+func (p *ProductRepo) CountProductsByCircleID(circleID int) (int, *domain.Error) {
 	var count int64
 	err := p.db.Model(&entity.Product{}).Where("circle_id = ?", circleID).Count(&count).Error
 	if err != nil {
@@ -46,7 +34,7 @@ func (p *productRepo) CountProductsByCircleID(circleID int) (int, *domain.Error)
 }
 
 // CreateOneOneByCircleID implements ProductRepo.
-func (p *productRepo) CreateOneOneByCircleID(circleID int, product entity.Product) (*entity.Product, *domain.Error) {
+func (p *ProductRepo) CreateOneOneByCircleID(circleID int, product entity.Product) (*entity.Product, *domain.Error) {
 	err := p.db.Where("circle_id = ?", circleID).Save(&product).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -56,7 +44,7 @@ func (p *productRepo) CreateOneOneByCircleID(circleID int, product entity.Produc
 }
 
 // DeleteAllByCircleID implements ProductRepo.
-func (p *productRepo) DeleteAllByCircleID(circleID int) *domain.Error {
+func (p *ProductRepo) DeleteAllByCircleID(circleID int) *domain.Error {
 	err := p.db.Where("circle_id = ?", circleID).Delete(&entity.Product{}).Error
 	if err != nil {
 		return domain.NewError(500, err, nil)
@@ -65,7 +53,7 @@ func (p *productRepo) DeleteAllByCircleID(circleID int) *domain.Error {
 }
 
 // BatchUpsertByCircleID implements ProductRepo.
-func (p *productRepo) BatchUpsertByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error) {
+func (p *ProductRepo) BatchUpsertByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error) {
 	tx := p.db.Begin()
 	if tx.Error != nil {
 		return nil, domain.NewError(500, tx.Error, nil)
@@ -130,7 +118,7 @@ func (p *productRepo) BatchUpsertByCircleID(circleID int, inputs []entity.Produc
 }
 
 // CreateOne implements ProductRepo.
-func (p *productRepo) CreateOne(product entity.Product) (*entity.Product, *domain.Error) {
+func (p *ProductRepo) CreateOne(product entity.Product) (*entity.Product, *domain.Error) {
 	err := p.db.Create(&product).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -140,7 +128,7 @@ func (p *productRepo) CreateOne(product entity.Product) (*entity.Product, *domai
 }
 
 // DeleteOneByID implements ProductRepo.
-func (p *productRepo) DeleteOneByID(circleID int, id int) *domain.Error {
+func (p *ProductRepo) DeleteOneByID(circleID int, id int) *domain.Error {
 	err := p.db.Delete(&entity.Product{}, id).Error
 	if err != nil {
 		return domain.NewError(500, err, nil)
@@ -150,7 +138,7 @@ func (p *productRepo) DeleteOneByID(circleID int, id int) *domain.Error {
 }
 
 // FindAllByCircleID implements ProductRepo.
-func (p *productRepo) FindAllByCircleID(circleID int) ([]entity.Product, *domain.Error) {
+func (p *ProductRepo) FindAllByCircleID(circleID int) ([]entity.Product, *domain.Error) {
 	var products []entity.Product
 	err := p.db.Where("circle_id = ?", circleID).Find(&products).Error
 	if err != nil {
@@ -161,7 +149,7 @@ func (p *productRepo) FindAllByCircleID(circleID int) ([]entity.Product, *domain
 }
 
 // UpdateOneByID implements ProductRepo.
-func (p *productRepo) UpdateOneByID(id int, product entity.Product) (*entity.Product, *domain.Error) {
+func (p ProductRepo) UpdateOneByID(id int, product entity.Product) (*entity.Product, *domain.Error) {
 	err := p.db.Model(&entity.Product{}).Where("id = ?", id).Updates(&product).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -172,8 +160,8 @@ func (p *productRepo) UpdateOneByID(id int, product entity.Product) (*entity.Pro
 
 func NewProductRepo(
 	db *gorm.DB,
-) ProductRepo {
-	return &productRepo{
+) *ProductRepo {
+	return &ProductRepo{
 		db: db,
 	}
 }

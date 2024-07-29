@@ -14,33 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleRepo interface {
-	CreateOne(circle entity.Circle) (*entity.Circle, *domain.Error)
-	OnboardNewCircle(circle *entity.Circle, user *entity.User) (*entity.Circle, *domain.Error)
-	FindOneByID(id int) (*entity.Circle, *domain.Error)
-	FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error)
-
-	UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error)
-	UpdateCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error)
-
-	ResetAttendingEvent(circle *entity.Circle) *domain.Error
-	UpdateAttendingEvent(circle *entity.Circle, body *circle_dto.UpdateCircleAttendingEvent) *domain.Error
-
-	transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error)
-
-	FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error)
-
-	FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
-
-	FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error)
-	FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error)
-}
-type circleRepo struct {
+type CircleRepo struct {
 	db *gorm.DB
 }
 
 // UpdateAttendingEvent implements CircleRepo.
-func (c *circleRepo) UpdateAttendingEvent(circle *entity.Circle, body *circle_dto.UpdateCircleAttendingEvent) *domain.Error {
+func (c *CircleRepo) UpdateAttendingEvent(circle *entity.Circle, body *circle_dto.UpdateCircleAttendingEvent) *domain.Error {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return domain.NewError(500, tx.Error, nil)
@@ -103,7 +82,7 @@ func (c *circleRepo) UpdateAttendingEvent(circle *entity.Circle, body *circle_dt
 }
 
 // ResetAttendingEvent implements CircleRepo.
-func (c *circleRepo) ResetAttendingEvent(circle *entity.Circle) *domain.Error {
+func (c *CircleRepo) ResetAttendingEvent(circle *entity.Circle) *domain.Error {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return domain.NewError(500, tx.Error, nil)
@@ -135,7 +114,7 @@ func (c *circleRepo) ResetAttendingEvent(circle *entity.Circle) *domain.Error {
 }
 
 // OnboardNewCircle implements CircleRepo.
-func (c *circleRepo) OnboardNewCircle(circle *entity.Circle, user *entity.User) (*entity.Circle, *domain.Error) {
+func (c *CircleRepo) OnboardNewCircle(circle *entity.Circle, user *entity.User) (*entity.Circle, *domain.Error) {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return nil, domain.NewError(500, tx.Error, nil)
@@ -166,7 +145,7 @@ func (c *circleRepo) OnboardNewCircle(circle *entity.Circle, user *entity.User) 
 }
 
 // transformBlockStringIntoBlockEvent implements CircleRepo.
-func (c *circleRepo) transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error) {
+func (c *CircleRepo) transformBlockStringIntoBlockEvent(block string) (*entity.BlockEvent, *domain.Error) {
 
 	var postfix string
 	var prefix string
@@ -194,7 +173,7 @@ func (c *circleRepo) transformBlockStringIntoBlockEvent(block string) (*entity.B
 }
 
 // UpserstOneCircle implements CircleRepo.
-func (c *circleRepo) UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error) {
+func (c *CircleRepo) UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *domain.Error) {
 	err := c.db.Save(circle).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -203,7 +182,7 @@ func (c *circleRepo) UpserstOneCircle(circle *entity.Circle) (*entity.Circle, *d
 }
 
 // UpdateCircleAndAllRelation implements CircleRepo.
-func (c *circleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error) {
+func (c *CircleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleRaw, *domain.Error) {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return nil, domain.NewError(500, tx.Error, nil)
@@ -302,14 +281,14 @@ func (c *circleRepo) UpdateCircleAndAllRelation(userID int, payload *entity.Circ
 
 func NewCircleRepo(
 	db *gorm.DB,
-) CircleRepo {
-	return &circleRepo{
+) *CircleRepo {
+	return &CircleRepo{
 		db: db,
 	}
 }
 
 // FindOneBySlugAndRelatedTables implements CircleRepo.
-func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error) {
+func (c *CircleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]entity.CircleRaw, *domain.Error) {
 	var row []entity.CircleRaw
 	err := c.db.Select(`
 			c.*,
@@ -358,7 +337,7 @@ func (c *circleRepo) FindOneBySlugAndRelatedTables(slug string, userID int) ([]e
 }
 
 // findAllBookmarkedCount implements CircleRepo.
-func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
+func (c *CircleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
 	var count int64
 
 	dbs := c.db.
@@ -384,7 +363,7 @@ func (c *circleRepo) FindAllBookmarkedCount(userID int, filter *circle_dto.FindA
 }
 
 // FindBookmarkedCircleByUserID implements CircleRepo.
-func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
+func (c *CircleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto.FindAllCircleFilter) ([]entity.CircleRaw, *domain.Error) {
 
 	cte := c.db.
 		Select(`
@@ -458,7 +437,7 @@ func (c *circleRepo) FindBookmarkedCircleByUserID(userID int, filter *circle_dto
 }
 
 // FindAll implements CircleRepo.
-func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
+func (c *CircleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, userID int) ([]entity.CircleRaw, *domain.Error) {
 	appStage := os.Getenv("APP_STAGE")
 
 	cte := c.db.
@@ -576,7 +555,7 @@ func (c *circleRepo) FindAllCircles(filter *circle_dto.FindAllCircleFilter, user
 }
 
 // FindAllCount implements CircleRepo.
-func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
+func (c *CircleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, *domain.Error) {
 	appStage := os.Getenv("APP_STAGE")
 	var count int64
 	joins := c.db.
@@ -635,7 +614,7 @@ func (c *circleRepo) FindAllCount(filter *circle_dto.FindAllCircleFilter) (int, 
 }
 
 // CreateOne implements CircleRepo.
-func (c *circleRepo) CreateOne(circle entity.Circle) (*entity.Circle, *domain.Error) {
+func (c *CircleRepo) CreateOne(circle entity.Circle) (*entity.Circle, *domain.Error) {
 	err := c.db.Create(&circle).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -644,7 +623,7 @@ func (c *circleRepo) CreateOne(circle entity.Circle) (*entity.Circle, *domain.Er
 }
 
 // FindOneByID implements CircleRepo.
-func (c *circleRepo) FindOneByID(id int) (*entity.Circle, *domain.Error) {
+func (c *CircleRepo) FindOneByID(id int) (*entity.Circle, *domain.Error) {
 	var circle entity.Circle
 	err := c.db.First(&circle, id).Error
 	if err != nil {

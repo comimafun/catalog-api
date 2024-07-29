@@ -14,9 +14,9 @@ import (
 )
 
 type CircleHandler struct {
-	circleService CircleService
+	circleService *CircleService
 	validator     *validator.Validate
-	userService   user.UserService
+	userService   *user.UserService
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
@@ -323,10 +323,10 @@ func (h *CircleHandler) DeleteCircleEventAttending(c *fiber.Ctx) error {
 }
 
 func NewCircleHandler(
-	circleService CircleService,
+	circleService *CircleService,
 	validator *validator.Validate,
-	userService user.UserService,
-	circleBookmarkService bookmark.CircleBookmarkService,
+	userService *user.UserService,
+	circleBookmarkService *bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
 		circleService: circleService,

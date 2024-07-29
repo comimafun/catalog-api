@@ -9,7 +9,7 @@ import (
 )
 
 type ReferralHandler struct {
-	service   ReferralService
+	service   *ReferralService
 	validator *validator.Validate
 }
 
@@ -41,6 +41,6 @@ func (h *ReferralHandler) CreateReferral(c *fiber.Ctx) error {
 	})
 }
 
-func NewReferralHandler(service ReferralService, validator *validator.Validate) *ReferralHandler {
+func NewReferralHandler(service *ReferralService, validator *validator.Validate) *ReferralHandler {
 	return &ReferralHandler{service, validator}
 }

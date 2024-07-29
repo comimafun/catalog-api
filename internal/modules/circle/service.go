@@ -20,47 +20,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleService interface {
-	OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error)
-	PublishCircleByID(circleID int) (*string, *domain.Error)
-	FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error)
-	FindCircleByID(circleID int) (*entity.Circle, *domain.Error)
-	UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error)
-
-	FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error)
-
-	UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error)
-	DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error)
-
-	transformCircleRawIntoCircleDetailResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse
-	transformCircleRawToPaginatedResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse
-
-	GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error)
-	GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error)
-
-	SaveBookmarkCircle(circleID int, userID int) *domain.Error
-	DeleteBookmarkCircle(circleID int, userID int) *domain.Error
-}
-
-type circleService struct {
-	circleRepo            CircleRepo
-	userService           user.UserService
+type CircleService struct {
+	circleRepo            *CircleRepo
+	userService           *user.UserService
 	utils                 utils.Utils
-	refreshTokenService   refreshtoken.RefreshTokenService
-	circleWorkTypeService circle_work_type.CircleWorkTypeService
-	circleFandomService   circle_fandom.CircleFandomService
-	bookmark              bookmark.CircleBookmarkService
+	refreshTokenService   *refreshtoken.RefreshTokenService
+	circleWorkTypeService *circle_work_type.CircleWorkTypeService
+	circleFandomService   *circle_fandom.CircleFandomService
+	bookmark              *bookmark.CircleBookmarkService
 	sanitizer             *validation.Sanitizer
-	referralService       referral.ReferralService
+	referralService       *referral.ReferralService
 }
 
 // FindReferralCodeByCircleID implements CircleService.
-func (c *circleService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
+func (c *CircleService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
 	return c.referralService.FindReferralCodeByCircleID(circleID)
 }
 
 // DeleteCircleEventAttendingByID implements CircleService.
-func (c *circleService) DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error) {
 	circle, err := c.FindCircleByID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -84,7 +62,7 @@ func (c *circleService) DeleteCircleEventAttendingByID(circleID int, userID int)
 }
 
 // UpdateCircleAttendingEventByID implements CircleService.
-func (c *circleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error) {
 	circle, err := c.FindCircleByID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -120,17 +98,17 @@ func (c *circleService) UpdateCircleAttendingEventByID(circleID int, userID int,
 }
 
 func NewCircleService(
-	circleRepo CircleRepo,
-	userService user.UserService,
+	circleRepo *CircleRepo,
+	userService *user.UserService,
 	utils utils.Utils,
-	refreshTokenService refreshtoken.RefreshTokenService,
-	circleWorkTypeService circle_work_type.CircleWorkTypeService,
-	circleFandomService circle_fandom.CircleFandomService,
-	bookmark bookmark.CircleBookmarkService,
+	refreshTokenService *refreshtoken.RefreshTokenService,
+	circleWorkTypeService *circle_work_type.CircleWorkTypeService,
+	circleFandomService *circle_fandom.CircleFandomService,
+	bookmark *bookmark.CircleBookmarkService,
 	sanitizer *validation.Sanitizer,
-	referralService referral.ReferralService,
-) CircleService {
-	return &circleService{
+	referralService *referral.ReferralService,
+) *CircleService {
+	return &CircleService{
 		circleRepo:            circleRepo,
 		userService:           userService,
 		utils:                 utils,
@@ -144,7 +122,7 @@ func NewCircleService(
 }
 
 // transformCircleRawToCircleOneForPaginationResponse implements CircleService.
-func (c *circleService) transformCircleRawToPaginatedResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse {
+func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse {
 	if len(rows) == 0 {
 		return []circle_dto.CircleOneForPaginationResponse{}
 	}
@@ -265,7 +243,7 @@ func (c *circleService) transformCircleRawToPaginatedResponse(rows []entity.Circ
 }
 
 // UpdateCircleByID implements CircleService.
-func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
 	if body.Name != nil && *body.Name == "" {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
@@ -336,7 +314,7 @@ func (c *circleService) UpdateCircleByID(userID int, circleID int, body *circle_
 }
 
 // FindCircleByID implements CircleService.
-func (c *circleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Error) {
+func (c *CircleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Error) {
 	circle, err := c.circleRepo.FindOneByID(circleID)
 	if err != nil {
 		return nil, err
@@ -346,17 +324,17 @@ func (c *circleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Er
 }
 
 // DeleteBookmarkCircle implements CircleService.
-func (c *circleService) DeleteBookmarkCircle(circleID int, userID int) *domain.Error {
+func (c *CircleService) DeleteBookmarkCircle(circleID int, userID int) *domain.Error {
 	return c.bookmark.DeleteBookmark(circleID, userID)
 }
 
 // SaveBookmarkCircle implements CircleService.
-func (c *circleService) SaveBookmarkCircle(circleID int, userID int) *domain.Error {
+func (c *CircleService) SaveBookmarkCircle(circleID int, userID int) *domain.Error {
 	return c.bookmark.CreateBookmark(circleID, userID)
 }
 
 // transformCircleRawIntoCircleDetailResponse implements CircleService.
-func (c *circleService) transformCircleRawIntoCircleDetailResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse {
+func (c *CircleService) transformCircleRawIntoCircleDetailResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse {
 	if len(rows) == 0 {
 		return []circle_dto.CircleResponse{}
 	}
@@ -487,7 +465,7 @@ func (c *circleService) transformCircleRawIntoCircleDetailResponse(rows []entity
 }
 
 // GetPaginatedBookmarkedCircle implements CircleService.
-func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
+func (c *CircleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
 	rows, err := c.circleRepo.FindBookmarkedCircleByUserID(userID, filter)
 	if err != nil {
 		return nil, err
@@ -508,7 +486,7 @@ func (c *circleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_
 }
 
 // GetPaginatedCircle implements CircleService.
-func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
+func (c *CircleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
 	rows, err := c.circleRepo.FindAllCircles(filter, userID)
 	if err != nil {
 		return nil, err
@@ -529,7 +507,7 @@ func (c *circleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 }
 
 // FindCircleBySlug implements CircleService.
-func (c *circleService) FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error) {
 	if slug == "" {
 		return nil, domain.NewError(400, errors.New("SLUG_IS_EMPTY"), nil)
 	}
@@ -549,7 +527,7 @@ func (c *circleService) FindCircleBySlug(slug string, userID int) (*circle_dto.C
 }
 
 // PublishCircleByID implements CircleService.
-func (c *circleService) PublishCircleByID(circleID int) (*string, *domain.Error) {
+func (c *CircleService) PublishCircleByID(circleID int) (*string, *domain.Error) {
 	if circleID == 0 {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NOT_FOUND"), nil)
 	}
@@ -575,7 +553,7 @@ func (c *circleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 }
 
 // OnboardNewCircle implements CircleService.
-func (c *circleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
 	referralID := 0
 	if body.ReferralCode != "" {
 		ref, err := c.referralService.FindReferralByCode(body.ReferralCode)

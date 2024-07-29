@@ -9,24 +9,17 @@ import (
 	"time"
 )
 
-type FandomService interface {
-	CreateOne(fandom entity.Fandom) (*entity.Fandom, *domain.Error)
-	UpdateOne(id int, fandom entity.Fandom) (*entity.Fandom, *domain.Error)
-	DeleteByID(id int) *domain.Error
-	GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*dto.Pagination[[]entity.Fandom], *domain.Error)
-}
-
-type fandomService struct {
-	fandomRepo FandomRepo
+type FandomService struct {
+	fandomRepo *FandomRepo
 }
 
 // DeleteByID implements FandomService.
-func (f *fandomService) DeleteByID(id int) *domain.Error {
+func (f *FandomService) DeleteByID(id int) *domain.Error {
 	return f.fandomRepo.DeleteByID(id)
 }
 
 // GetPaginatedFandom implements FandomService.
-func (f *fandomService) GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*dto.Pagination[[]entity.Fandom], *domain.Error) {
+func (f *FandomService) GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*dto.Pagination[[]entity.Fandom], *domain.Error) {
 	count, countErr := f.fandomRepo.GetFandomCount(filter)
 	if countErr != nil {
 		return nil, countErr
@@ -44,7 +37,7 @@ func (f *fandomService) GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*d
 }
 
 // UpdateOne implements FandomService.
-func (f *fandomService) UpdateOne(id int, fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
+func (f *FandomService) UpdateOne(id int, fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
 	now := time.Now()
 	return f.fandomRepo.UpdateOne(id, entity.Fandom{
 		Name:      fandom.Name,
@@ -54,12 +47,12 @@ func (f *fandomService) UpdateOne(id int, fandom entity.Fandom) (*entity.Fandom,
 }
 
 // CreateOne implements FandomService.
-func (f *fandomService) CreateOne(fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
+func (f *FandomService) CreateOne(fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
 	return f.fandomRepo.CreateOne(fandom)
 }
 
-func NewFandomService(fandomRepo FandomRepo) FandomService {
-	return &fandomService{
+func NewFandomService(fandomRepo *FandomRepo) *FandomService {
+	return &FandomService{
 		fandomRepo,
 	}
 }

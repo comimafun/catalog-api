@@ -11,18 +11,13 @@ import (
 	"time"
 )
 
-type EventService interface {
-	CreateOne(body event_dto.CreateEventReqeuestBody) (*entity.Event, *domain.Error)
-	GetPaginatedEvents(filter event_dto.GetEventFilter) (*dto.Pagination[[]entity.Event], *domain.Error)
-}
-
-type eventService struct {
-	eventRepository EventRepo
+type EventService struct {
+	eventRepository *EventRepo
 	utils           utils.Utils
 }
 
 // CreateOne implements EventService.
-func (e *eventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entity.Event, *domain.Error) {
+func (e *EventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entity.Event, *domain.Error) {
 	startedAt, err := time.Parse(time.RFC3339, body.StartedAt)
 	if err != nil {
 		return nil, domain.NewError(400, errors.New("INVALID_TIME_FORMAT"), nil)
@@ -61,7 +56,7 @@ func (e *eventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entit
 }
 
 // GetPaginatedEvents implements EventService.
-func (e *eventService) GetPaginatedEvents(filter event_dto.GetEventFilter) (*dto.Pagination[[]entity.Event], *domain.Error) {
+func (e *EventService) GetPaginatedEvents(filter event_dto.GetEventFilter) (*dto.Pagination[[]entity.Event], *domain.Error) {
 	count, countErr := e.eventRepository.FindAllCount(filter)
 	if countErr != nil {
 		return nil, domain.NewError(countErr.Code, countErr.Err, nil)
@@ -77,6 +72,6 @@ func (e *eventService) GetPaginatedEvents(filter event_dto.GetEventFilter) (*dto
 	return &dto.Pagination[[]entity.Event]{Data: events, Metadata: *metadata}, nil
 }
 
-func NewEventService(eventRepository EventRepo, utils utils.Utils) EventService {
-	return &eventService{eventRepository: eventRepository, utils: utils}
+func NewEventService(eventRepository *EventRepo, utils utils.Utils) *EventService {
+	return &EventService{eventRepository: eventRepository, utils: utils}
 }
