@@ -13,7 +13,7 @@ import (
 )
 
 type AuthHandler struct {
-	authService AuthService
+	authService *AuthService
 	validator   *validator.Validate
 }
 
@@ -220,7 +220,7 @@ func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	})
 }
 
-func NewAuthHandler(authService AuthService, validator *validator.Validate) *AuthHandler {
+func NewAuthHandler(authService *AuthService, validator *validator.Validate) *AuthHandler {
 	return &AuthHandler{
 		authService,
 		validator,
