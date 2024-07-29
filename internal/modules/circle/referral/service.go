@@ -9,18 +9,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type ReferralService interface {
-	CreateNewReferral(dto referral_dto.CreateReferralBody) (*entity.Referral, *domain.Error)
-	FindReferralByCode(referralCode string) (*entity.Referral, *domain.Error)
-	FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error)
+type ReferralService struct {
+	repo *ReferralRepo
 }
 
-type referralService struct {
-	repo ReferralRepo
+func NewReferralService(repo *ReferralRepo) *ReferralService {
+	return &ReferralService{repo}
 }
 
 // FindReferralCodeByCircleID implements ReferralService.
-func (r *referralService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
+func (r *ReferralService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
 	ref, err := r.repo.FindOneReferralByCircleID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -34,7 +32,7 @@ func (r *referralService) FindReferralCodeByCircleID(circleID int) (*entity.Refe
 }
 
 // FindReferralByCode implements ReferralService.
-func (r *referralService) FindReferralByCode(referralCode string) (*entity.Referral, *domain.Error) {
+func (r *ReferralService) FindReferralByCode(referralCode string) (*entity.Referral, *domain.Error) {
 	code, err := r.repo.FindOneReferralByCode(referralCode)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -48,7 +46,7 @@ func (r *referralService) FindReferralByCode(referralCode string) (*entity.Refer
 }
 
 // CreateNewReferral implements ReferralService.
-func (r *referralService) CreateNewReferral(dto referral_dto.CreateReferralBody) (*entity.Referral, *domain.Error) {
+func (r *ReferralService) CreateNewReferral(dto referral_dto.CreateReferralBody) (*entity.Referral, *domain.Error) {
 	created, err := r.repo.CreateReferral(
 		&entity.Referral{CircleID: dto.CircleID, ReferralCode: dto.ReferralCode},
 	)
@@ -57,8 +55,4 @@ func (r *referralService) CreateNewReferral(dto referral_dto.CreateReferralBody)
 	}
 
 	return created, nil
-}
-
-func NewReferralService(repo ReferralRepo) ReferralService {
-	return &referralService{repo}
 }

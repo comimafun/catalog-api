@@ -51,7 +51,7 @@ type circleService struct {
 	circleFandomService   circle_fandom.CircleFandomService
 	bookmark              bookmark.CircleBookmarkService
 	sanitizer             *validation.Sanitizer
-	referralService       referral.ReferralService
+	referralService       *referral.ReferralService
 }
 
 // FindReferralCodeByCircleID implements CircleService.
@@ -128,7 +128,7 @@ func NewCircleService(
 	circleFandomService circle_fandom.CircleFandomService,
 	bookmark bookmark.CircleBookmarkService,
 	sanitizer *validation.Sanitizer,
-	referralService referral.ReferralService,
+	referralService *referral.ReferralService,
 ) CircleService {
 	return &circleService{
 		circleRepo:            circleRepo,
