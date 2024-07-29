@@ -23,7 +23,7 @@ type AuthService struct {
 	config              internal_config.Config
 	refreshTokenService *refreshtoken.RefreshTokenService
 	utils               utils.Utils
-	circleService       circle.CircleService
+	circleService       *circle.CircleService
 }
 
 // LogoutByAccessToken implements AuthService.
@@ -258,7 +258,7 @@ func NewAuthService(
 	config internal_config.Config,
 	refreshToken *refreshtoken.RefreshTokenService,
 	utils utils.Utils,
-	circleService circle.CircleService,
+	circleService *circle.CircleService,
 ) *AuthService {
 	return &AuthService{
 		userService,

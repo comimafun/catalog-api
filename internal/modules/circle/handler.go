@@ -14,7 +14,7 @@ import (
 )
 
 type CircleHandler struct {
-	circleService CircleService
+	circleService *CircleService
 	validator     *validator.Validate
 	userService   *user.UserService
 }
@@ -323,7 +323,7 @@ func (h *CircleHandler) DeleteCircleEventAttending(c *fiber.Ctx) error {
 }
 
 func NewCircleHandler(
-	circleService CircleService,
+	circleService *CircleService,
 	validator *validator.Validate,
 	userService *user.UserService,
 	circleBookmarkService *bookmark.CircleBookmarkService,
