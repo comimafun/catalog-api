@@ -21,16 +21,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up dummy env
+        run: |
+          echo "DUMMY_ENV=1" >> $GITHUB_ENV
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.21.1
       - name: Run tests
         run: |
-          make test
+          go test ./tests -v
       - name: Remove label
         uses: actions-ecosystem/action-remove-labels@v1
         if: ${{always()}}
         with:
-          label: run-test
+          labels: run-test
           fail_on_error: false
