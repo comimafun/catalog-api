@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -101,9 +102,72 @@ func getConnUrl(t *testing.T, ctx context.Context) string {
 }
 
 func seedDataForPagination(t *testing.T, db *gorm.DB) {
-	oldStdout := os.Stdout
-	os.Stdout, _ = os.Open(os.DevNull)
-	defer func() { os.Stdout = oldStdout }()
+	err := db.Create([]entity.Event{
+		{
+			Name: "Event 1",
+			Slug: "event-1",
+		},
+		{
+			Name: "Event 2",
+			Slug: "event-2",
+		}, {
+			Name: "Event 3",
+			Slug: "event-3",
+		},
+	}).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fandomFile, err := os.Open("./data/fandom.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fandomFile.Close()
+
+	var fandoms []entity.Fandom
+	if err := json.NewDecoder(fandomFile).Decode(&fandoms); err != nil {
+		t.Fatal(err)
+	}
+
+	fandomModels := []entity.Fandom{}
+	for _, fandom := range fandoms {
+		fandomModel := entity.Fandom{
+			Name:    fandom.Name,
+			Visible: true,
+		}
+		fandomModels = append(fandomModels, fandomModel)
+	}
+	err = db.Create(&fandomModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	workType, err := os.Open("./data/work_type.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer workType.Close()
+
+	var workTypes []entity.WorkType
+	if err := json.NewDecoder(workType).Decode(&workTypes); err != nil {
+		t.Fatal(err)
+	}
+
+	workTypeModels := []entity.WorkType{}
+
+	for _, workType := range workTypes {
+		workTypeModel := entity.WorkType{
+			Name: workType.Name,
+		}
+		workTypeModels = append(workTypeModels, workTypeModel)
+	}
+
+	err = db.Create(&workTypeModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	file, err := os.Open("./data/circle_initial.json")
 	if err != nil {
 		t.Fatal(err)
@@ -111,7 +175,6 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	defer file.Close()
 
 	var circles []CircleJson
-
 	if err := json.NewDecoder(file).Decode(&circles); err != nil {
 		t.Fatal(err)
 	}
@@ -119,6 +182,12 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	circleModels := []entity.Circle{}
 
 	for _, circle := range circles {
+		// Seed the random number generator to ensure different results each time
+		rand.Seed(time.Now().UnixNano())
+
+		// Generate a random number between 1 and 3
+		randomNumber := rand.Intn(3) + 1
+
 		cover := "https://cdn.innercatalog.com/development/covers/0190eefb-669a-75e9-a29c-3b244895c4fb.jpg"
 		picture := "https://cdn.innercatalog.com/profiles/0190c595-24dd-79f3-8f7a-f2b8f9198d3e.png"
 
@@ -132,12 +201,67 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 			UsedReferralCodeID: nil,
 			CoverPictureURL:    &cover,
 			PictureURL:         &picture,
+			EventID:            &randomNumber,
 		}
 
 		circleModels = append(circleModels, circleModel)
 	}
-
 	err = db.Create(&circleModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	circleWorkTypeFile, err := os.Open("./data/circle_worktype_initial.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer circleWorkTypeFile.Close()
+
+	var circleWorkTypes []entity.CircleWorkType
+
+	if err := json.NewDecoder(circleWorkTypeFile).Decode(&circleWorkTypes); err != nil {
+		t.Fatal(err)
+	}
+
+	circleWorkTypeModels := []entity.CircleWorkType{}
+
+	for _, circleWorkType := range circleWorkTypes {
+		circleWorkTypeModel := entity.CircleWorkType{
+			CircleID:   circleWorkType.CircleID,
+			WorkTypeID: circleWorkType.WorkTypeID,
+		}
+		circleWorkTypeModels = append(circleWorkTypeModels, circleWorkTypeModel)
+	}
+
+	err = db.Create(&circleWorkTypeModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	circleFandomFile, err := os.Open("./data/circle_fandom_initial.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer circleFandomFile.Close()
+
+	var circleFandoms []entity.CircleFandom
+
+	if err := json.NewDecoder(circleFandomFile).Decode(&circleFandoms); err != nil {
+		t.Fatal(err)
+	}
+
+	circleFandomModels := []entity.CircleFandom{}
+
+	for _, circleFandom := range circleFandoms {
+		circleFandomModel := entity.CircleFandom{
+			CircleID: circleFandom.CircleID,
+			FandomID: circleFandom.FandomID,
+		}
+		circleFandomModels = append(circleFandomModels, circleFandomModel)
+	}
+
+	err = db.Create(&circleFandomModels).Error
 	if err != nil {
 		t.Fatal(err)
 	}

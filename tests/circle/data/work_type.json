@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "name": "Goods",
+    "deleted_at": null
+  },
+  {
+    "id": 2,
+    "name": "Comission",
+    "deleted_at": null
+  },
+  {
+    "id": 3,
+    "name": "Comic",
+    "deleted_at": null
+  },
+  {
+    "id": 4,
+    "name": "Novel",
+    "deleted_at": null
+  },
+  {
+    "id": 5,
+    "name": "Handmade Craft",
+    "deleted_at": null
+  },
+  {
+    "id": 6,
+    "name": "Photobook General",
+    "deleted_at": null
+  },
+  {
+    "id": 7,
+    "name": "Photobook Cosplay",
+    "deleted_at": null
+  },
+  {
+    "id": 8,
+    "name": "Game",
+    "deleted_at": null
+  },
+  {
+    "id": 9,
+    "name": "Music",
+    "deleted_at": null
+  },
+  {
+    "id": 10,
+    "name": "Artbook",
+    "deleted_at": null
+  }
+]

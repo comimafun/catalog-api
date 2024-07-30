@@ -1,0 +1,378 @@
+[
+  {
+    "id": 1,
+    "name": "Blue Archive"
+  },
+  {
+    "id": 2,
+    "name": "PLAVE"
+  },
+  {
+    "id": 3,
+    "name": "Genshin Impact"
+  },
+  {
+    "id": 4,
+    "name": "Honkai Star Rail"
+  },
+  {
+    "id": 5,
+    "name": "Honkai Impact"
+  },
+  {
+    "id": 6,
+    "name": "Wuthering Waves"
+  },
+  {
+    "id": 7,
+    "name": "Zenless Zone Zero"
+  },
+  {
+    "id": 8,
+    "name": "Granblue Fantasy"
+  },
+  {
+    "id": 9,
+    "name": "Haikyuu"
+  },
+  {
+    "id": 10,
+    "name": "KPOP"
+  },
+  {
+    "id": 11,
+    "name": "TWICE"
+  },
+  {
+    "id": 12,
+    "name": "Arknights"
+  },
+  {
+    "id": 13,
+    "name": "Final Fantasy"
+  },
+  {
+    "id": 14,
+    "name": "Fate"
+  },
+  {
+    "id": 15,
+    "name": "Sousou no Frieren"
+  },
+  {
+    "id": 16,
+    "name": "Oshi no Ko"
+  },
+  {
+    "id": 17,
+    "name": "Bersek"
+  },
+  {
+    "id": 18,
+    "name": "Jojo"
+  },
+  {
+    "id": 19,
+    "name": "VTuber"
+  },
+  {
+    "id": 20,
+    "name": "Hololive"
+  },
+  {
+    "id": 21,
+    "name": "NIKKE"
+  },
+  {
+    "id": 22,
+    "name": "Pokemon"
+  },
+  {
+    "id": 23,
+    "name": "Cosplayer"
+  },
+  {
+    "id": 24,
+    "name": "One Piece"
+  },
+  {
+    "id": 25,
+    "name": "Mashle"
+  },
+  {
+    "id": 26,
+    "name": "Uma Musume"
+  },
+  {
+    "id": 27,
+    "name": "Touhou"
+  },
+  {
+    "id": 28,
+    "name": "Original Works"
+  },
+  {
+    "id": 29,
+    "name": "Kimetsu no Yaiba"
+  },
+  {
+    "id": 30,
+    "name": "ORV"
+  },
+  {
+    "id": 31,
+    "name": "Omniscient Reader's Viewpoint"
+  },
+  {
+    "id": 32,
+    "name": "Valorant"
+  },
+  {
+    "id": 33,
+    "name": "Ghibli"
+  },
+  {
+    "id": 34,
+    "name": "Jujutsu Kaisen"
+  },
+  {
+    "id": 35,
+    "name": "Spy x Family"
+  },
+  {
+    "id": 36,
+    "name": "Atarashii Gakko"
+  },
+  {
+    "id": 37,
+    "name": "Anime"
+  },
+  {
+    "id": 38,
+    "name": "Persona"
+  },
+  {
+    "id": 39,
+    "name": "Attack on Titan"
+  },
+  {
+    "id": 40,
+    "name": "AOT"
+  },
+  {
+    "id": 41,
+    "name": "Boku no Hero Academia"
+  },
+  {
+    "id": 42,
+    "name": "Dungeon Meshi"
+  },
+  {
+    "id": 43,
+    "name": "Hunter x Hunter"
+  },
+  {
+    "id": 44,
+    "name": "Given"
+  },
+  {
+    "id": 45,
+    "name": "Taylor Swift"
+  },
+  {
+    "id": 46,
+    "name": "Blue Lock"
+  },
+  {
+    "id": 47,
+    "name": "Chainsaw Man"
+  },
+  {
+    "id": 48,
+    "name": "Hetalia"
+  },
+  {
+    "id": 49,
+    "name": "Apothecary Diaries"
+  },
+  {
+    "id": 50,
+    "name": "Nijisanji"
+  },
+  {
+    "id": 51,
+    "name": "Vshojo"
+  },
+  {
+    "id": 52,
+    "name": "Solo Leveling"
+  },
+  {
+    "id": 53,
+    "name": "Bochhi the Rock"
+  },
+  {
+    "id": 54,
+    "name": "Kaiju no 8"
+  },
+  {
+    "id": 55,
+    "name": "Evangelion"
+  },
+  {
+    "id": 56,
+    "name": "Tears of Themis"
+  },
+  {
+    "id": 57,
+    "name": "Love Live"
+  },
+  {
+    "id": 58,
+    "name": "Gekkan Shoujo Nozaki"
+  },
+  {
+    "id": 59,
+    "name": "Yuru Camp"
+  },
+  {
+    "id": 60,
+    "name": "Digimon"
+  },
+  {
+    "id": 61,
+    "name": "Tokusatsu"
+  },
+  {
+    "id": 62,
+    "name": "Yugioh"
+  },
+  {
+    "id": 63,
+    "name": "Vanguard"
+  },
+  {
+    "id": 64,
+    "name": "Fate Grand Order"
+  },
+  {
+    "id": 65,
+    "name": "Kantai Collection"
+  },
+  {
+    "id": 66,
+    "name": "Reverse 1999"
+  },
+  {
+    "id": 67,
+    "name": "Punishing Gray Raven"
+  },
+  {
+    "id": 68,
+    "name": "Project Sekai"
+  },
+  {
+    "id": 69,
+    "name": "Vocaloid"
+  },
+  {
+    "id": 70,
+    "name": "Houseki no Kuni"
+  },
+  {
+    "id": 71,
+    "name": "Baldur’s Gate 3"
+  },
+  {
+    "id": 72,
+    "name": "Gundam"
+  },
+  {
+    "id": 73,
+    "name": "Elden Ring"
+  },
+  {
+    "id": 74,
+    "name": "Ensemble Stars"
+  },
+  {
+    "id": 75,
+    "name": "Mecha"
+  },
+  {
+    "id": 76,
+    "name": "Call of Duty"
+  },
+  {
+    "id": 77,
+    "name": "Mortal Kombat"
+  },
+  {
+    "id": 78,
+    "name": "Dune"
+  },
+  {
+    "id": 79,
+    "name": "Overwatch"
+  },
+  {
+    "id": 80,
+    "name": "League of Legends"
+  },
+  {
+    "id": 81,
+    "name": "Marvel"
+  },
+  {
+    "id": 82,
+    "name": "SEVENTEEN"
+  },
+  {
+    "id": 83,
+    "name": "BTS"
+  },
+  {
+    "id": 84,
+    "name": "Identity V"
+  },
+  {
+    "id": 85,
+    "name": "NCT"
+  },
+  {
+    "id": 86,
+    "name": "RoshiDere"
+  },
+  {
+    "id": 87,
+    "name": "Touken Ranbu"
+  },
+  {
+    "id": 88,
+    "name": "LOOKISM"
+  },
+  {
+    "id": 89,
+    "name": "Red Velvet"
+  },
+  {
+    "id": 90,
+    "name": "Bocchi The Rock"
+  },
+  {
+    "id": 91,
+    "name": "Idolmaster"
+  },
+  {
+    "id": 92,
+    "name": "Manhwa"
+  },
+  {
+    "id": 93,
+    "name": "Yaoi"
+  },
+  {
+    "id": 94,
+    "name": "The Beginning After The End"
+  }
+]
