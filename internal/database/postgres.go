@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func New(dsn string) *gorm.DB {
+func New(dsn string, isLogging bool) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		TranslateError: true,
 	})
@@ -28,8 +28,11 @@ func New(dsn string) *gorm.DB {
 	sqlDB.SetMaxOpenConns(50)
 	sqlDB.SetConnMaxLifetime(time.Minute * 30)
 
-	fmt.Println("DB_CONNECTED SUCCESSFULLY")
-	db.Logger = logger.Default.LogMode((logger.Info))
+	fmt.Println("DB_CONNECTED_SUCCESSFULLY")
+
+	if isLogging {
+		db.Logger = logger.Default.LogMode((logger.Info))
+	}
 
 	return db
 }

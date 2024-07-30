@@ -19,11 +19,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var connUrl = ""
 var sleepTime = time.Millisecond * 5
 
 func migrate(db *gorm.DB) {
-	sqlDir := "../migrator/migrations"
+	sqlDir := "../../migrator/migrations"
 
 	files, err := os.ReadDir(sqlDir)
 	if err != nil {
@@ -42,20 +41,17 @@ func migrate(db *gorm.DB) {
 				panic(err)
 			}
 
-			fmt.Printf("Migrated: %s\n", file.Name())
 		}
 	}
 }
 
 func setupDb(dsn string) *gorm.DB {
-	db := database.New(dsn)
+	db := database.New(dsn, false)
 	migrate(db)
 	return db
 }
 
-func TestMain(m *testing.M) {
-	ctx := context.Background()
-
+func getConnUrl(ctx context.Context) string {
 	container, err := postgres.RunContainer(ctx,
 		testcontainers.WithImage("postgres:16"),
 		postgres.WithDatabase("testdb"),
@@ -72,17 +68,23 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not start postgres container: %s", err)
 	}
 
-	connUrl, err = container.ConnectionString(ctx, "sslmode=disable")
+	connUrl, err := container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		log.Fatalf("Could not get connection string: %s", err)
 	}
-	setupDb(connUrl)
+
+	return connUrl
+}
+
+func TestMain(m *testing.M) {
 	res := m.Run()
 	os.Exit(res)
 }
 
 func TestUser(t *testing.T) {
-	db := database.New(connUrl)
+	ctx := context.Background()
+	connUrl := getConnUrl(ctx)
+	db := setupDb(connUrl)
 	userRepo := user.NewUserRepo(db)
 
 	service := user.NewUserService(userRepo)
@@ -100,12 +102,23 @@ func TestUser(t *testing.T) {
 	})
 
 	t.Run("Get user by email", func(t *testing.T) {
+		t.Parallel()
 		as, err := service.FindOneByEmail("test@test.com")
 
 		assert.Nil(t, err)
 		assert.NotNil(t, as)
 
 		assert.Equal(t, "test@test.com", as.Email)
+		assert.Equal(t, 1, as.ID)
+	})
+
+	t.Run("Get user by id", func(t *testing.T) {
+		t.Parallel()
+		as, err := service.FindOneByID(1)
+
+		assert.Nil(t, err)
+		assert.NotNil(t, as)
+
 		assert.Equal(t, 1, as.ID)
 	})
 }
