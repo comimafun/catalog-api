@@ -24,7 +24,7 @@ func New() *FiberServer {
 			ServerHeader: "catalog-be",
 			AppName:      "catalog-be",
 		}),
-		Pg:        database.New(dsn),
+		Pg:        database.New(dsn, true),
 		Validator: validator.New(),
 		S3:        database.NewS3(),
 	}
