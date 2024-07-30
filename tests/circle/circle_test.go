@@ -308,7 +308,7 @@ func TestCircle(t *testing.T) {
 
 		t.Run("Test day filter", func(t *testing.T) {
 			t.Run("Test single day", func(t *testing.T) {
-				day := entity.Day("1")
+				day := entity.Day("first")
 				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
 					Page:  1,
 					Limit: 20,
@@ -319,8 +319,8 @@ func TestCircle(t *testing.T) {
 
 				for _, circle := range data.Data {
 					assert.Equal(t, day, *circle.Day)
-					assert.NotEqual(t, entity.Day("2"), *circle.Day)
-					assert.NotEqual(t, entity.Day("3"), *circle.Day)
+					assert.NotEqual(t, entity.Day("second"), *circle.Day)
+					assert.NotEqual(t, entity.Day("both"), *circle.Day)
 				}
 			})
 		})
