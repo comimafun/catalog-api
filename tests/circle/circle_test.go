@@ -492,5 +492,141 @@ func TestCircle(t *testing.T) {
 				}
 			})
 		})
+
+		t.Run("Test filter by work type", func(t *testing.T) {
+			t.Run("Test single work type", func(t *testing.T) {
+				workTypeIDS := []int{1}
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:        1,
+					Limit:       20,
+					WorkTypeIDs: workTypeIDS,
+				}, 0)
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					workTypePaginationMap := make(map[int]bool)
+
+					for _, workType := range circle.WorkType {
+						workTypePaginationMap[workType.ID] = true
+					}
+
+					for _, workTypeID := range workTypeIDS {
+						assert.Equal(t, true, workTypePaginationMap[workTypeID])
+					}
+				}
+
+			})
+
+			t.Run("Test multiple work type", func(t *testing.T) {
+				workTypeIDS := []int{1, 3, 5, 10}
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:        1,
+					Limit:       20,
+					WorkTypeIDs: workTypeIDS,
+				}, 0)
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					currentCircleWorkType := make(map[int]bool)
+					for _, workType := range circle.WorkType {
+						currentCircleWorkType[workType.ID] = true
+					}
+
+					found := false
+					for _, workTypeID := range workTypeIDS {
+						if currentCircleWorkType[workTypeID] {
+							found = true
+							break
+						}
+					}
+
+					assert.True(t, found)
+				}
+
+			})
+
+			t.Run("Test filter by fandom", func(t *testing.T) {
+				t.Run("Test single fandom", func(t *testing.T) {
+					// create random fandom ids from 1-94
+					randomFandomID := rand.Intn(94) + 1
+					fandomIDS := []int{randomFandomID}
+
+					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:      1,
+						Limit:     20,
+						FandomIDs: fandomIDS,
+					}, 0)
+					assert.Nil(t, err)
+
+					for _, circle := range data.Data {
+						currentCircleFandom := make(map[int]bool)
+						for _, fandom := range circle.Fandom {
+							currentCircleFandom[fandom.ID] = true
+						}
+
+						found := false
+						for _, fandomID := range fandomIDS {
+							if currentCircleFandom[fandomID] {
+								found = true
+								break
+							}
+						}
+
+						assert.True(t, found)
+					}
+				})
+
+				t.Run("Test multiple fandom", func(t *testing.T) {
+
+					var fandomIDS []int
+					maxFandomID := rand.Intn(94) + 1
+					for i := 1; i <= maxFandomID; i++ {
+						fandomIDS = append(fandomIDS, i)
+					}
+
+					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:      1,
+						Limit:     20,
+						FandomIDs: fandomIDS,
+					}, 0)
+					assert.Nil(t, err)
+
+					for _, circle := range data.Data {
+						currentCircleFandom := make(map[int]bool)
+						for _, fandom := range circle.Fandom {
+							currentCircleFandom[fandom.ID] = true
+						}
+
+						found := false
+						for _, fandomID := range fandomIDS {
+							if currentCircleFandom[fandomID] {
+								found = true
+								break
+							}
+						}
+
+						assert.True(t, found)
+					}
+				})
+			})
+
+		})
+
+		t.Run("Test filter by event", func(t *testing.T) {
+			t.Run("Test single event", func(t *testing.T) {
+				event := "event-1"
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:  1,
+					Limit: 20,
+					Event: event,
+				}, 0)
+
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					assert.Equal(t, event, circle.Event.Slug)
+				}
+			})
+		})
 	})
 }
