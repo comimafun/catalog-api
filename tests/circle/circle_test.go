@@ -29,7 +29,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleJson struct {
+type circleJson struct {
 	Name             string     `json:"name"`
 	Slug             string     `json:"slug"`
 	Rating           *string    `json:"rating"` // enum GA, PG, M
@@ -53,19 +53,19 @@ func migrate(t *testing.T, db *gorm.DB) {
 
 	files, err := os.ReadDir(sqlDir)
 	if err != nil {
-		panic(err)
+		t.Fatalf("Error reading directory: %s", err)
 	}
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
 			sqlContent, err := os.ReadFile(fmt.Sprintf("%s/%s", sqlDir, file.Name()))
 			if err != nil {
-				panic(err)
+				t.Fatalf("Error reading directory: %s", err)
 			}
 
 			err = db.Exec(string(sqlContent)).Error
 			if err != nil {
-				panic(err)
+				t.Fatalf("Error reading directory: %s", err)
 			}
 		}
 	}
@@ -101,7 +101,7 @@ func getConnUrl(t *testing.T, ctx context.Context) string {
 	return connUrl
 }
 
-func seedDataForPagination(t *testing.T, db *gorm.DB) {
+func seedEvent(t *testing.T, db *gorm.DB) {
 	err := db.Create([]entity.Event{
 		{
 			Name: "Event 1",
@@ -115,10 +115,13 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 			Slug: "event-3",
 		},
 	}).Error
+
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedFandom(t *testing.T, db *gorm.DB) {
 	fandomFile, err := os.Open("./data/fandom.json")
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +145,9 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedWorkType(t *testing.T, db *gorm.DB) {
 	workType, err := os.Open("./data/work_type.json")
 	if err != nil {
 		t.Fatal(err)
@@ -167,14 +172,16 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedCircle(t *testing.T, db *gorm.DB) {
 	file, err := os.Open("./data/circle_initial.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer file.Close()
 
-	var circles []CircleJson
+	var circles []circleJson
 	if err := json.NewDecoder(file).Decode(&circles); err != nil {
 		t.Fatal(err)
 	}
@@ -210,7 +217,9 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedCircleWorkType(t *testing.T, db *gorm.DB) {
 	circleWorkTypeFile, err := os.Open("./data/circle_worktype_initial.json")
 	if err != nil {
 		t.Fatal(err)
@@ -237,7 +246,9 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedCircleFandom(t *testing.T, db *gorm.DB) {
 	circleFandomFile, err := os.Open("./data/circle_fandom_initial.json")
 	if err != nil {
 		t.Fatal(err)
@@ -265,7 +276,15 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedDataForPagination(t *testing.T, db *gorm.DB) {
+	seedEvent(t, db)
+	seedFandom(t, db)
+	seedWorkType(t, db)
+	seedCircle(t, db)
+	seedCircleWorkType(t, db)
+	seedCircleFandom(t, db)
 }
 
 func TestMain(t *testing.M) {
@@ -349,6 +368,35 @@ func TestCircle(t *testing.T) {
 				for i, circle := range data.Data {
 					for j := i + 1; j < len(data.Data); j++ {
 						assert.NotEqual(t, circle.ID, data.Data[j].ID)
+					}
+				}
+			})
+
+			t.Run("first to third page", func(t *testing.T) {
+				var allDatas []circle_dto.CircleOneForPaginationResponse
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:  1,
+					Limit: 20}, 0)
+				assert.Nil(t, err)
+
+				data2, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page: 2,
+				}, 0)
+				assert.Nil(t, err)
+
+				data3, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:  3,
+					Limit: 20,
+				}, 0)
+				assert.Nil(t, err)
+
+				allDatas = append(allDatas, data.Data...)
+				allDatas = append(allDatas, data2.Data...)
+				allDatas = append(allDatas, data3.Data...)
+
+				for i, circle := range allDatas {
+					for j := i + 1; j < len(allDatas); j++ {
+						assert.NotEqual(t, circle.ID, allDatas[j].ID)
 					}
 				}
 			})
