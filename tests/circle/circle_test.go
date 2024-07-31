@@ -372,27 +372,23 @@ func TestCircle(t *testing.T) {
 				}
 			})
 
-			t.Run("first to third page", func(t *testing.T) {
+			t.Run("all pages", func(t *testing.T) {
 				var allDatas []circle_dto.CircleOneForPaginationResponse
 				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
 					Page:  1,
 					Limit: 20}, 0)
 				assert.Nil(t, err)
 
-				data2, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
-					Page: 2,
-				}, 0)
-				assert.Nil(t, err)
-
-				data3, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
-					Page:  3,
-					Limit: 20,
-				}, 0)
-				assert.Nil(t, err)
-
 				allDatas = append(allDatas, data.Data...)
-				allDatas = append(allDatas, data2.Data...)
-				allDatas = append(allDatas, data3.Data...)
+
+				for i := 2; i <= data.Metadata.TotalPages; i++ {
+					data, err = instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:  i,
+						Limit: 20,
+					}, 0)
+					assert.Nil(t, err)
+					allDatas = append(allDatas, data.Data...)
+				}
 
 				for i, circle := range allDatas {
 					for j := i + 1; j < len(allDatas); j++ {
