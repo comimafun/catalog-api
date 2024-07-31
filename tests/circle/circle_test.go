@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"testing"
@@ -28,7 +29,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleJson struct {
+type circleJson struct {
 	Name             string     `json:"name"`
 	Slug             string     `json:"slug"`
 	Rating           *string    `json:"rating"` // enum GA, PG, M
@@ -52,19 +53,19 @@ func migrate(t *testing.T, db *gorm.DB) {
 
 	files, err := os.ReadDir(sqlDir)
 	if err != nil {
-		panic(err)
+		t.Fatalf("Error reading directory: %s", err)
 	}
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), "up.sql") {
 			sqlContent, err := os.ReadFile(fmt.Sprintf("%s/%s", sqlDir, file.Name()))
 			if err != nil {
-				panic(err)
+				t.Fatalf("Error reading directory: %s", err)
 			}
 
 			err = db.Exec(string(sqlContent)).Error
 			if err != nil {
-				panic(err)
+				t.Fatalf("Error reading directory: %s", err)
 			}
 		}
 	}
@@ -100,18 +101,87 @@ func getConnUrl(t *testing.T, ctx context.Context) string {
 	return connUrl
 }
 
-func seedDataForPagination(t *testing.T, db *gorm.DB) {
-	oldStdout := os.Stdout
-	os.Stdout, _ = os.Open(os.DevNull)
-	defer func() { os.Stdout = oldStdout }()
+func seedEvent(t *testing.T, db *gorm.DB) {
+	err := db.Create([]entity.Event{
+		{
+			Name: "Event 1",
+			Slug: "event-1",
+		},
+		{
+			Name: "Event 2",
+			Slug: "event-2",
+		}, {
+			Name: "Event 3",
+			Slug: "event-3",
+		},
+	}).Error
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedFandom(t *testing.T, db *gorm.DB) {
+	fandomFile, err := os.Open("./data/fandom.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fandomFile.Close()
+
+	var fandoms []entity.Fandom
+	if err := json.NewDecoder(fandomFile).Decode(&fandoms); err != nil {
+		t.Fatal(err)
+	}
+
+	fandomModels := []entity.Fandom{}
+	for _, fandom := range fandoms {
+		fandomModel := entity.Fandom{
+			Name:    fandom.Name,
+			Visible: true,
+		}
+		fandomModels = append(fandomModels, fandomModel)
+	}
+	err = db.Create(&fandomModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedWorkType(t *testing.T, db *gorm.DB) {
+	workType, err := os.Open("./data/work_type.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer workType.Close()
+
+	var workTypes []entity.WorkType
+	if err := json.NewDecoder(workType).Decode(&workTypes); err != nil {
+		t.Fatal(err)
+	}
+
+	workTypeModels := []entity.WorkType{}
+
+	for _, workType := range workTypes {
+		workTypeModel := entity.WorkType{
+			Name: workType.Name,
+		}
+		workTypeModels = append(workTypeModels, workTypeModel)
+	}
+
+	err = db.Create(&workTypeModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedCircle(t *testing.T, db *gorm.DB) {
 	file, err := os.Open("./data/circle_initial.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer file.Close()
 
-	var circles []CircleJson
-
+	var circles []circleJson
 	if err := json.NewDecoder(file).Decode(&circles); err != nil {
 		t.Fatal(err)
 	}
@@ -119,6 +189,12 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 	circleModels := []entity.Circle{}
 
 	for _, circle := range circles {
+		// Seed the random number generator to ensure different results each time
+		rand.Seed(time.Now().UnixNano())
+
+		// Generate a random number between 1 and 3
+		randomNumber := rand.Intn(3) + 1
+
 		cover := "https://cdn.innercatalog.com/development/covers/0190eefb-669a-75e9-a29c-3b244895c4fb.jpg"
 		picture := "https://cdn.innercatalog.com/profiles/0190c595-24dd-79f3-8f7a-f2b8f9198d3e.png"
 
@@ -132,16 +208,83 @@ func seedDataForPagination(t *testing.T, db *gorm.DB) {
 			UsedReferralCodeID: nil,
 			CoverPictureURL:    &cover,
 			PictureURL:         &picture,
+			EventID:            &randomNumber,
 		}
 
 		circleModels = append(circleModels, circleModel)
 	}
-
 	err = db.Create(&circleModels).Error
 	if err != nil {
 		t.Fatal(err)
 	}
+}
 
+func seedCircleWorkType(t *testing.T, db *gorm.DB) {
+	circleWorkTypeFile, err := os.Open("./data/circle_worktype_initial.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer circleWorkTypeFile.Close()
+
+	var circleWorkTypes []entity.CircleWorkType
+
+	if err := json.NewDecoder(circleWorkTypeFile).Decode(&circleWorkTypes); err != nil {
+		t.Fatal(err)
+	}
+
+	circleWorkTypeModels := []entity.CircleWorkType{}
+
+	for _, circleWorkType := range circleWorkTypes {
+		circleWorkTypeModel := entity.CircleWorkType{
+			CircleID:   circleWorkType.CircleID,
+			WorkTypeID: circleWorkType.WorkTypeID,
+		}
+		circleWorkTypeModels = append(circleWorkTypeModels, circleWorkTypeModel)
+	}
+
+	err = db.Create(&circleWorkTypeModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedCircleFandom(t *testing.T, db *gorm.DB) {
+	circleFandomFile, err := os.Open("./data/circle_fandom_initial.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer circleFandomFile.Close()
+
+	var circleFandoms []entity.CircleFandom
+
+	if err := json.NewDecoder(circleFandomFile).Decode(&circleFandoms); err != nil {
+		t.Fatal(err)
+	}
+
+	circleFandomModels := []entity.CircleFandom{}
+
+	for _, circleFandom := range circleFandoms {
+		circleFandomModel := entity.CircleFandom{
+			CircleID: circleFandom.CircleID,
+			FandomID: circleFandom.FandomID,
+		}
+		circleFandomModels = append(circleFandomModels, circleFandomModel)
+	}
+
+	err = db.Create(&circleFandomModels).Error
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func seedDataForPagination(t *testing.T, db *gorm.DB) {
+	seedEvent(t, db)
+	seedFandom(t, db)
+	seedWorkType(t, db)
+	seedCircle(t, db)
+	seedCircleWorkType(t, db)
+	seedCircleFandom(t, db)
 }
 
 func TestMain(t *testing.M) {
@@ -225,6 +368,31 @@ func TestCircle(t *testing.T) {
 				for i, circle := range data.Data {
 					for j := i + 1; j < len(data.Data); j++ {
 						assert.NotEqual(t, circle.ID, data.Data[j].ID)
+					}
+				}
+			})
+
+			t.Run("all pages", func(t *testing.T) {
+				var allDatas []circle_dto.CircleOneForPaginationResponse
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:  1,
+					Limit: 20}, 0)
+				assert.Nil(t, err)
+
+				allDatas = append(allDatas, data.Data...)
+
+				for i := 2; i <= data.Metadata.TotalPages; i++ {
+					data, err = instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:  i,
+						Limit: 20,
+					}, 0)
+					assert.Nil(t, err)
+					allDatas = append(allDatas, data.Data...)
+				}
+
+				for i, circle := range allDatas {
+					for j := i + 1; j < len(allDatas); j++ {
+						assert.NotEqual(t, circle.ID, allDatas[j].ID)
 					}
 				}
 			})
@@ -321,6 +489,142 @@ func TestCircle(t *testing.T) {
 					assert.Equal(t, day, *circle.Day)
 					assert.NotEqual(t, entity.Day("second"), *circle.Day)
 					assert.NotEqual(t, entity.Day("both"), *circle.Day)
+				}
+			})
+		})
+
+		t.Run("Test filter by work type", func(t *testing.T) {
+			t.Run("Test single work type", func(t *testing.T) {
+				workTypeIDS := []int{1}
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:        1,
+					Limit:       20,
+					WorkTypeIDs: workTypeIDS,
+				}, 0)
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					workTypePaginationMap := make(map[int]bool)
+
+					for _, workType := range circle.WorkType {
+						workTypePaginationMap[workType.ID] = true
+					}
+
+					for _, workTypeID := range workTypeIDS {
+						assert.Equal(t, true, workTypePaginationMap[workTypeID])
+					}
+				}
+
+			})
+
+			t.Run("Test multiple work type", func(t *testing.T) {
+				workTypeIDS := []int{1, 3, 5, 10}
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:        1,
+					Limit:       20,
+					WorkTypeIDs: workTypeIDS,
+				}, 0)
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					currentCircleWorkType := make(map[int]bool)
+					for _, workType := range circle.WorkType {
+						currentCircleWorkType[workType.ID] = true
+					}
+
+					found := false
+					for _, workTypeID := range workTypeIDS {
+						if currentCircleWorkType[workTypeID] {
+							found = true
+							break
+						}
+					}
+
+					assert.True(t, found)
+				}
+
+			})
+
+			t.Run("Test filter by fandom", func(t *testing.T) {
+				t.Run("Test single fandom", func(t *testing.T) {
+					// create random fandom ids from 1-94
+					randomFandomID := rand.Intn(94) + 1
+					fandomIDS := []int{randomFandomID}
+
+					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:      1,
+						Limit:     20,
+						FandomIDs: fandomIDS,
+					}, 0)
+					assert.Nil(t, err)
+
+					for _, circle := range data.Data {
+						currentCircleFandom := make(map[int]bool)
+						for _, fandom := range circle.Fandom {
+							currentCircleFandom[fandom.ID] = true
+						}
+
+						found := false
+						for _, fandomID := range fandomIDS {
+							if currentCircleFandom[fandomID] {
+								found = true
+								break
+							}
+						}
+
+						assert.True(t, found)
+					}
+				})
+
+				t.Run("Test multiple fandom", func(t *testing.T) {
+
+					var fandomIDS []int
+					maxFandomID := rand.Intn(94) + 1
+					for i := 1; i <= maxFandomID; i++ {
+						fandomIDS = append(fandomIDS, i)
+					}
+
+					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+						Page:      1,
+						Limit:     20,
+						FandomIDs: fandomIDS,
+					}, 0)
+					assert.Nil(t, err)
+
+					for _, circle := range data.Data {
+						currentCircleFandom := make(map[int]bool)
+						for _, fandom := range circle.Fandom {
+							currentCircleFandom[fandom.ID] = true
+						}
+
+						found := false
+						for _, fandomID := range fandomIDS {
+							if currentCircleFandom[fandomID] {
+								found = true
+								break
+							}
+						}
+
+						assert.True(t, found)
+					}
+				})
+			})
+
+		})
+
+		t.Run("Test filter by event", func(t *testing.T) {
+			t.Run("Test single event", func(t *testing.T) {
+				event := "event-1"
+				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					Page:  1,
+					Limit: 20,
+					Event: event,
+				}, 0)
+
+				assert.Nil(t, err)
+
+				for _, circle := range data.Data {
+					assert.Equal(t, event, circle.Event.Slug)
 				}
 			})
 		})
