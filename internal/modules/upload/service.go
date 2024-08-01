@@ -42,6 +42,7 @@ type UploadService struct {
 // randomizedFilename implements UploadService.
 func (u *UploadService) randomizedFilename(currentName string) (string, *domain.Error) {
 	uuid, err := uuid.NewV7()
+
 	if err != nil {
 		return "", domain.NewError(500, err, nil)
 	}
