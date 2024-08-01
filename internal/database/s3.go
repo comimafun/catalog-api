@@ -11,15 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func NewS3() *s3.Client {
-	var accountId = os.Getenv("ACCOUNT_ID")
+func NewS3(endpoint aws.Endpoint) *s3.Client {
 	var accessKeyId = os.Getenv("ACCOUNT_KEY_ID")
 	var accessKeySecret = os.Getenv("ACCOUNT_KEY_SECRET")
 
 	r2Resolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL: fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId),
-		}, nil
+		return endpoint, nil
 	})
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
