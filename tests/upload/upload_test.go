@@ -15,6 +15,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/localstack"
@@ -71,26 +72,76 @@ func newUploadInstance(client *s3.Client) *uploadInstance {
 	}
 }
 
+func createFileHeader(path string, contentType string) *multipart.FileHeader {
+	// open the file
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	// create a buffer to hold the file in memory
+	var buff bytes.Buffer
+	buffWriter := io.Writer(&buff)
+
+	// create a new form and create a new file field
+	formWriter := multipart.NewWriter(buffWriter)
+	formPart, err := formWriter.CreateFormFile("file", filepath.Base(file.Name()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// copy the content of the file to the form's file field
+	if _, err := io.Copy(formPart, file); err != nil {
+		log.Fatal(err)
+	}
+
+	// close the form writer after the copying process is finished
+	// I don't use defer in here to avoid unexpected EOF error
+	formWriter.Close()
+
+	// transform the bytes buffer into a form reader
+	buffReader := bytes.NewReader(buff.Bytes())
+	formReader := multipart.NewReader(buffReader, formWriter.Boundary())
+
+	// read the form components with max stored memory of 1MB
+	multipartForm, err := formReader.ReadForm(1 << 20)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// return the multipart file header
+	files, exists := multipartForm.File["file"]
+	if !exists || len(files) == 0 {
+		log.Fatal("multipart file not exists")
+	}
+
+	fileHeader := files[0]
+	fileHeader.Header.Set("Content-Type", contentType)
+
+	return fileHeader
+}
+
+func isUUID(s string) bool {
+	_, err := uuid.Parse(s)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func TestUpload(t *testing.T) {
+	t.Parallel()
+	bucketName := os.Getenv("BUCKET_NAME")
+	appStage := os.Getenv("APP_STAGE")
 	ctx := context.Background()
 	client := createS3Client(ctx, t)
 	// create bucket
 	_, err := client.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket: aws.String("localstack"),
+		Bucket: aws.String(bucketName),
 	})
 	if err != nil {
 		t.Logf("Error creating bucket: %s", err)
-	}
-
-	// get bucket list
-	listBucketOutput, err := client.ListBuckets(ctx, &s3.ListBucketsInput{})
-
-	if err != nil {
-		t.Logf("Error listing buckets: %s", err)
-	}
-
-	for _, bucket := range listBucketOutput.Buckets {
-		t.Logf("Bucket: %s", *bucket.Name)
 	}
 
 	instance := newUploadInstance(client)
@@ -98,57 +149,67 @@ func TestUpload(t *testing.T) {
 		t.Fatal("Error creating S3 client")
 	}
 
-	t.Run("Test upload .jpeg accepted", func(t *testing.T) {
-		// open the file
-		file, err := os.Open("./data/accepted_jpeg.jpeg")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
+	t.Run("Test upload covers", func(t *testing.T) {
+		t.Run("Test upload covers success", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/accepted_jpeg.jpeg", "image/jpeg")
+			_, uploadErr := instance.uploadService.UploadImage("covers", fileHeader)
+			if uploadErr != nil {
+				t.Logf("Error uploading image: %s", uploadErr.Err.Error())
+			}
+			assert.Nil(t, uploadErr)
+		})
+		t.Run("Test upload covers file too large", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/4mb.jpg", "image/jpg")
+			_, uploadErr := instance.uploadService.UploadImage("covers", fileHeader)
+			assert.NotNil(t, uploadErr)
+			assert.Equal(t, "FILE_SIZE_TOO_LARGE", uploadErr.Err.Error())
+		})
 
-		// create a buffer to hold the file in memory
-		var buff bytes.Buffer
-		buffWriter := io.Writer(&buff)
+		t.Run("Incorrect file type", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/dummies.pdf", "application/pdf")
+			_, uploadErr := instance.uploadService.UploadImage("covers", fileHeader)
+			assert.NotNil(t, uploadErr)
+			assert.Equal(t, "FILE_TYPE_INVALID", uploadErr.Err.Error())
+		})
+	})
 
-		// create a new form and create a new file field
-		formWriter := multipart.NewWriter(buffWriter)
-		formPart, err := formWriter.CreateFormFile("file", filepath.Base(file.Name()))
-		if err != nil {
-			log.Fatal(err)
-		}
+	t.Run("Test upload products", func(t *testing.T) {
+		t.Run("Test upload product successs", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/4mb.jpg", "image/jpg")
+			path, uploadErr := instance.uploadService.UploadImage("products", fileHeader)
+			assert.Nil(t, uploadErr)
+			assert.NotEmpty(t, path)
+			assert.Contains(t, path, "products")
+			assert.Contains(t, path, appStage)
 
-		// copy the content of the file to the form's file field
-		if _, err := io.Copy(formPart, file); err != nil {
-			log.Fatal(err)
-		}
+			filename := filepath.Base(path)
+			extension := filepath.Ext(filename)
+			filenameWithoutExt := filename[0 : len(filename)-len(extension)]
+			assert.True(t, isUUID(filenameWithoutExt))
+		})
+	})
 
-		// close the form writer after the copying process is finished
-		// I don't use defer in here to avoid unexpected EOF error
-		formWriter.Close()
+	t.Run("Test upload descriptions", func(t *testing.T) {
+		t.Run("Test upload description successs", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/accepted_webp.webp", "image/webp")
+			path, uploadErr := instance.uploadService.UploadImage("descriptions", fileHeader)
+			assert.Nil(t, uploadErr)
+			assert.NotEmpty(t, path)
+			assert.Contains(t, path, "descriptions")
+			assert.Contains(t, path, appStage)
 
-		// transform the bytes buffer into a form reader
-		buffReader := bytes.NewReader(buff.Bytes())
-		formReader := multipart.NewReader(buffReader, formWriter.Boundary())
+			filename := filepath.Base(path)
+			extension := filepath.Ext(filename)
+			filenameWithoutExt := filename[0 : len(filename)-len(extension)]
+			assert.True(t, isUUID(filenameWithoutExt))
+		})
 
-		// read the form components with max stored memory of 1MB
-		multipartForm, err := formReader.ReadForm(1 << 20)
-		if err != nil {
-			log.Fatal(err)
-		}
+		t.Run("Test upload description failed file too large", func(t *testing.T) {
+			fileHeader := createFileHeader("./data/4mb.jpg", "image/jpg")
+			_, uploadErr := instance.uploadService.UploadImage("descriptions", fileHeader)
+			assert.NotNil(t, uploadErr)
+			assert.Equal(t, "FILE_SIZE_TOO_LARGE", uploadErr.Err.Error())
 
-		// return the multipart file header
-		files, exists := multipartForm.File["file"]
-		if !exists || len(files) == 0 {
-			log.Fatal("multipart file not exists")
-		}
-
-		fileHeader := files[0]
-		fileHeader.Header.Set("Content-Type", "image/jpeg")
-
-		_, uploadErr := instance.uploadService.UploadImage("products", fileHeader)
-		if uploadErr != nil {
-			t.Logf("Error uploading image: %s", uploadErr.Err.Error())
-		}
-		assert.Nil(t, uploadErr)
+		})
 	})
 }
