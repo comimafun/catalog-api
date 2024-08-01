@@ -124,10 +124,7 @@ func createFileHeader(path string, contentType string) *multipart.FileHeader {
 
 func isUUID(s string) bool {
 	_, err := uuid.Parse(s)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func TestUpload(t *testing.T) {
