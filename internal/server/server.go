@@ -34,7 +34,7 @@ func New() *FiberServer {
 		}),
 		Pg:        database.New(dsn, true),
 		Validator: validator.New(),
-		S3:        database.NewS3(s3Endpoint),
+		S3:        database.NewS3(s3Endpoint, "auto"),
 	}
 
 	return server
