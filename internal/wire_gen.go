@@ -17,6 +17,7 @@ import (
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/image_optimization"
 	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/upload"
@@ -69,6 +70,8 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	productService := product.NewProductService(productRepo)
 	productHandler := product.NewProductHandler(productService, validate)
 	referralHandler := referral.NewReferralHandler(referralService, validate)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler)
+	imageOptimizationService := image_optimization.NewImageOptimizationService(s3_2)
+	imageOptimizationHandler := image_optimization.NewImageOptimizationHandler(imageOptimizationService, validate)
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler, imageOptimizationHandler)
 	return http
 }

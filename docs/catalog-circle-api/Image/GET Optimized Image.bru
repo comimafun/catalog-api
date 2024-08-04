@@ -1,0 +1,16 @@
+meta {
+  name: GET Optimized Image
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{hostnamev1}}/image?width=500&height=500
+  body: none
+  auth: none
+}
+
+query {
+  width: 500
+  height: 500
+}

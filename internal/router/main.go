@@ -7,6 +7,7 @@ import (
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/image_optimization"
 	"catalog-be/internal/modules/product"
 	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/work_type"
@@ -15,15 +16,16 @@ import (
 )
 
 type HTTP struct {
-	auth           *auth.AuthHandler
-	authMiddleware *middlewares.AuthMiddleware
-	fandom         *fandom.FandomHandler
-	workType       *work_type.WorkTypeHandler
-	circle         *circle.CircleHandler
-	event          *event.EventHandler
-	upload         *upload.UploadHandler
-	product        *product.ProductHandler
-	referral       *referral.ReferralHandler
+	auth              *auth.AuthHandler
+	authMiddleware    *middlewares.AuthMiddleware
+	fandom            *fandom.FandomHandler
+	workType          *work_type.WorkTypeHandler
+	circle            *circle.CircleHandler
+	event             *event.EventHandler
+	upload            *upload.UploadHandler
+	product           *product.ProductHandler
+	referral          *referral.ReferralHandler
+	imageOptimization *image_optimization.ImageOptimizationHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -89,6 +91,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	referral := v1.Group("/referral")
 	referral.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.referral.CreateReferral)
+
+	image := v1.Group("/image")
+	image.Get("/", h.imageOptimization.GetOptimizedImage)
 }
 
 func NewHTTP(
@@ -101,6 +106,7 @@ func NewHTTP(
 	upload *upload.UploadHandler,
 	product *product.ProductHandler,
 	referral *referral.ReferralHandler,
+	imageOptimization *image_optimization.ImageOptimizationHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -112,5 +118,6 @@ func NewHTTP(
 		upload,
 		product,
 		referral,
+		imageOptimization,
 	}
 }

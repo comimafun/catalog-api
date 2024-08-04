@@ -127,8 +127,8 @@ func (a *AuthService) GetAuthURL() string {
 	return a.config.AuthCodeURL()
 }
 
-// registerWithGoogle implements AuthService.
-func (a *AuthService) registerWithGoogle(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error) {
+// register implements AuthService.
+func (a *AuthService) register(user *auth_dto.GoogleUserData) (*entity.User, *domain.Error) {
 	randString := a.utils.GenerateRandomCode(10)
 	hash, hashingErr := a.utils.HashPassword(randString)
 	if hashingErr != nil {
@@ -238,7 +238,7 @@ func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 		return login, nil
 	}
 
-	newUser, newUserErr := a.registerWithGoogle(user)
+	newUser, newUserErr := a.register(user)
 	if newUserErr != nil {
 		return nil, newUserErr
 	}

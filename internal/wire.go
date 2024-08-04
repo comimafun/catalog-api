@@ -14,6 +14,7 @@ import (
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
+	"catalog-be/internal/modules/image_optimization"
 	"catalog-be/internal/modules/product"
 	refreshtoken "catalog-be/internal/modules/refresh_token"
 	"catalog-be/internal/modules/upload"
@@ -79,6 +80,9 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3 *s3.Client) 
 
 		upload.NewUploadHandler,
 		upload.NewUploadService,
+
+		image_optimization.NewImageOptimizationService,
+		image_optimization.NewImageOptimizationHandler,
 
 		validation.NewSanitizer,
 		middlewares.NewAuthMiddleware,
