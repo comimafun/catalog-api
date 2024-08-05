@@ -44,12 +44,13 @@ func New() *FiberServer {
 func SetDsn() string {
 	utilsUtils := utils.NewUtils()
 	result := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=Asia/Jakarta",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		utilsUtils.GetEnv("DB_HOST", "localhost"),
 		utilsUtils.GetEnv("DB_PORT", "5432"),
 		utilsUtils.GetEnv("DB_USERNAME", "postgres"),
 		utilsUtils.GetEnv("DB_PASSWORD", "postgres"),
 		utilsUtils.GetEnv("DB_DATABASE", ""),
+		utilsUtils.GetEnv("DB_SSLMODE", "disable"),
 	)
 	return result
 }
