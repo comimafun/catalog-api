@@ -33,7 +33,7 @@ docker-down:
 # Test the application
 test:
 	@echo "Testing..."
-	@go test ./tests -v
+	@go test ./tests/... -v
 
 # Clean the binary
 clean:
@@ -64,11 +64,11 @@ create-migration:
 
 migrate-up:
 	@read -p "how many steps to migrate up? " steps; \
-	migrate -path migrator/migrations -database "${DB_URL}" up $$steps
+	migrate -path migrator/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE}" up $$steps
 
 migrate-down:
 	@read -p "how many steps to migrate down? " steps; \
-	migrate -path migrator/migrations -database "${DB_URL}" down $$steps
+	migrate -path migrator/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE}" down $$steps
 
 
 

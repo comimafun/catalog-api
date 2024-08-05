@@ -12,7 +12,7 @@ import (
 )
 
 type ProductHandler struct {
-	productService ProductService
+	productService *ProductService
 	validator      *validator.Validate
 }
 
@@ -182,7 +182,7 @@ func (p *ProductHandler) DeleteOneProduct(c *fiber.Ctx) error {
 
 }
 
-func NewProductHandler(productService ProductService, validator *validator.Validate) *ProductHandler {
+func NewProductHandler(productService *ProductService, validator *validator.Validate) *ProductHandler {
 	return &ProductHandler{
 		productService: productService,
 		validator:      validator,

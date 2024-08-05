@@ -13,8 +13,10 @@ type ImageURLs struct {
 }
 
 type OnboardNewCircleRequestBody struct {
-	Name string `json:"name" validate:"required,min=3,max=255"`
+	Name   string `json:"name" validate:"required,min=3,max=255"`
+	Rating string `json:"rating" validate:"required,oneof=GA PG M"`
 	ImageURLs
+	ReferralCode string `json:"referral_code" validate:"omitempty"`
 }
 
 type CreateFandomCircleRelation struct {
@@ -30,7 +32,7 @@ type CreateWorkTypeCircleRelation struct {
 type UpdateCircleRequestBody struct {
 	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
 	Description *string `json:"description" validate:"omitempty"`
-	Batch       *int    `json:"batch" validate:"omitempty"`
+	Rating      *string `json:"rating" validate:"omitempty,oneof=GA PG M"`
 
 	PictureURL      *string `json:"picture_url" validate:"omitempty,max=255"`
 	CoverPictureURL *string `json:"cover_picture_url" validate:"omitempty,max=255"`

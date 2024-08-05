@@ -9,7 +9,7 @@ import (
 )
 
 type EventHandler struct {
-	eventService EventService
+	eventService *EventService
 	validator    *validator.Validate
 }
 
@@ -60,7 +60,7 @@ func (e *EventHandler) GetPaginatedEvents(c *fiber.Ctx) error {
 	})
 }
 
-func NewEventHandler(eventService EventService, validator *validator.Validate) *EventHandler {
+func NewEventHandler(eventService *EventService, validator *validator.Validate) *EventHandler {
 	return &EventHandler{
 		eventService: eventService,
 		validator:    validator,

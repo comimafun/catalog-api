@@ -6,22 +6,14 @@ import (
 	"errors"
 )
 
-type UserService interface {
-	DeleteOneByID(id int) *domain.Error
-	CreateOne(user entity.User) (*entity.User, *domain.Error)
-	UpdateOneByID(user entity.User) (*entity.User, *domain.Error)
-	FindOneByID(id int) (*entity.User, *domain.Error)
-	FindOneByEmail(email string) (*entity.User, *domain.Error)
-}
-
-type userService struct {
-	userRepo UserRepo
+type UserService struct {
+	userRepo *UserRepo
 }
 
 //
 
 // FindOneByEmail implements UserService.
-func (u *userService) FindOneByEmail(email string) (*entity.User, *domain.Error) {
+func (u *UserService) FindOneByEmail(email string) (*entity.User, *domain.Error) {
 	if email == "" {
 		return nil, domain.NewError(400, errors.New("EMAIL_IS_EMPTY"), nil)
 	}
@@ -35,7 +27,7 @@ func (u *userService) FindOneByEmail(email string) (*entity.User, *domain.Error)
 }
 
 // FindOneByID implements UserService.
-func (u *userService) FindOneByID(id int) (*entity.User, *domain.Error) {
+func (u *UserService) FindOneByID(id int) (*entity.User, *domain.Error) {
 	if id == 0 {
 		return nil, domain.NewError(400, errors.New("ID_IS_EMPTY"), nil)
 	}
@@ -49,7 +41,7 @@ func (u *userService) FindOneByID(id int) (*entity.User, *domain.Error) {
 }
 
 // CreateOne implements UserService.
-func (u *userService) CreateOne(user entity.User) (*entity.User, *domain.Error) {
+func (u *UserService) CreateOne(user entity.User) (*entity.User, *domain.Error) {
 	newUser, err := u.userRepo.CreateOne(user)
 	if err != nil {
 		return nil, err
@@ -59,7 +51,7 @@ func (u *userService) CreateOne(user entity.User) (*entity.User, *domain.Error) 
 }
 
 // UpdateOne implements UserService.
-func (u *userService) UpdateOneByID(user entity.User) (*entity.User, *domain.Error) {
+func (u *UserService) UpdateOneByID(user entity.User) (*entity.User, *domain.Error) {
 	newUser, err := u.userRepo.UpdateOneByID(user.ID, user)
 	if err != nil {
 		return nil, err
@@ -69,7 +61,7 @@ func (u *userService) UpdateOneByID(user entity.User) (*entity.User, *domain.Err
 }
 
 // DeleteOneByID implements UserService.
-func (u *userService) DeleteOneByID(id int) *domain.Error {
+func (u *UserService) DeleteOneByID(id int) *domain.Error {
 	err := u.userRepo.DeleteOneByID(id)
 	if err != nil {
 		return err
@@ -77,8 +69,8 @@ func (u *userService) DeleteOneByID(id int) *domain.Error {
 	return nil
 }
 
-func NewUserService(userRepo UserRepo) UserService {
-	return &userService{
+func NewUserService(userRepo *UserRepo) *UserService {
+	return &UserService{
 		userRepo,
 	}
 }

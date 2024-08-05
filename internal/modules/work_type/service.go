@@ -6,19 +6,12 @@ import (
 	"time"
 )
 
-type WorkTypeService interface {
-	CreateOne(workType entity.WorkType) (*entity.WorkType, *domain.Error)
-	UpdateOne(id int, workType entity.WorkType) (*entity.WorkType, *domain.Error)
-	DeleteByID(id int) *domain.Error
-	FindAll() (*[]entity.WorkType, *domain.Error)
-}
-
-type workTypeService struct {
-	workTypeRepo WorkTypeRepo
+type WorkTypeService struct {
+	workTypeRepo *WorkTypeRepo
 }
 
 // CreateOne implements WorkTypeService.
-func (w *workTypeService) CreateOne(workType entity.WorkType) (*entity.WorkType, *domain.Error) {
+func (w *WorkTypeService) CreateOne(workType entity.WorkType) (*entity.WorkType, *domain.Error) {
 	data, err := w.workTypeRepo.CreateOne(workType)
 	if err != nil {
 		return nil, err
@@ -27,12 +20,12 @@ func (w *workTypeService) CreateOne(workType entity.WorkType) (*entity.WorkType,
 }
 
 // DeleteByID implements WorkTypeService.
-func (w *workTypeService) DeleteByID(id int) *domain.Error {
+func (w *WorkTypeService) DeleteByID(id int) *domain.Error {
 	return w.workTypeRepo.DeleteByID(id)
 }
 
 // FindAll implements WorkTypeService.
-func (w *workTypeService) FindAll() (*[]entity.WorkType, *domain.Error) {
+func (w *WorkTypeService) FindAll() (*[]entity.WorkType, *domain.Error) {
 	data, err := w.workTypeRepo.FindAll()
 	if err != nil {
 		return nil, err
@@ -41,7 +34,7 @@ func (w *workTypeService) FindAll() (*[]entity.WorkType, *domain.Error) {
 }
 
 // UpdateOne implements WorkTypeService.
-func (w *workTypeService) UpdateOne(id int, workType entity.WorkType) (*entity.WorkType, *domain.Error) {
+func (w *WorkTypeService) UpdateOne(id int, workType entity.WorkType) (*entity.WorkType, *domain.Error) {
 	now := time.Now()
 	return w.workTypeRepo.UpdateOne(id, entity.WorkType{
 		Name:      workType.Name,
@@ -50,9 +43,9 @@ func (w *workTypeService) UpdateOne(id int, workType entity.WorkType) (*entity.W
 }
 
 func NewWorkTypeService(
-	workTypeRepo WorkTypeRepo,
-) WorkTypeService {
-	return &workTypeService{
+	workTypeRepo *WorkTypeRepo,
+) *WorkTypeService {
+	return &WorkTypeService{
 		workTypeRepo: workTypeRepo,
 	}
 }

@@ -5,25 +5,20 @@ import (
 	"catalog-be/internal/entity"
 )
 
-type CircleWorkTypeService interface {
-	FindAllCircleWorkTypeRelated(circleID int) ([]entity.WorkType, *domain.Error)
-	BulkDeleteAndInsertCircleWorkType(circleID int, workTypeIDs []int) *domain.Error
-}
-
-type circleWorkTypeService struct {
-	repo CircleWorkTypeRepo
+type CircleWorkTypeService struct {
+	repo *CircleWorkTypeRepo
 }
 
 // BulkDeleteAndInsertCircleWorkType implements CircleWorkTypeService.
-func (c *circleWorkTypeService) BulkDeleteAndInsertCircleWorkType(circleID int, workTypeIDs []int) *domain.Error {
+func (c *CircleWorkTypeService) BulkDeleteAndInsertCircleWorkType(circleID int, workTypeIDs []int) *domain.Error {
 	return c.repo.BatchInsertCircleWorkTypeRelation(circleID, workTypeIDs)
 }
 
 // FindAllCircleWorkTypeRelated implements CircleWorkTypeService.
-func (c *circleWorkTypeService) FindAllCircleWorkTypeRelated(circleID int) ([]entity.WorkType, *domain.Error) {
+func (c *CircleWorkTypeService) FindAllCircleWorkTypeRelated(circleID int) ([]entity.WorkType, *domain.Error) {
 	return c.repo.FindAllCircleRelationWorkType(circleID)
 }
 
-func NewCircleWorkTypeService(repo CircleWorkTypeRepo) CircleWorkTypeService {
-	return &circleWorkTypeService{repo: repo}
+func NewCircleWorkTypeService(repo *CircleWorkTypeRepo) *CircleWorkTypeService {
+	return &CircleWorkTypeService{repo: repo}
 }

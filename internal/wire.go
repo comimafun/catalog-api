@@ -11,6 +11,7 @@ import (
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
 	"catalog-be/internal/modules/circle/circle_work_type"
+	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
@@ -60,8 +61,9 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3 *s3.Client) 
 		circle_fandom.NewCircleFandomRepo,
 		circle_fandom.NewCircleFandomService,
 
-		// circle_upvote.NewCircleUpvoteRepo,
-		// circle_upvote.NewCircleUpvoteService,
+		referral.NewReferralHandler,
+		referral.NewReferralRepo,
+		referral.NewReferralService,
 
 		product.NewProductRepo,
 		product.NewProductService,

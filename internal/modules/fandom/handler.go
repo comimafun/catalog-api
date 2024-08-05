@@ -12,7 +12,7 @@ import (
 )
 
 type FandomHandler struct {
-	fandomService FandomService
+	fandomService *FandomService
 	validator     *validator.Validate
 }
 
@@ -111,7 +111,7 @@ func (h *FandomHandler) GetFandomPagination(c *fiber.Ctx) error {
 }
 
 func NewFandomHandler(
-	fandomService FandomService,
+	fandomService *FandomService,
 	validator *validator.Validate,
 ) *FandomHandler {
 	return &FandomHandler{

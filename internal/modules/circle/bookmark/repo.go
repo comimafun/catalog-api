@@ -7,18 +7,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleBookmarkRepo interface {
-	CreateBookmark(circleID int, userID int) *domain.Error
-	DeleteBookmark(circleID int, userID int) *domain.Error
-	FindByCircleIDAndUserID(circleID int, userID int) (*entity.UserBookmark, *domain.Error)
-}
-
-type circleBookmarkRepo struct {
+type CircleBookmarkRepo struct {
 	db *gorm.DB
 }
 
 // FindByCircleIDAndUserID implements CircleBookmarkRepo.
-func (c *circleBookmarkRepo) FindByCircleIDAndUserID(circleID int, userID int) (*entity.UserBookmark, *domain.Error) {
+func (c *CircleBookmarkRepo) FindByCircleIDAndUserID(circleID int, userID int) (*entity.UserBookmark, *domain.Error) {
 	bookmark := new(entity.UserBookmark)
 	err := c.db.Table("user_bookmark").Where("circle_id = ? AND user_id = ?", circleID, userID).First(bookmark).Error
 
@@ -30,7 +24,7 @@ func (c *circleBookmarkRepo) FindByCircleIDAndUserID(circleID int, userID int) (
 }
 
 // DeleteBookmark implements CircleBookmarkRepo.
-func (c *circleBookmarkRepo) DeleteBookmark(circleID int, userID int) *domain.Error {
+func (c *CircleBookmarkRepo) DeleteBookmark(circleID int, userID int) *domain.Error {
 	err := c.db.Table("user_bookmark").Where("circle_id = ? AND user_id = ?", circleID, userID).Delete(&entity.UserBookmark{}).Error
 
 	if err != nil {
@@ -41,7 +35,7 @@ func (c *circleBookmarkRepo) DeleteBookmark(circleID int, userID int) *domain.Er
 }
 
 // CreateBookmark implements CircleBookmarkRepo.
-func (c *circleBookmarkRepo) CreateBookmark(circleID int, userID int) *domain.Error {
+func (c *CircleBookmarkRepo) CreateBookmark(circleID int, userID int) *domain.Error {
 	err := c.db.Table("user_bookmark").Create(&entity.UserBookmark{
 		UserID:   userID,
 		CircleID: circleID,
@@ -54,6 +48,6 @@ func (c *circleBookmarkRepo) CreateBookmark(circleID int, userID int) *domain.Er
 	return nil
 }
 
-func NewCircleBookmarkRepo(db *gorm.DB) CircleBookmarkRepo {
-	return &circleBookmarkRepo{db: db}
+func NewCircleBookmarkRepo(db *gorm.DB) *CircleBookmarkRepo {
+	return &CircleBookmarkRepo{db: db}
 }

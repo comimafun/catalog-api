@@ -26,16 +26,17 @@ type Circle struct {
 	InstagramURL    *string        `json:"instagram_url"`
 	TwitterURL      *string        `json:"twitter_url"`
 	Description     *string        `json:"description"`
-	Batch           *int           `json:"batch"`
+	Rating          *string        `json:"rating"` // enum GA, PG, M
 	Verified        bool           `json:"verified"`
 	Published       bool           `json:"published"`
 	CreatedAt       *time.Time     `json:"created_at"`
 	UpdatedAt       *time.Time     `json:"updated_at"`
 	DeletedAt       gorm.DeletedAt `json:"deleted_at"`
 
-	EventID *int `json:"event_id"`
-
 	Day *Day `json:"day"`
+
+	EventID            *int `json:"event_id"`
+	UsedReferralCodeID *int `json:"-"`
 }
 
 type CircleRaw struct {

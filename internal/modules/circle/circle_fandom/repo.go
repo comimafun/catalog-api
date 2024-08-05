@@ -9,18 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type CircleFandomRepo interface {
-	deleteFandomRelationByCircleID(circleID int) *domain.Error
-	BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error
-	FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error)
-}
-
-type circleFandomRepo struct {
+type CircleFandomRepo struct {
 	db *gorm.DB
 }
 
 // BatchInsertFandomCircleRelation implements CircleFandomRepo.
-func (c *circleFandomRepo) BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error {
+func (c *CircleFandomRepo) BatchInsertFandomCircleRelation(circleID int, fandomIDs []int) *domain.Error {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return domain.NewError(500, tx.Error, nil)
@@ -58,7 +52,7 @@ func (c *circleFandomRepo) BatchInsertFandomCircleRelation(circleID int, fandomI
 }
 
 // FindAllCircleRelationFandom implements CircleFandomRepo.
-func (c *circleFandomRepo) FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error) {
+func (c *CircleFandomRepo) FindAllCircleRelationFandom(circleID int) ([]entity.Fandom, *domain.Error) {
 	var fandoms []entity.Fandom
 	err := c.db.Raw(`
 		select
@@ -76,7 +70,7 @@ func (c *circleFandomRepo) FindAllCircleRelationFandom(circleID int) ([]entity.F
 }
 
 // deleteFandomRelationByCircleID implements CircleFandomRepo.
-func (c *circleFandomRepo) deleteFandomRelationByCircleID(circleID int) *domain.Error {
+func (c *CircleFandomRepo) deleteFandomRelationByCircleID(circleID int) *domain.Error {
 	err := c.db.Exec(`
     delete from circle_fandom where circle_id = ?
 `, circleID).Error
@@ -86,8 +80,8 @@ func (c *circleFandomRepo) deleteFandomRelationByCircleID(circleID int) *domain.
 	return nil
 }
 
-func NewCircleFandomRepo(db *gorm.DB) CircleFandomRepo {
-	return &circleFandomRepo{
+func NewCircleFandomRepo(db *gorm.DB) *CircleFandomRepo {
+	return &CircleFandomRepo{
 		db: db,
 	}
 }

@@ -14,9 +14,9 @@ import (
 )
 
 type CircleHandler struct {
-	circleService CircleService
+	circleService *CircleService
 	validator     *validator.Validate
-	userService   user.UserService
+	userService   *user.UserService
 }
 
 func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
@@ -98,6 +98,7 @@ func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 	}
 
 	body.Name = strings.TrimSpace(body.Name)
+	body.ReferralCode = strings.ToUpper(strings.TrimSpace(body.ReferralCode))
 
 	if err := h.validator.Struct(body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
@@ -135,6 +136,31 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": circle,
+		"code": fiber.StatusOK,
+	})
+}
+
+func (h *CircleHandler) GetCircleReferral(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("circleid")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("CIRCLE_ID_SHOULD_BE_NUMBER"), nil)))
+	}
+
+	referral, refErr := h.circleService.FindReferralCodeByCircleID(circleID)
+
+	if refErr != nil {
+		if refErr.Code == 404 {
+			return c.Status(fiber.StatusOK).JSON(fiber.Map{
+				"data": nil,
+				"code": fiber.StatusOK,
+			})
+		} else {
+			return c.Status(refErr.Code).JSON(domain.NewErrorFiber(c, refErr))
+		}
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": referral.ReferralCode,
 		"code": fiber.StatusOK,
 	})
 }
@@ -297,10 +323,10 @@ func (h *CircleHandler) DeleteCircleEventAttending(c *fiber.Ctx) error {
 }
 
 func NewCircleHandler(
-	circleService CircleService,
+	circleService *CircleService,
 	validator *validator.Validate,
-	userService user.UserService,
-	circleBookmarkService bookmark.CircleBookmarkService,
+	userService *user.UserService,
+	circleBookmarkService *bookmark.CircleBookmarkService,
 ) *CircleHandler {
 	return &CircleHandler{
 		circleService: circleService,

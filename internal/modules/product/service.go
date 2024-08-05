@@ -8,26 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type ProductService interface {
-	UpsertProductByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error)
-	CreateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error)
-	UpdateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error)
-	GetAllProductsByCircleID(circleID int) ([]entity.Product, *domain.Error)
-	CountProductsByCircleID(circleID int) (int, *domain.Error)
-	DeleteOneByID(circleID int, id int) *domain.Error
-}
-
-type productService struct {
-	repo ProductRepo
+type ProductService struct {
+	repo *ProductRepo
 }
 
 // DeleteOneByID implements ProductService.
-func (p *productService) DeleteOneByID(circleID int, id int) *domain.Error {
+func (p *ProductService) DeleteOneByID(circleID int, id int) *domain.Error {
 	return p.repo.DeleteOneByID(circleID, id)
 }
 
 // UpdateOneProductByCircleID implements ProductService.
-func (p *productService) UpdateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error) {
+func (p *ProductService) UpdateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error) {
 	check, err := p.repo.FindOneByID(input.ID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -45,12 +36,12 @@ func (p *productService) UpdateOneProductByCircleID(circleID int, input entity.P
 }
 
 // CountProductsByCircleID implements ProductService.
-func (p *productService) CountProductsByCircleID(circleID int) (int, *domain.Error) {
+func (p *ProductService) CountProductsByCircleID(circleID int) (int, *domain.Error) {
 	return p.repo.CountProductsByCircleID(circleID)
 }
 
 // CreateOneProductByCircleID implements ProductService.
-func (p *productService) CreateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error) {
+func (p *ProductService) CreateOneProductByCircleID(circleID int, input entity.Product) (*entity.Product, *domain.Error) {
 	product := entity.Product{
 		ID:       input.ID,
 		CircleID: circleID,
@@ -62,12 +53,12 @@ func (p *productService) CreateOneProductByCircleID(circleID int, input entity.P
 }
 
 // GetAllProductsByCircleID implements ProductService.
-func (p *productService) GetAllProductsByCircleID(circleID int) ([]entity.Product, *domain.Error) {
+func (p *ProductService) GetAllProductsByCircleID(circleID int) ([]entity.Product, *domain.Error) {
 	return p.repo.FindAllByCircleID(circleID)
 }
 
 // UpsertProductByCircleID implements ProductService.
-func (p *productService) UpsertProductByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error) {
+func (p *ProductService) UpsertProductByCircleID(circleID int, inputs []entity.Product) ([]entity.Product, *domain.Error) {
 	if len(inputs) == 0 {
 		err := p.repo.DeleteAllByCircleID(circleID)
 		if err != nil {
@@ -90,8 +81,8 @@ func (p *productService) UpsertProductByCircleID(circleID int, inputs []entity.P
 	return p.repo.BatchUpsertByCircleID(circleID, products)
 }
 
-func NewProductService(repo ProductRepo) ProductService {
-	return &productService{
+func NewProductService(repo *ProductRepo) *ProductService {
+	return &ProductService{
 		repo: repo,
 	}
 }

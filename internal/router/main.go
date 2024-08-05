@@ -4,6 +4,7 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
+	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
@@ -22,6 +23,7 @@ type HTTP struct {
 	event          *event.EventHandler
 	upload         *upload.UploadHandler
 	product        *product.ProductHandler
+	referral       *referral.ReferralHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -65,6 +67,8 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Get("/bookmarked", h.authMiddleware.Init, h.circle.GetPaginatedBookmarkedCircle)
 	circle.Get("/:slug", h.authMiddleware.IfAuthed, h.circle.FindCircleBySlug)
 
+	circle.Get("/:circleid/referral", h.circle.GetCircleReferral)
+
 	circle.Post("/:id/bookmark", h.authMiddleware.Init, h.circle.SaveCircle)
 	circle.Delete("/:id/bookmark", h.authMiddleware.Init, h.circle.UnsaveCircle)
 
@@ -82,6 +86,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	upload := v1.Group("/upload")
 	upload.Post("/image", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.upload.UploadImage)
+
+	referral := v1.Group("/referral")
+	referral.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.referral.CreateReferral)
 }
 
 func NewHTTP(
@@ -93,6 +100,7 @@ func NewHTTP(
 	event *event.EventHandler,
 	upload *upload.UploadHandler,
 	product *product.ProductHandler,
+	referral *referral.ReferralHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -103,5 +111,6 @@ func NewHTTP(
 		event,
 		upload,
 		product,
+		referral,
 	}
 }

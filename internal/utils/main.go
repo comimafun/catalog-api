@@ -3,6 +3,7 @@ package utils
 import (
 	"catalog-be/internal/domain"
 	"math/rand"
+	"os"
 	"regexp"
 	"strings"
 
@@ -13,6 +14,7 @@ type Utils interface {
 	GenerateRandomCode(length int) string
 	Slugify(text string) (string, error)
 	HashPassword(password string) (*string, *domain.Error)
+	GetEnv(key string, defaultValue string) string
 }
 
 type utils struct{}
@@ -67,6 +69,13 @@ func (u *utils) Slugify(text string) (string, error) {
 	slug = strings.ToLower(slug)
 
 	return slug, nil
+}
+
+func (u *utils) GetEnv(key string, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return defaultValue
 }
 
 func NewUtils() Utils {
