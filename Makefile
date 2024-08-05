@@ -64,11 +64,11 @@ create-migration:
 
 migrate-up:
 	@read -p "how many steps to migrate up? " steps; \
-	migrate -path migrator/migrations -database "${DB_URL}" up $$steps
+	migrate -path migrator/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE}" up $$steps
 
 migrate-down:
 	@read -p "how many steps to migrate down? " steps; \
-	migrate -path migrator/migrations -database "${DB_URL}" down $$steps
+	migrate -path migrator/migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE}" down $$steps
 
 
 

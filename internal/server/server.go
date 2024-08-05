@@ -2,6 +2,7 @@ package server
 
 import (
 	"catalog-be/internal/database"
+	"catalog-be/internal/utils"
 	"fmt"
 	"os"
 
@@ -20,7 +21,7 @@ type FiberServer struct {
 }
 
 func New() *FiberServer {
-	dsn := os.Getenv("DB_URL")
+	dsn := SetDsn()
 
 	var accountId = os.Getenv("ACCOUNT_ID")
 	s3Endpoint := aws.Endpoint{
@@ -38,4 +39,18 @@ func New() *FiberServer {
 	}
 
 	return server
+}
+
+func SetDsn() string {
+	utilsUtils := utils.NewUtils()
+	result := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		utilsUtils.GetEnv("DB_HOST", "localhost"),
+		utilsUtils.GetEnv("DB_PORT", "5432"),
+		utilsUtils.GetEnv("DB_USERNAME", "postgres"),
+		utilsUtils.GetEnv("DB_PASSWORD", "postgres"),
+		utilsUtils.GetEnv("DB_DATABASE", ""),
+		utilsUtils.GetEnv("DB_SSLMODE", "disable"),
+	)
+	return result
 }
