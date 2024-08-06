@@ -1,5 +1,5 @@
 create table
-  "circle_report" (
+  "report" (
     id serial primary key,
     user_id integer not null,
     circle_id integer not null,
@@ -10,6 +10,6 @@ create table
   );
   
 -- add index
-create index "idx_rpt_user_id" on "circle_report" ("user_id");
+create index "idx_report_user_id" on "report" ("user_id");
 
-create index "idx_rpt_circle_id" on "circle_report" ("circle_id");
+create index "idx_report_circle_id" on "report" ("circle_id");

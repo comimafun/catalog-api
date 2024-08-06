@@ -1,5 +1,5 @@
-package circle_report_dto
+package report_dto
 
-type CreateCircleReportPayload struct {
+type CreateReportPayload struct {
 	Reason string `json:"reason" validate:"required,min=3,max=255"`
 }

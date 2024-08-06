@@ -4,11 +4,11 @@ import (
 	"catalog-be/internal/middlewares"
 	"catalog-be/internal/modules/auth"
 	"catalog-be/internal/modules/circle"
-	"catalog-be/internal/modules/circle/circle_report"
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
+	"catalog-be/internal/modules/report"
 	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/work_type"
 
@@ -25,7 +25,7 @@ type HTTP struct {
 	upload         *upload.UploadHandler
 	product        *product.ProductHandler
 	referral       *referral.ReferralHandler
-	circleReport   *circle_report.CircleReportHandler
+	report         *report.ReportHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -82,8 +82,6 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	circle.Put("/:circleid/event", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.PutUpdateAttendingEventByCircleID)
 	circle.Delete("/:circleid/event", h.authMiddleware.Init, h.authMiddleware.CircleOnly, h.circle.DeleteAttendingEventByCircleID)
 
-	circle.Post("/:id/report", h.authMiddleware.Init, h.circleReport.CreateReportCircle)
-
 	event := v1.Group("/event")
 	event.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.event.CreateOneEvent)
 	event.Get("/", h.event.GetPaginatedEvents)
@@ -93,6 +91,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	referral := v1.Group("/referral")
 	referral.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.referral.CreateOneReferral)
+
+	report := v1.Group("/report")
+	report.Post("/:id/circle", h.authMiddleware.Init, h.report.PostCreateOneReportCircle)
 }
 
 func NewHTTP(
@@ -105,7 +106,7 @@ func NewHTTP(
 	upload *upload.UploadHandler,
 	product *product.ProductHandler,
 	referral *referral.ReferralHandler,
-	circleReport *circle_report.CircleReportHandler,
+	report *report.ReportHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -117,6 +118,6 @@ func NewHTTP(
 		upload,
 		product,
 		referral,
-		circleReport,
+		report,
 	}
 }

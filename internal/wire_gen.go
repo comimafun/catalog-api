@@ -13,7 +13,7 @@ import (
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
-	"catalog-be/internal/modules/circle/circle_report"
+	"catalog-be/internal/modules/report"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
@@ -72,10 +72,21 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	productHandler := product.NewProductHandler(productService, validate)
 	referralHandler := referral.NewReferralHandler(referralService, validate)
 	
-	circleReportRepo := circle_report.NewCircleReportRepo(db)
-	circleReportService := circle_report.NewCircleReportService(circleReportRepo)
-	circleReportHandler := circle_report.NewCircleReportHandler(circleReportService, validate)
+	reportRepo := report.NewReportRepo(db)
+	reportService := report.NewReportService(reportRepo)
+	reportHandler := report.NewReportHandler(reportService, validate)
 	
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler, circleReportHandler)
+	http := router.NewHTTP(
+		authHandler, 
+		authMiddleware, 
+		fandomHandler, 
+		workTypeHandler, 
+		circleHandler, 
+		eventHandler, 
+		uploadHandler, 
+		productHandler, 
+		referralHandler, 
+		reportHandler,
+	)
 	return http
 }
