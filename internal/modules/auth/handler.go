@@ -133,7 +133,7 @@ func (a *AuthHandler) GetGoogleCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	data, err := a.authService.AuthWithGoogle(code)
+	data, err := a.authService.AuthWithGoogleCode(code)
 	if err != nil {
 		return c.Status(err.Code).JSON(fiber.Map{
 			"error": err.Err.Error(),
@@ -164,7 +164,7 @@ func (a *AuthHandler) PostGoogleCallback(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	data, err := a.authService.AuthWithGoogle(code.Code)
+	data, err := a.authService.AuthWithGoogleCode(code.Code)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}

@@ -213,15 +213,8 @@ func (a *AuthService) login(user *entity.User) (*auth_dto.NewTokenResponse, *dom
 	}, nil
 }
 
-// AuthWithGoogle implements AuthService.
-func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
-	user, err := a.config.ParseCodeToUserData(code)
-	if err != nil {
-		return nil, err
-	}
-
+func (a *AuthService) authWithGoogleUserData(user *auth_dto.GoogleUserData) (*auth_dto.NewTokenResponse, *domain.Error) {
 	existingUser, existingUserErr := a.userService.FindOneByEmail(user.Email)
-
 	if existingUserErr != nil && !errors.Is(existingUserErr.Err, gorm.ErrRecordNotFound) {
 		return nil, existingUserErr
 	}
@@ -242,15 +235,21 @@ func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 	if newUserErr != nil {
 		return nil, newUserErr
 	}
-
 	login, loginErr := a.login(newUser)
-
 	if loginErr != nil {
 		return nil, loginErr
 	}
 
 	return login, nil
+}
 
+// AuthWithGoogleCode implements AuthService.
+func (a *AuthService) AuthWithGoogleCode(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
+	user, err := a.config.ParseCodeToUserData(code)
+	if err != nil {
+		return nil, err
+	}
+	return a.authWithGoogleUserData(user)
 }
 
 func NewAuthService(
