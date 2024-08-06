@@ -14,49 +14,23 @@ type RefreshTokenService struct {
 	refreshTokenRepo *RefreshTokenRepo
 }
 
-// DeleteByRefreshToken implements RefreshTokenService.
-func (r *RefreshTokenService) DeleteByRefreshToken(refreshToken string) *domain.Error {
-	return r.refreshTokenRepo.DeleteByRefreshToken(refreshToken)
+// DeleteOneByRefreshToken implements RefreshTokenService.
+func (r *RefreshTokenService) DeleteOneByRefreshToken(refreshToken string) *domain.Error {
+	return r.refreshTokenRepo.DeleteOneByRefreshToken(refreshToken)
 }
 
-// DeleteAllRecordsByUserID implements RefreshTokenService.
-func (r *RefreshTokenService) DeleteAllRecordsByUserID(userID int) *domain.Error {
-	return r.refreshTokenRepo.DeleteAllRecordsByUserID(userID)
+// DeleteAllRefreshTokenRecordsByUserID implements RefreshTokenService.
+func (r *RefreshTokenService) DeleteAllRefreshTokenRecordsByUserID(userID int) *domain.Error {
+	return r.refreshTokenRepo.DeleteAllRefreshTokenRecordsByRefreshToken(userID)
 }
 
-// ForceExpiredRefreshToken implements RefreshTokenService.
-func (r *RefreshTokenService) ForceExpiredRefreshToken(accessToken string) *domain.Error {
-	token, err := r.refreshTokenRepo.FindOneByAccessToken(accessToken)
-	if err != nil {
-		return err
-	}
-
-	now := time.Now()
-
-	_, err = r.refreshTokenRepo.UpdateOneByID(token.ID, entity.RefreshToken{
-		ExpiredAt: &now,
-	})
-
-	return err
+// UpdateOneRefreshTokenByUserID implements RefreshTokenService.
+func (r *RefreshTokenService) UpdateOneRefreshTokenByUserID(id int, refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error) {
+	return r.refreshTokenRepo.UpdateOneRefreshTokenByRefreshTokenID(id, refreshToken)
 }
 
-// FindOneByAccessToken implements RefreshTokenService.
-func (r *RefreshTokenService) FindOneByAccessToken(accessToken string) (*entity.RefreshToken, *domain.Error) {
-	return r.refreshTokenRepo.FindOneByAccessToken(accessToken)
-}
-
-// LogoutRefreshToken implements RefreshTokenService.
-func (r *RefreshTokenService) LogoutRefreshToken(id int) *domain.Error {
-	return r.refreshTokenRepo.DeleteOneByID(id)
-}
-
-// UpdateByID implements RefreshTokenService.
-func (r *RefreshTokenService) UpdateByID(id int, refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error) {
-	return r.refreshTokenRepo.UpdateOneByID(id, refreshToken)
-}
-
-// CheckValidityByRefreshToken implements RefreshTokenService.
-func (r *RefreshTokenService) CheckValidityByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error) {
+// CheckSessionValidityByRefreshToken implements RefreshTokenService.
+func (r *RefreshTokenService) CheckSessionValidityByRefreshToken(refreshToken string) (*entity.RefreshToken, *domain.Error) {
 	token, err := r.refreshTokenRepo.FindOneByRefreshToken(refreshToken)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -74,9 +48,9 @@ func (r *RefreshTokenService) CheckValidityByRefreshToken(refreshToken string) (
 	return token, nil
 }
 
-// CreateOne implements RefreshTokenService.
-func (r *RefreshTokenService) CreateOne(refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error) {
-	return r.refreshTokenRepo.CreateOne(refreshToken)
+// CreateOneRefreshToken implements RefreshTokenService.
+func (r *RefreshTokenService) CreateOneRefreshToken(refreshToken entity.RefreshToken) (*entity.RefreshToken, *domain.Error) {
+	return r.refreshTokenRepo.CreateOneRefreshToken(refreshToken)
 }
 
 func NewRefreshTokenService(refreshTokenRepo *RefreshTokenRepo, utils utils.Utils) *RefreshTokenService {
