@@ -15,16 +15,16 @@ func NewReportService(repo *ReportRepo) *ReportService {
 }
 
 // CreateReport implements CircleReportService
-func (r *ReportService) CreateCircleReport(circleID int, userID int, reason string) *domain.Error {
-	return r.repo.CreateReport(circleID, userID, reason)
+func (r *ReportService) CreateReportCircle(report *entity.Report) *domain.Error {
+	return r.repo.CreateReportCircle(report)
 }
 
 // FindCircleReportByID implements CircleReportService
-func (r *ReportService) FindCircleReportByID(id int) (*entity.CircleReport, *domain.Error) {
+func (r *ReportService) FindReportByID(id int) (*entity.Report, *domain.Error) {
 	return r.repo.FindByID(id)
 }
 
 // FindAllCircleReportByCircleID implements CircleReportService
-func (r *ReportService) FindAllCircleReportByCircleID(circleID int) ([]entity.CircleReport, *domain.Error) {
-	return r.repo.FindByCircleIDAndUserID(circleID, 0)
+func (r *ReportService) FindAllReportByCircleID(circleID int) ([]entity.Report, *domain.Error) {
+	return r.repo.FindAllByCircleID(circleID)
 }

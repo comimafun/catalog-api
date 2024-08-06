@@ -2,6 +2,7 @@ package report
 
 import (
 	"catalog-be/internal/domain"
+	"catalog-be/internal/entity"
 	auth_dto "catalog-be/internal/modules/auth/dto"
 	report_dto "catalog-be/internal/modules/report/dto"
 
@@ -10,8 +11,8 @@ import (
 )
 
 type ReportHandler struct {
-	circleReportService *ReportService
-	validator           *validator.Validate
+	reportService *ReportService
+	validator     *validator.Validate
 }
 
 func NewReportHandler(
@@ -19,8 +20,8 @@ func NewReportHandler(
 	validator *validator.Validate,
 ) *ReportHandler {
 	return &ReportHandler{
-		circleReportService: service,
-		validator:           validator,
+		reportService: service,
+		validator:     validator,
 	}
 }
 
@@ -46,7 +47,12 @@ func (rh *ReportHandler) PostCreateOneReportCircle(c *fiber.Ctx) error {
 	}
 
 	user := c.Locals("user").(*auth_dto.ATClaims)
-	errInsertDb := rh.circleReportService.CreateCircleReport(circleID, user.UserID, body.Reason)
+
+	errInsertDb := rh.reportService.CreateReportCircle(&entity.Report{
+		UserID:   user.UserID,
+		CircleID: circleID,
+		Reason:   body.Reason,
+	})
 	if errInsertDb != nil {
 		return c.
 			Status(errInsertDb.Code).
