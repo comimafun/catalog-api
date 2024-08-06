@@ -32,7 +32,7 @@ func (h *FandomHandler) PostCreateOneFandom(c *fiber.Ctx) error {
 		body.Visible = true
 	}
 
-	fandom, createErr := h.fandomService.CreateOne(entity.Fandom{Name: body.Name, Visible: body.Visible})
+	fandom, createErr := h.fandomService.CreateOneFandom(entity.Fandom{Name: body.Name, Visible: body.Visible})
 	if createErr != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(domain.NewErrorFiber(c, createErr))
 	}
@@ -49,7 +49,7 @@ func (h *FandomHandler) DeleteOneFandomByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("FANDOM_ID_INVALID"), nil)))
 	}
 
-	deleteErr := h.fandomService.DeleteByID(id)
+	deleteErr := h.fandomService.DeleteOneFandomByFandomID(id)
 	if deleteErr != nil {
 		return c.Status(deleteErr.Code).JSON(domain.NewErrorFiber(c, deleteErr))
 	}
@@ -77,7 +77,7 @@ func (h *FandomHandler) PutUpdateOneFandom(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("FANDOM_ID_INVALID"), nil)))
 	}
 
-	fandom, updateErr := h.fandomService.UpdateOne(id, entity.Fandom{Name: body.Name, Visible: body.Visible})
+	fandom, updateErr := h.fandomService.UpdateOneFandomByFandomID(id, entity.Fandom{Name: body.Name, Visible: body.Visible})
 	if updateErr != nil {
 		return c.Status(updateErr.Code).JSON(domain.NewErrorFiber(c, updateErr))
 	}
@@ -89,7 +89,7 @@ func (h *FandomHandler) PutUpdateOneFandom(c *fiber.Ctx) error {
 }
 
 func (h *FandomHandler) GetPaginatedFandoms(c *fiber.Ctx) error {
-	filter := new(fandom_dto.FindAllFilter)
+	filter := new(fandom_dto.GetPaginatedFandomFilter)
 	if err := c.QueryParser(filter); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -98,7 +98,7 @@ func (h *FandomHandler) GetPaginatedFandoms(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	pagination, findErr := h.fandomService.GetPaginatedFandom(filter)
+	pagination, findErr := h.fandomService.GetPaginatedFandoms(filter)
 	if findErr != nil {
 		return c.Status(findErr.Code).JSON(domain.NewErrorFiber(c, findErr))
 	}
