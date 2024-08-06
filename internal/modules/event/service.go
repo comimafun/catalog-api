@@ -16,8 +16,8 @@ type EventService struct {
 	utils           utils.Utils
 }
 
-// CreateOne implements EventService.
-func (e *EventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entity.Event, *domain.Error) {
+// CreateOneEvent implements EventService.
+func (e *EventService) CreateOneEvent(body event_dto.CreateEventReqeuestBody) (*entity.Event, *domain.Error) {
 	startedAt, err := time.Parse(time.RFC3339, body.StartedAt)
 	if err != nil {
 		return nil, domain.NewError(400, errors.New("INVALID_TIME_FORMAT"), nil)
@@ -47,7 +47,7 @@ func (e *EventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entit
 	payload.EndedAt = endedAt
 	payload.Slug = slug
 
-	created, createErr := e.eventRepository.CreateOne(*payload)
+	created, createErr := e.eventRepository.CreateOneEvent(*payload)
 	if createErr != nil {
 		return nil, domain.NewError(500, errors.New("INTERNAL_SERVER_ERROR"), nil)
 	}
@@ -56,15 +56,15 @@ func (e *EventService) CreateOne(body event_dto.CreateEventReqeuestBody) (*entit
 }
 
 // GetPaginatedEvents implements EventService.
-func (e *EventService) GetPaginatedEvents(filter event_dto.GetEventFilter) (*dto.Pagination[[]entity.Event], *domain.Error) {
-	count, countErr := e.eventRepository.FindAllCount(filter)
+func (e *EventService) GetPaginatedEvents(filter event_dto.GetPaginatedEventsFilter) (*dto.Pagination[[]entity.Event], *domain.Error) {
+	count, countErr := e.eventRepository.GetEventsCount(filter)
 	if countErr != nil {
 		return nil, domain.NewError(countErr.Code, countErr.Err, nil)
 	}
 
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	events, findErr := e.eventRepository.FindAll(filter)
+	events, findErr := e.eventRepository.GetPaginatedEvents(filter)
 	if findErr != nil {
 		return nil, domain.NewError(findErr.Code, findErr.Err, nil)
 	}
