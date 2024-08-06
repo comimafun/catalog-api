@@ -26,8 +26,8 @@ type AuthService struct {
 	circleService       *circle.CircleService
 }
 
-// LogoutByAccessToken implements AuthService.
-func (a *AuthService) LogoutByAccessToken(userID int) *domain.Error {
+// logoutByAccessToken implements AuthService.
+func (a *AuthService) logoutByAccessToken(userID int) *domain.Error {
 	err := a.refreshTokenService.DeleteAllRecordsByUserID(userID)
 	if err != nil {
 		return err
@@ -35,8 +35,8 @@ func (a *AuthService) LogoutByAccessToken(userID int) *domain.Error {
 	return nil
 }
 
-// LogoutByRefreshToken implements AuthService.
-func (a *AuthService) LogoutByRefreshToken(refreshToken string) *domain.Error {
+// logoutByRefreshToken implements AuthService.
+func (a *AuthService) logoutByRefreshToken(refreshToken string) *domain.Error {
 	err := a.refreshTokenService.DeleteByRefreshToken(refreshToken)
 	if err != nil {
 		return err
@@ -69,8 +69,8 @@ func (a *AuthService) generateAndUpdateToken(user *entity.User, refreshTokenID i
 	}, nil
 }
 
-// RefreshToken implements AuthService.
-func (a *AuthService) RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
+// GenerateNewTokenAndRefreshToken implements AuthService.
+func (a *AuthService) GenerateNewTokenAndRefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
 	refresh, refreshErr := a.refreshTokenService.CheckValidityByRefreshToken(refreshToken)
 	if refreshErr != nil {
 		return nil, refreshErr

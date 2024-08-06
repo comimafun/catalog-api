@@ -40,7 +40,7 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 	auth.Get("/google", h.auth.GetAuthURL)
 	auth.Get("/google/callback", h.auth.GetGoogleCallback)
 	auth.Post("/google/callback", h.auth.PostGoogleCallback)
-	auth.Get("/refresh", h.auth.GetRefreshToken)
+	auth.Get("/refresh", h.auth.GetGenerateNewTokenAndRefreshToken)
 	auth.Get("/self", h.authMiddleware.Init, h.auth.GetSelf)
 	auth.Post("/logout", h.authMiddleware.IfAuthed, h.auth.PostLogout)
 
