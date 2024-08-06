@@ -7,7 +7,7 @@ create table
     created_at timestamp not null default current_timestamp,
     foreign key (circle_id) references "circle" (id) on delete cascade,
     foreign key (user_id) references "user" (id) on delete cascade
-  )
+  );
   
 -- add index
 create index "idx_rpt_user_id" on "circle_report" ("user_id");
