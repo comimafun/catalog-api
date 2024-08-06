@@ -13,6 +13,7 @@ import (
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/circle/bookmark"
 	"catalog-be/internal/modules/circle/circle_fandom"
+	"catalog-be/internal/modules/circle/circle_report"
 	"catalog-be/internal/modules/circle/circle_work_type"
 	"catalog-be/internal/modules/circle/referral"
 	"catalog-be/internal/modules/event"
@@ -25,6 +26,7 @@ import (
 	"catalog-be/internal/router"
 	"catalog-be/internal/utils"
 	"catalog-be/internal/validation"
+
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
@@ -69,6 +71,11 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	productService := product.NewProductService(productRepo)
 	productHandler := product.NewProductHandler(productService, validate)
 	referralHandler := referral.NewReferralHandler(referralService, validate)
-	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler)
+	
+	circleReportRepo := circle_report.NewCircleReportRepo(db)
+	circleReportService := circle_report.NewCircleReportService(circleReportRepo)
+	circleReportHandler := circle_report.NewCircleReportHandler(circleReportService, validate)
+	
+	http := router.NewHTTP(authHandler, authMiddleware, fandomHandler, workTypeHandler, circleHandler, eventHandler, uploadHandler, productHandler, referralHandler, circleReportHandler)
 	return http
 }
