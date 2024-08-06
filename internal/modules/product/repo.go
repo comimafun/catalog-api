@@ -11,8 +11,8 @@ type ProductRepo struct {
 	db *gorm.DB
 }
 
-// FindOneByID implements ProductRepo.
-func (p *ProductRepo) FindOneByID(id int) (*entity.Product, *domain.Error) {
+// GetOneProductByProductID implements ProductRepo.
+func (p *ProductRepo) GetOneProductByProductID(id int) (*entity.Product, *domain.Error) {
 	var product entity.Product
 	err := p.db.First(&product, id).Error
 	if err != nil {
@@ -117,8 +117,8 @@ func (p *ProductRepo) BatchUpsertByCircleID(circleID int, inputs []entity.Produc
 	return updatedProducts, nil
 }
 
-// CreateOne implements ProductRepo.
-func (p *ProductRepo) CreateOne(product entity.Product) (*entity.Product, *domain.Error) {
+// CreateOneProduct implements ProductRepo.
+func (p *ProductRepo) CreateOneProduct(product entity.Product) (*entity.Product, *domain.Error) {
 	err := p.db.Create(&product).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)
@@ -127,8 +127,8 @@ func (p *ProductRepo) CreateOne(product entity.Product) (*entity.Product, *domai
 	return &product, nil
 }
 
-// DeleteOneByID implements ProductRepo.
-func (p *ProductRepo) DeleteOneByID(circleID int, id int) *domain.Error {
+// DeleteOneProductByProductID implements ProductRepo.
+func (p *ProductRepo) DeleteOneProductByProductID(circleID int, id int) *domain.Error {
 	err := p.db.Delete(&entity.Product{}, id).Error
 	if err != nil {
 		return domain.NewError(500, err, nil)
@@ -137,8 +137,8 @@ func (p *ProductRepo) DeleteOneByID(circleID int, id int) *domain.Error {
 	return nil
 }
 
-// FindAllByCircleID implements ProductRepo.
-func (p *ProductRepo) FindAllByCircleID(circleID int) ([]entity.Product, *domain.Error) {
+// GetAllProductByCircleID implements ProductRepo.
+func (p *ProductRepo) GetAllProductByCircleID(circleID int) ([]entity.Product, *domain.Error) {
 	var products []entity.Product
 	err := p.db.Where("circle_id = ?", circleID).Find(&products).Error
 	if err != nil {
@@ -148,8 +148,8 @@ func (p *ProductRepo) FindAllByCircleID(circleID int) ([]entity.Product, *domain
 	return products, nil
 }
 
-// UpdateOneByID implements ProductRepo.
-func (p ProductRepo) UpdateOneByID(id int, product entity.Product) (*entity.Product, *domain.Error) {
+// UpdateOneByProductID implements ProductRepo.
+func (p ProductRepo) UpdateOneByProductID(id int, product entity.Product) (*entity.Product, *domain.Error) {
 	err := p.db.Model(&entity.Product{}).Where("id = ?", id).Updates(&product).Error
 	if err != nil {
 		return nil, domain.NewError(500, err, nil)

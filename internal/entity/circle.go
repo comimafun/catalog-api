@@ -39,7 +39,7 @@ type Circle struct {
 	UsedReferralCodeID *int `json:"-"`
 }
 
-type CircleRaw struct {
+type CircleJoinedTables struct {
 	Circle
 
 	FandomID        int            `json:"fandom_id"`

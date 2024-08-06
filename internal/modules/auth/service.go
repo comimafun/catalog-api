@@ -26,18 +26,18 @@ type AuthService struct {
 	circleService       *circle.CircleService
 }
 
-// LogoutByAccessToken implements AuthService.
-func (a *AuthService) LogoutByAccessToken(userID int) *domain.Error {
-	err := a.refreshTokenService.DeleteAllRecordsByUserID(userID)
+// logoutByAccessToken implements AuthService.
+func (a *AuthService) logoutByAccessToken(userID int) *domain.Error {
+	err := a.refreshTokenService.DeleteAllRefreshTokenRecordsByUserID(userID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// LogoutByRefreshToken implements AuthService.
-func (a *AuthService) LogoutByRefreshToken(refreshToken string) *domain.Error {
-	err := a.refreshTokenService.DeleteByRefreshToken(refreshToken)
+// logoutByRefreshToken implements AuthService.
+func (a *AuthService) logoutByRefreshToken(refreshToken string) *domain.Error {
+	err := a.refreshTokenService.DeleteOneByRefreshToken(refreshToken)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (a *AuthService) generateAndUpdateToken(user *entity.User, refreshTokenID i
 		return nil, tokenErr
 	}
 	now := time.Now()
-	update, updateErr := a.refreshTokenService.UpdateByID(refreshTokenID, entity.RefreshToken{
+	update, updateErr := a.refreshTokenService.UpdateOneRefreshTokenByUserID(refreshTokenID, entity.RefreshToken{
 		AccessToken: token.AccessToken,
 		ExpiredAt:   &token.RefreshTokenExpiredAt,
 		Token:       token.RefreshToken,
@@ -69,9 +69,9 @@ func (a *AuthService) generateAndUpdateToken(user *entity.User, refreshTokenID i
 	}, nil
 }
 
-// RefreshToken implements AuthService.
-func (a *AuthService) RefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
-	refresh, refreshErr := a.refreshTokenService.CheckValidityByRefreshToken(refreshToken)
+// GenerateNewTokenAndRefreshToken implements AuthService.
+func (a *AuthService) GenerateNewTokenAndRefreshToken(refreshToken string) (*auth_dto.NewTokenResponse, *domain.Error) {
+	refresh, refreshErr := a.refreshTokenService.CheckSessionValidityByRefreshToken(refreshToken)
 	if refreshErr != nil {
 		return nil, refreshErr
 	}
@@ -100,7 +100,7 @@ func (a *AuthService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 
 	myCircle := (*entity.Circle)(nil)
 	if checkUser.CircleID != nil {
-		circle, circleErr := a.circleService.FindCircleByID(*checkUser.CircleID)
+		circle, circleErr := a.circleService.GetOneCircleByCircleID(*checkUser.CircleID)
 
 		if circleErr != nil && !errors.Is(circleErr.Err, gorm.ErrRecordNotFound) {
 			return nil, circleErr
@@ -195,7 +195,7 @@ func (a *AuthService) login(user *entity.User) (*auth_dto.NewTokenResponse, *dom
 		return nil, newTokenErr
 	}
 
-	_, insertErr := a.refreshTokenService.CreateOne(entity.RefreshToken{
+	_, insertErr := a.refreshTokenService.CreateOneRefreshToken(entity.RefreshToken{
 		AccessToken: newToken.AccessToken,
 		Token:       newToken.RefreshToken,
 		UserID:      user.ID,
@@ -213,21 +213,14 @@ func (a *AuthService) login(user *entity.User) (*auth_dto.NewTokenResponse, *dom
 	}, nil
 }
 
-// AuthWithGoogle implements AuthService.
-func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
-	user, err := a.config.ParseCodeToUserData(code)
-	if err != nil {
-		return nil, err
-	}
-
+func (a *AuthService) authWithGoogleUserData(user *auth_dto.GoogleUserData) (*auth_dto.NewTokenResponse, *domain.Error) {
 	existingUser, existingUserErr := a.userService.FindOneByEmail(user.Email)
-
 	if existingUserErr != nil && !errors.Is(existingUserErr.Err, gorm.ErrRecordNotFound) {
 		return nil, existingUserErr
 	}
 
 	if existingUser != nil {
-		deleteErr := a.refreshTokenService.DeleteAllRecordsByUserID(existingUser.ID)
+		deleteErr := a.refreshTokenService.DeleteAllRefreshTokenRecordsByUserID(existingUser.ID)
 		if deleteErr != nil {
 			return nil, deleteErr
 		}
@@ -242,15 +235,21 @@ func (a *AuthService) AuthWithGoogle(code string) (*auth_dto.NewTokenResponse, *
 	if newUserErr != nil {
 		return nil, newUserErr
 	}
-
 	login, loginErr := a.login(newUser)
-
 	if loginErr != nil {
 		return nil, loginErr
 	}
 
 	return login, nil
+}
 
+// AuthWithGoogleCode implements AuthService.
+func (a *AuthService) AuthWithGoogleCode(code string) (*auth_dto.NewTokenResponse, *domain.Error) {
+	user, err := a.config.ParseCodeToUserData(code)
+	if err != nil {
+		return nil, err
+	}
+	return a.authWithGoogleUserData(user)
 }
 
 func NewAuthService(

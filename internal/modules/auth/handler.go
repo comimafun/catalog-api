@@ -68,11 +68,11 @@ func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
 	c.Cookie(cookie)
 }
 
-func (a *AuthHandler) Logout(c *fiber.Ctx) error {
+func (a *AuthHandler) PostLogout(c *fiber.Ctx) error {
 	user := c.Locals("user")
 	if user != nil {
 		claims := user.(*auth_dto.ATClaims)
-		err := a.authService.LogoutByAccessToken(claims.UserID)
+		err := a.authService.logoutByAccessToken(claims.UserID)
 		if err != nil {
 			return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 		}
@@ -101,7 +101,7 @@ func (a *AuthHandler) Logout(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, err, nil)))
 	}
 
-	err := a.authService.LogoutByRefreshToken(cookie.RefreshToken)
+	err := a.authService.logoutByRefreshToken(cookie.RefreshToken)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
@@ -133,7 +133,7 @@ func (a *AuthHandler) GetGoogleCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	data, err := a.authService.AuthWithGoogle(code)
+	data, err := a.authService.AuthWithGoogleCode(code)
 	if err != nil {
 		return c.Status(err.Code).JSON(fiber.Map{
 			"error": err.Err.Error(),
@@ -164,7 +164,7 @@ func (a *AuthHandler) PostGoogleCallback(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	data, err := a.authService.AuthWithGoogle(code.Code)
+	data, err := a.authService.AuthWithGoogleCode(code.Code)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
@@ -193,7 +193,7 @@ func (a *AuthHandler) GetSelf(c *fiber.Ctx) error {
 	})
 }
 
-func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+func (a *AuthHandler) GetGenerateNewTokenAndRefreshToken(c *fiber.Ctx) error {
 	type reqCookie struct {
 		RefreshToken string `cookie:"refresh_token"`
 	}
@@ -207,7 +207,7 @@ func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	data, err := a.authService.RefreshToken(reqCookies.RefreshToken)
+	data, err := a.authService.GenerateNewTokenAndRefreshToken(reqCookies.RefreshToken)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}

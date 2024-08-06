@@ -13,7 +13,7 @@ type EventHandler struct {
 	validator    *validator.Validate
 }
 
-func (e *EventHandler) CreateOne(c *fiber.Ctx) error {
+func (e *EventHandler) CreateOneEvent(c *fiber.Ctx) error {
 	body := new(event_dto.CreateEventReqeuestBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(400).JSON(
@@ -25,7 +25,7 @@ func (e *EventHandler) CreateOne(c *fiber.Ctx) error {
 		return c.Status(400).JSON(domain.NewErrorFiber(c, domain.NewError(400, err, nil)))
 	}
 
-	created, createErr := e.eventService.CreateOne(*body)
+	created, createErr := e.eventService.CreateOneEvent(*body)
 	if createErr != nil {
 		return c.Status(createErr.Code).JSON(domain.NewErrorFiber(c, createErr))
 	}
@@ -37,7 +37,7 @@ func (e *EventHandler) CreateOne(c *fiber.Ctx) error {
 }
 
 func (e *EventHandler) GetPaginatedEvents(c *fiber.Ctx) error {
-	query := new(event_dto.GetEventFilter)
+	query := new(event_dto.GetPaginatedEventsFilter)
 	if err := c.QueryParser(query); err != nil {
 		return c.Status(400).JSON(
 			domain.NewErrorFiber(c, domain.NewError(400, err, nil)),

@@ -13,20 +13,20 @@ type FandomService struct {
 	fandomRepo *FandomRepo
 }
 
-// DeleteByID implements FandomService.
-func (f *FandomService) DeleteByID(id int) *domain.Error {
-	return f.fandomRepo.DeleteByID(id)
+// DeleteOneFandomByFandomID implements FandomService.
+func (f *FandomService) DeleteOneFandomByFandomID(id int) *domain.Error {
+	return f.fandomRepo.DeleteOneFandomByFandomID(id)
 }
 
-// GetPaginatedFandom implements FandomService.
-func (f *FandomService) GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*dto.Pagination[[]entity.Fandom], *domain.Error) {
+// GetPaginatedFandoms implements FandomService.
+func (f *FandomService) GetPaginatedFandoms(filter *fandom_dto.GetPaginatedFandomFilter) (*dto.Pagination[[]entity.Fandom], *domain.Error) {
 	count, countErr := f.fandomRepo.GetFandomCount(filter)
 	if countErr != nil {
 		return nil, countErr
 	}
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	fandoms, findErr := f.fandomRepo.FindAll(filter)
+	fandoms, findErr := f.fandomRepo.GetPaginatedFandoms(filter)
 	if findErr != nil {
 		return nil, findErr
 	}
@@ -36,19 +36,19 @@ func (f *FandomService) GetPaginatedFandom(filter *fandom_dto.FindAllFilter) (*d
 	}, nil
 }
 
-// UpdateOne implements FandomService.
-func (f *FandomService) UpdateOne(id int, fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
+// UpdateOneFandomByFandomID implements FandomService.
+func (f *FandomService) UpdateOneFandomByFandomID(id int, fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
 	now := time.Now()
-	return f.fandomRepo.UpdateOne(id, entity.Fandom{
+	return f.fandomRepo.UpdateOneFandom(id, entity.Fandom{
 		Name:      fandom.Name,
 		Visible:   fandom.Visible,
 		UpdatedAt: &now,
 	})
 }
 
-// CreateOne implements FandomService.
-func (f *FandomService) CreateOne(fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
-	return f.fandomRepo.CreateOne(fandom)
+// CreateOneFandom implements FandomService.
+func (f *FandomService) CreateOneFandom(fandom entity.Fandom) (*entity.Fandom, *domain.Error) {
+	return f.fandomRepo.CreateOneFandom(fandom)
 }
 
 func NewFandomService(fandomRepo *FandomRepo) *FandomService {

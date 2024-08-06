@@ -14,7 +14,7 @@ type UploadHandler struct {
 	uploadService *UploadService
 }
 
-func (h *UploadHandler) UploadImage(c *fiber.Ctx) error {
+func (h *UploadHandler) PostUploadImage(c *fiber.Ctx) error {
 	appStage := os.Getenv("APP_STAGE")
 
 	if appStage == "" {

@@ -1,6 +1,6 @@
 package fandom_dto
 
-type FindAllFilter struct {
+type GetPaginatedFandomFilter struct {
 	Search string `json:"search"`
 	Page   int    `json:"page" validate:"required,min=1"`
 	Limit  int    `json:"limit" validate:"required,min=1,max=20"`

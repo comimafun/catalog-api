@@ -17,9 +17,9 @@ func NewReferralService(repo *ReferralRepo) *ReferralService {
 	return &ReferralService{repo}
 }
 
-// FindReferralCodeByCircleID implements ReferralService.
-func (r *ReferralService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
-	ref, err := r.repo.FindOneReferralByCircleID(circleID)
+// GetOneReferralCodeByCircleID implements ReferralService.
+func (r *ReferralService) GetOneReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
+	ref, err := r.repo.GetOneReferralByCircleID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, domain.NewError(404, errors.New("NOT_FOUND"), nil)
@@ -31,9 +31,9 @@ func (r *ReferralService) FindReferralCodeByCircleID(circleID int) (*entity.Refe
 	return ref, nil
 }
 
-// FindReferralByCode implements ReferralService.
-func (r *ReferralService) FindReferralByCode(referralCode string) (*entity.Referral, *domain.Error) {
-	code, err := r.repo.FindOneReferralByCode(referralCode)
+// GetOneReferralByCode implements ReferralService.
+func (r *ReferralService) GetOneReferralByCode(referralCode string) (*entity.Referral, *domain.Error) {
+	code, err := r.repo.GetOneReferralByCode(referralCode)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, domain.NewError(404, errors.New("NOT_FOUND"), nil)
@@ -45,9 +45,9 @@ func (r *ReferralService) FindReferralByCode(referralCode string) (*entity.Refer
 	return code, nil
 }
 
-// CreateNewReferral implements ReferralService.
-func (r *ReferralService) CreateNewReferral(dto referral_dto.CreateReferralBody) (*entity.Referral, *domain.Error) {
-	created, err := r.repo.CreateReferral(
+// CreateOneReferral implements ReferralService.
+func (r *ReferralService) CreateOneReferral(dto referral_dto.CreateReferralPayload) (*entity.Referral, *domain.Error) {
+	created, err := r.repo.CreateOneReferral(
 		&entity.Referral{CircleID: dto.CircleID, ReferralCode: dto.ReferralCode},
 	)
 	if err != nil {

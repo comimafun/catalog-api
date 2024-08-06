@@ -12,24 +12,24 @@ type ImageURLs struct {
 	TwitterURL   string `json:"twitter_url" validate:"omitempty,url,max=255"`
 }
 
-type OnboardNewCircleRequestBody struct {
+type OnboardNewCirclePayload struct {
 	Name   string `json:"name" validate:"required,min=3,max=255"`
 	Rating string `json:"rating" validate:"required,oneof=GA PG M"`
 	ImageURLs
 	ReferralCode string `json:"referral_code" validate:"omitempty"`
 }
 
-type CreateFandomCircleRelation struct {
+type CreateFandomCircleRelationPayload struct {
 	ID   int    `json:"ID" validate:"required"`
 	Name string `json:"name" validate:"required,min=3,max=255"`
 }
 
-type CreateWorkTypeCircleRelation struct {
+type CreateWorkTypeCircleRelationPayload struct {
 	ID   int    `json:"ID" validate:"required"`
 	Name string `json:"name" validate:"required,min=3,max=255"`
 }
 
-type UpdateCircleRequestBody struct {
+type UpdateCirclePayload struct {
 	Name        *string `json:"name" validate:"omitempty,min=3,max=255"`
 	Description *string `json:"description" validate:"omitempty"`
 	Rating      *string `json:"rating" validate:"omitempty,oneof=GA PG M"`
@@ -46,7 +46,7 @@ type UpdateCircleRequestBody struct {
 	WorkTypeIDs *[]int `json:"work_type_ids" validate:"omitempty,dive"`
 }
 
-type UpdateCircleAttendingEvent struct {
+type UpdateCircleAttendingEventDayAndBlockPayload struct {
 	CircleBlock string      `json:"circle_block" validate:"omitempty"`
 	Day         *entity.Day `json:"day" validate:"omitempty,day_or_empty"`
 	EventID     int         `json:"event_id" validate:"omitempty"`
@@ -57,22 +57,21 @@ type BlockResponse struct {
 	Name string `json:"name"`
 }
 
-type CircleResponse struct {
+type CircleOneDetailedResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
 	WorkType []entity.WorkType `json:"work_type"`
 
-	Bookmarked bool `json:"bookmarked"`
-
+	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`
-
-	Event *entity.Event `json:"event"`
+	Event      *entity.Event  `json:"event"`
 }
 
-type CircleOneForPaginationResponse struct {
+type CirclePaginatedResponse struct {
 	entity.Circle
-	Fandom   []entity.Fandom   `json:"fandom"`
-	WorkType []entity.WorkType `json:"work_type"`
+	Description *string           `json:"-"`
+	Fandom      []entity.Fandom   `json:"fandom"`
+	WorkType    []entity.WorkType `json:"work_type"`
 
 	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`
