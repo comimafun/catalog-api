@@ -14,7 +14,7 @@ type ReferralHandler struct {
 }
 
 func (h *ReferralHandler) CreateOneReferral(c *fiber.Ctx) error {
-	var body referral_dto.CreateReferralBody
+	var body referral_dto.CreateReferralPayload
 
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(
@@ -28,7 +28,7 @@ func (h *ReferralHandler) CreateOneReferral(c *fiber.Ctx) error {
 		)
 	}
 
-	referral, err := h.service.CreateNewReferral(body)
+	referral, err := h.service.CreateOneReferral(body)
 	if err != nil {
 		return c.Status(err.Code).JSON(
 			domain.NewErrorFiber(c, err),

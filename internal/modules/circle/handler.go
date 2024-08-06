@@ -59,7 +59,7 @@ func (h *CircleHandler) PatchUpdateOneCircleByCircleID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, errors.New("FORBIDDEN"), nil)))
 	}
 
-	var body circle_dto.UpdateCircleRequestBody
+	var body circle_dto.UpdateCirclePayload
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -92,7 +92,7 @@ func (h *CircleHandler) PostOnboardNewCircle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusConflict).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusConflict, errors.New("USER_ALREADY_HAVE_CIRCLE"), nil)))
 	}
 
-	var body circle_dto.OnboardNewCircleRequestBody
+	var body circle_dto.OnboardNewCirclePayload
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -275,7 +275,7 @@ func (h *CircleHandler) PutUpdateAttendingEventByCircleID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
 	}
 
-	var body circle_dto.UpdateCircleAttendingEvent
+	var body circle_dto.UpdateCircleAttendingEventDayAndBlockPayload
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}

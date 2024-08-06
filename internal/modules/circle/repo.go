@@ -19,7 +19,7 @@ type CircleRepo struct {
 }
 
 // UpdateAttendingEventDayAndCircleBlock implements CircleRepo.
-func (c *CircleRepo) UpdateAttendingEventDayAndCircleBlock(circle *entity.Circle, body *circle_dto.UpdateCircleAttendingEvent) *domain.Error {
+func (c *CircleRepo) UpdateAttendingEventDayAndCircleBlock(circle *entity.Circle, body *circle_dto.UpdateCircleAttendingEventDayAndBlockPayload) *domain.Error {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return domain.NewError(500, tx.Error, nil)
@@ -182,7 +182,7 @@ func (c *CircleRepo) UpsertOneCircle(circle *entity.Circle) (*entity.Circle, *do
 }
 
 // UpdateOneCircleAndAllRelation implements CircleRepo.
-func (c *CircleRepo) UpdateOneCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCircleRequestBody) ([]entity.CircleJoinedTables, *domain.Error) {
+func (c *CircleRepo) UpdateOneCircleAndAllRelation(userID int, payload *entity.Circle, body *circle_dto.UpdateCirclePayload) ([]entity.CircleJoinedTables, *domain.Error) {
 	tx := c.db.Begin()
 	if tx.Error != nil {
 		return nil, domain.NewError(500, tx.Error, nil)

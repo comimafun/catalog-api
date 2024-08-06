@@ -34,7 +34,7 @@ type CircleService struct {
 
 // FindReferralCodeByCircleID implements CircleService.
 func (c *CircleService) FindReferralCodeByCircleID(circleID int) (*entity.Referral, *domain.Error) {
-	return c.referralService.FindReferralCodeByCircleID(circleID)
+	return c.referralService.GetOneReferralCodeByCircleID(circleID)
 }
 
 // DeleteCircleAttendedEventByCircleID implements CircleService.
@@ -62,7 +62,7 @@ func (c *CircleService) DeleteCircleAttendedEventByCircleID(circleID int, userID
 }
 
 // UpdateCircleAttendingEventByID implements CircleService.
-func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
+func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEventDayAndBlockPayload) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	circle, err := c.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
@@ -242,7 +242,7 @@ func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.Circ
 }
 
 // UpdateCircleByID implements CircleService.
-func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
+func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCirclePayload) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	if body.Name != nil && *body.Name == "" {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
@@ -324,12 +324,12 @@ func (c *CircleService) GetOneCircleByCircleID(circleID int) (*entity.Circle, *d
 
 // DeleteBookmarkCircle implements CircleService.
 func (c *CircleService) DeleteBookmarkCircle(circleID int, userID int) *domain.Error {
-	return c.bookmark.DeleteBookmark(circleID, userID)
+	return c.bookmark.DeleteBookmarkByUserCircleID(circleID, userID)
 }
 
 // SaveBookmarkCircle implements CircleService.
 func (c *CircleService) SaveBookmarkCircle(circleID int, userID int) *domain.Error {
-	return c.bookmark.CreateBookmark(circleID, userID)
+	return c.bookmark.CreateOneBookmark(circleID, userID)
 }
 
 // transformCircleRawToCircleDetailedResponse implements CircleService.
@@ -552,10 +552,10 @@ func (c *CircleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 }
 
 // OnboardNewCircle implements CircleService.
-func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
+func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCirclePayload, userID int) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	referralID := 0
 	if body.ReferralCode != "" {
-		ref, err := c.referralService.FindReferralByCode(body.ReferralCode)
+		ref, err := c.referralService.GetOneReferralByCode(body.ReferralCode)
 		if err != nil {
 			if err.Code == 404 {
 				return nil, domain.NewError(404, errors.New("REFERRAL_CODE_NOT_FOUND"), nil)
