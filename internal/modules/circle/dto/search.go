@@ -2,7 +2,7 @@ package circle_dto
 
 import "catalog-be/internal/entity"
 
-type FindAllCircleFilter struct {
+type GetPaginatedCirclesFilter struct {
 	Search      string      `query:"search" validate:"omitempty"`
 	WorkTypeIDs []int       `query:"work_type_id" validate:"omitempty,dive"`
 	Page        int         `query:"page" validate:"required,min=1"`

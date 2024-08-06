@@ -129,7 +129,7 @@ func (h *CircleHandler) GetOneCricleByCircleSlug(c *fiber.Ctx) error {
 		userID = user.(*auth_dto.ATClaims).UserID
 	}
 
-	circle, err := h.circleService.FindCircleBySlug(slug, userID)
+	circle, err := h.circleService.GetOneCircleByCircleSlug(slug, userID)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
@@ -166,7 +166,7 @@ func (h *CircleHandler) GetCircleReferralByCirclceID(c *fiber.Ctx) error {
 }
 
 func (h *CircleHandler) GetPaginatedCircles(c *fiber.Ctx) error {
-	var query circle_dto.FindAllCircleFilter
+	var query circle_dto.GetPaginatedCirclesFilter
 	if err := c.QueryParser(&query); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -182,7 +182,7 @@ func (h *CircleHandler) GetPaginatedCircles(c *fiber.Ctx) error {
 		userID = user.(*auth_dto.ATClaims).UserID
 	}
 
-	circles, err := h.circleService.GetPaginatedCircle(&query, userID)
+	circles, err := h.circleService.GetPaginatedCircles(&query, userID)
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
@@ -195,7 +195,7 @@ func (h *CircleHandler) GetPaginatedCircles(c *fiber.Ctx) error {
 }
 
 func (h *CircleHandler) GetPaginatedBookmarkedCircles(c *fiber.Ctx) error {
-	var query circle_dto.FindAllCircleFilter
+	var query circle_dto.GetPaginatedCirclesFilter
 	if err := c.QueryParser(&query); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -311,7 +311,7 @@ func (h *CircleHandler) DeleteAttendingEventByCircleID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("FORBIDDEN"), nil)))
 	}
 
-	circle, circleErr := h.circleService.DeleteCircleEventAttendingByID(circleID, user.UserID)
+	circle, circleErr := h.circleService.DeleteCircleAttendedEventByCircleID(circleID, user.UserID)
 	if circleErr != nil {
 		return c.Status(circleErr.Code).JSON(domain.NewErrorFiber(c, circleErr))
 	}

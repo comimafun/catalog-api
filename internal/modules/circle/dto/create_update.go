@@ -57,22 +57,21 @@ type BlockResponse struct {
 	Name string `json:"name"`
 }
 
-type CircleResponse struct {
+type CircleOneDetailedResponse struct {
 	entity.Circle
 	Fandom   []entity.Fandom   `json:"fandom"`
 	WorkType []entity.WorkType `json:"work_type"`
 
-	Bookmarked bool `json:"bookmarked"`
-
+	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`
-
-	Event *entity.Event `json:"event"`
+	Event      *entity.Event  `json:"event"`
 }
 
-type CircleOneForPaginationResponse struct {
+type CirclePaginatedResponse struct {
 	entity.Circle
-	Fandom   []entity.Fandom   `json:"fandom"`
-	WorkType []entity.WorkType `json:"work_type"`
+	Description *string           `json:"-"`
+	Fandom      []entity.Fandom   `json:"fandom"`
+	WorkType    []entity.WorkType `json:"work_type"`
 
 	Bookmarked bool           `json:"bookmarked"`
 	BlockEvent *BlockResponse `json:"block"`

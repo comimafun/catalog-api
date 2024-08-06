@@ -100,7 +100,7 @@ func (a *AuthService) Self(accessToken string, user *auth_dto.ATClaims) (*auth_d
 
 	myCircle := (*entity.Circle)(nil)
 	if checkUser.CircleID != nil {
-		circle, circleErr := a.circleService.FindCircleByID(*checkUser.CircleID)
+		circle, circleErr := a.circleService.GetOneCircleByCircleID(*checkUser.CircleID)
 
 		if circleErr != nil && !errors.Is(circleErr.Err, gorm.ErrRecordNotFound) {
 			return nil, circleErr

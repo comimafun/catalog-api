@@ -37,9 +37,9 @@ func (c *CircleService) FindReferralCodeByCircleID(circleID int) (*entity.Referr
 	return c.referralService.FindReferralCodeByCircleID(circleID)
 }
 
-// DeleteCircleEventAttendingByID implements CircleService.
-func (c *CircleService) DeleteCircleEventAttendingByID(circleID int, userID int) (*circle_dto.CircleResponse, *domain.Error) {
-	circle, err := c.FindCircleByID(circleID)
+// DeleteCircleAttendedEventByCircleID implements CircleService.
+func (c *CircleService) DeleteCircleAttendedEventByCircleID(circleID int, userID int) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
+	circle, err := c.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
@@ -47,23 +47,23 @@ func (c *CircleService) DeleteCircleEventAttendingByID(circleID int, userID int)
 		return nil, err
 	}
 
-	err = c.circleRepo.ResetAttendingEvent(circle)
+	err = c.circleRepo.DeleteAllBlockEventByCircleIDAndEventID(circle)
 	if err != nil {
 		return nil, err
 	}
 
-	updatedCircle, updatedErr := c.circleRepo.FindOneBySlugAndRelatedTables(circle.Slug, userID)
+	updatedCircle, updatedErr := c.circleRepo.GetOneCircleJoinTablesByCircleSlug(circle.Slug, userID)
 	if updatedErr != nil {
 		return nil, updatedErr
 	}
-	response := c.transformCircleRawIntoCircleDetailResponse(updatedCircle)
+	response := c.transformCircleRawToCircleDetailedResponse(updatedCircle)
 
 	return &response[0], nil
 }
 
 // UpdateCircleAttendingEventByID implements CircleService.
-func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleResponse, *domain.Error) {
-	circle, err := c.FindCircleByID(circleID)
+func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int, body *circle_dto.UpdateCircleAttendingEvent) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
+	circle, err := c.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		if errors.Is(err.Err, gorm.ErrRecordNotFound) {
 			return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
@@ -83,15 +83,15 @@ func (c *CircleService) UpdateCircleAttendingEventByID(circleID int, userID int,
 	} else {
 		circle.Day = body.Day
 	}
-	err = c.circleRepo.UpdateAttendingEvent(circle, body)
+	err = c.circleRepo.UpdateAttendingEventDayAndCircleBlock(circle, body)
 	if err != nil {
 		return nil, err
 	}
-	updated, updatedErr := c.circleRepo.FindOneBySlugAndRelatedTables(circle.Slug, 0)
+	updated, updatedErr := c.circleRepo.GetOneCircleJoinTablesByCircleSlug(circle.Slug, 0)
 	if updatedErr != nil {
 		return nil, updatedErr
 	}
-	response := c.transformCircleRawIntoCircleDetailResponse(updated)
+	response := c.transformCircleRawToCircleDetailedResponse(updated)
 
 	return &response[0], nil
 
@@ -122,12 +122,12 @@ func NewCircleService(
 }
 
 // transformCircleRawToCircleOneForPaginationResponse implements CircleService.
-func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.CircleRaw) []circle_dto.CircleOneForPaginationResponse {
+func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.CircleJoinedTables) []circle_dto.CirclePaginatedResponse {
 	if len(rows) == 0 {
-		return []circle_dto.CircleOneForPaginationResponse{}
+		return []circle_dto.CirclePaginatedResponse{}
 	}
 
-	var response []circle_dto.CircleOneForPaginationResponse
+	var response []circle_dto.CirclePaginatedResponse
 
 	for _, row := range rows {
 		// check if row is inside response
@@ -173,8 +173,7 @@ func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.Circ
 		}
 
 		if !found {
-			emptyString := ""
-			latestRow := circle_dto.CircleOneForPaginationResponse{
+			latestRow := circle_dto.CirclePaginatedResponse{
 				Circle: entity.Circle{
 					ID:              row.ID,
 					Name:            row.Name,
@@ -183,7 +182,7 @@ func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.Circ
 					FacebookURL:     row.FacebookURL,
 					InstagramURL:    row.InstagramURL,
 					TwitterURL:      row.TwitterURL,
-					Description:     &emptyString,
+					Description:     nil,
 					Verified:        row.Verified,
 					Published:       row.Published,
 					CreatedAt:       row.CreatedAt,
@@ -243,12 +242,12 @@ func (c *CircleService) transformCircleRawToPaginatedResponse(rows []entity.Circ
 }
 
 // UpdateCircleByID implements CircleService.
-func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_dto.UpdateCircleRequestBody) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	if body.Name != nil && *body.Name == "" {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NAME_CANNOT_BE_EMPTY"), nil)
 	}
 
-	circle, err := c.FindCircleByID(circleID)
+	circle, err := c.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		return nil, err
 	}
@@ -299,12 +298,12 @@ func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_
 		}
 	}
 
-	rows, err := c.circleRepo.UpdateCircleAndAllRelation(userID, circle, body)
+	rows, err := c.circleRepo.UpdateOneCircleAndAllRelation(userID, circle, body)
 	if err != nil {
 		return nil, err
 	}
 
-	response := c.transformCircleRawIntoCircleDetailResponse(rows)
+	response := c.transformCircleRawToCircleDetailedResponse(rows)
 
 	if len(response) == 0 {
 		return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
@@ -313,9 +312,9 @@ func (c *CircleService) UpdateCircleByID(userID int, circleID int, body *circle_
 	return &response[0], nil
 }
 
-// FindCircleByID implements CircleService.
-func (c *CircleService) FindCircleByID(circleID int) (*entity.Circle, *domain.Error) {
-	circle, err := c.circleRepo.FindOneByID(circleID)
+// GetOneCircleByCircleID implements CircleService.
+func (c *CircleService) GetOneCircleByCircleID(circleID int) (*entity.Circle, *domain.Error) {
+	circle, err := c.circleRepo.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		return nil, err
 	}
@@ -333,13 +332,13 @@ func (c *CircleService) SaveBookmarkCircle(circleID int, userID int) *domain.Err
 	return c.bookmark.CreateBookmark(circleID, userID)
 }
 
-// transformCircleRawIntoCircleDetailResponse implements CircleService.
-func (c *CircleService) transformCircleRawIntoCircleDetailResponse(rows []entity.CircleRaw) []circle_dto.CircleResponse {
+// transformCircleRawToCircleDetailedResponse implements CircleService.
+func (c *CircleService) transformCircleRawToCircleDetailedResponse(rows []entity.CircleJoinedTables) []circle_dto.CircleOneDetailedResponse {
 	if len(rows) == 0 {
-		return []circle_dto.CircleResponse{}
+		return []circle_dto.CircleOneDetailedResponse{}
 	}
 
-	var response []circle_dto.CircleResponse
+	var response []circle_dto.CircleOneDetailedResponse
 
 	for _, row := range rows {
 		// check if row is inside response
@@ -389,7 +388,7 @@ func (c *CircleService) transformCircleRawIntoCircleDetailResponse(rows []entity
 		}
 
 		if !found {
-			latestRow := circle_dto.CircleResponse{
+			latestRow := circle_dto.CircleOneDetailedResponse{
 				Circle: entity.Circle{
 					ID:              row.ID,
 					Name:            row.Name,
@@ -465,33 +464,33 @@ func (c *CircleService) transformCircleRawIntoCircleDetailResponse(rows []entity
 }
 
 // GetPaginatedBookmarkedCircle implements CircleService.
-func (c *CircleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.FindAllCircleFilter) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
-	rows, err := c.circleRepo.FindBookmarkedCircleByUserID(userID, filter)
+func (c *CircleService) GetPaginatedBookmarkedCircle(userID int, filter *circle_dto.GetPaginatedCirclesFilter) (*dto.Pagination[[]circle_dto.CirclePaginatedResponse], *domain.Error) {
+	rows, err := c.circleRepo.GetPaginatedBookmarkedCirclesByUserID(userID, filter)
 	if err != nil {
 		return nil, err
 	}
 
 	response := c.transformCircleRawToPaginatedResponse(rows)
 
-	count, err := c.circleRepo.FindAllBookmarkedCount(userID, filter)
+	count, err := c.circleRepo.GetAllBookmarkedCircleCount(userID, filter)
 	if err != nil {
 		return nil, err
 	}
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	return &dto.Pagination[[]circle_dto.CircleOneForPaginationResponse]{
+	return &dto.Pagination[[]circle_dto.CirclePaginatedResponse]{
 		Data:     response,
 		Metadata: *metadata,
 	}, nil
 }
 
-// GetPaginatedCircle implements CircleService.
-func (c *CircleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilter, userID int) (*dto.Pagination[[]circle_dto.CircleOneForPaginationResponse], *domain.Error) {
-	rows, err := c.circleRepo.FindAllCircles(filter, userID)
+// GetPaginatedCircles implements CircleService.
+func (c *CircleService) GetPaginatedCircles(filter *circle_dto.GetPaginatedCirclesFilter, userID int) (*dto.Pagination[[]circle_dto.CirclePaginatedResponse], *domain.Error) {
+	rows, err := c.circleRepo.GetPaginatedCircles(filter, userID)
 	if err != nil {
 		return nil, err
 	}
-	count, err := c.circleRepo.FindAllCount(filter)
+	count, err := c.circleRepo.GetAllCirclesCount(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -499,25 +498,25 @@ func (c *CircleService) GetPaginatedCircle(filter *circle_dto.FindAllCircleFilte
 	response := c.transformCircleRawToPaginatedResponse(rows)
 	metadata := factory.GetPaginationMetadata(count, filter.Page, filter.Limit)
 
-	return &dto.Pagination[[]circle_dto.CircleOneForPaginationResponse]{
+	return &dto.Pagination[[]circle_dto.CirclePaginatedResponse]{
 		Data:     response,
 		Metadata: *metadata,
 	}, nil
 
 }
 
-// FindCircleBySlug implements CircleService.
-func (c *CircleService) FindCircleBySlug(slug string, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+// GetOneCircleByCircleSlug implements CircleService.
+func (c *CircleService) GetOneCircleByCircleSlug(slug string, userID int) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	if slug == "" {
 		return nil, domain.NewError(400, errors.New("SLUG_IS_EMPTY"), nil)
 	}
 
-	rows, err := c.circleRepo.FindOneBySlugAndRelatedTables(slug, userID)
+	rows, err := c.circleRepo.GetOneCircleJoinTablesByCircleSlug(slug, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	response := c.transformCircleRawIntoCircleDetailResponse(rows)
+	response := c.transformCircleRawToCircleDetailedResponse(rows)
 
 	if len(response) == 0 {
 		return nil, domain.NewError(404, errors.New("CIRCLE_NOT_FOUND"), nil)
@@ -532,14 +531,14 @@ func (c *CircleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 		return nil, domain.NewError(400, errors.New("CIRCLE_NOT_FOUND"), nil)
 	}
 
-	circle, err := c.circleRepo.FindOneByID(circleID)
+	circle, err := c.circleRepo.GetOneCircleByCircleID(circleID)
 	if err != nil {
 		return nil, err
 	}
 
 	circle.Published = !circle.Published
 
-	_, err = c.circleRepo.UpserstOneCircle(circle)
+	_, err = c.circleRepo.UpsertOneCircle(circle)
 
 	if err != nil {
 		return nil, err
@@ -553,7 +552,7 @@ func (c *CircleService) PublishCircleByID(circleID int) (*string, *domain.Error)
 }
 
 // OnboardNewCircle implements CircleService.
-func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleResponse, *domain.Error) {
+func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleRequestBody, userID int) (*circle_dto.CircleOneDetailedResponse, *domain.Error) {
 	referralID := 0
 	if body.ReferralCode != "" {
 		ref, err := c.referralService.FindReferralByCode(body.ReferralCode)
@@ -604,7 +603,7 @@ func (c *CircleService) OnboardNewCircle(body *circle_dto.OnboardNewCircleReques
 		return nil, err
 	}
 
-	return &circle_dto.CircleResponse{
+	return &circle_dto.CircleOneDetailedResponse{
 		Circle:   *circle,
 		Fandom:   []entity.Fandom{},
 		WorkType: []entity.WorkType{},

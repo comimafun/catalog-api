@@ -331,7 +331,7 @@ func TestCircle(t *testing.T) {
 		instance := newCreateCircleInstance(db)
 
 		t.Run("Test GetPaginatedCircles should return correct metadata", func(t *testing.T) {
-			data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+			data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:  1,
 				Limit: 20,
 			}, 0)
@@ -344,7 +344,7 @@ func TestCircle(t *testing.T) {
 
 		t.Run("No duplicated circle", func(t *testing.T) {
 			t.Run("first page", func(t *testing.T) {
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:  1,
 					Limit: 20,
 				}, 0)
@@ -358,7 +358,7 @@ func TestCircle(t *testing.T) {
 				}
 			})
 			t.Run("second page", func(t *testing.T) {
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:  2,
 					Limit: 20,
 				}, 0)
@@ -373,8 +373,8 @@ func TestCircle(t *testing.T) {
 			})
 
 			t.Run("all pages", func(t *testing.T) {
-				var allDatas []circle_dto.CircleOneForPaginationResponse
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				var allDatas []circle_dto.CirclePaginatedResponse
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:  1,
 					Limit: 20}, 0)
 				assert.Nil(t, err)
@@ -382,7 +382,7 @@ func TestCircle(t *testing.T) {
 				allDatas = append(allDatas, data.Data...)
 
 				for i := 2; i <= data.Metadata.TotalPages; i++ {
-					data, err = instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					data, err = instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 						Page:  i,
 						Limit: 20,
 					}, 0)
@@ -399,14 +399,14 @@ func TestCircle(t *testing.T) {
 		})
 
 		t.Run("Test last page", func(t *testing.T) {
-			data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+			data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:  2,
 				Limit: 20,
 			}, 0)
 
 			assert.Nil(t, err)
 
-			data, err = instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+			data, err = instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:  data.Metadata.TotalPages,
 				Limit: 20,
 			}, 0)
@@ -416,7 +416,7 @@ func TestCircle(t *testing.T) {
 		})
 
 		t.Run("Test out of bond page", func(t *testing.T) {
-			data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+			data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:  100,
 				Limit: 20,
 			}, 0)
@@ -427,7 +427,7 @@ func TestCircle(t *testing.T) {
 
 		t.Run("Test search filter", func(t *testing.T) {
 			search := "mag"
-			data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+			data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:   1,
 				Limit:  20,
 				Search: search,
@@ -443,7 +443,7 @@ func TestCircle(t *testing.T) {
 		t.Run("Test rating filter", func(t *testing.T) {
 			t.Run("Test single Rating", func(t *testing.T) {
 				rating := "GA"
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:   1,
 					Limit:  20,
 					Rating: []string{rating},
@@ -459,7 +459,7 @@ func TestCircle(t *testing.T) {
 			})
 			t.Run("Test multiple Rating", func(t *testing.T) {
 				rating := []string{"GA", "PG"}
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:   1,
 					Limit:  20,
 					Rating: rating,
@@ -477,7 +477,7 @@ func TestCircle(t *testing.T) {
 		t.Run("Test day filter", func(t *testing.T) {
 			t.Run("Test single day", func(t *testing.T) {
 				day := entity.Day("first")
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:  1,
 					Limit: 20,
 					Day:   &day,
@@ -496,7 +496,7 @@ func TestCircle(t *testing.T) {
 		t.Run("Test filter by work type", func(t *testing.T) {
 			t.Run("Test single work type", func(t *testing.T) {
 				workTypeIDS := []int{1}
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:        1,
 					Limit:       20,
 					WorkTypeIDs: workTypeIDS,
@@ -519,7 +519,7 @@ func TestCircle(t *testing.T) {
 
 			t.Run("Test multiple work type", func(t *testing.T) {
 				workTypeIDS := []int{1, 3, 5, 10}
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:        1,
 					Limit:       20,
 					WorkTypeIDs: workTypeIDS,
@@ -551,7 +551,7 @@ func TestCircle(t *testing.T) {
 					randomFandomID := rand.Intn(94) + 1
 					fandomIDS := []int{randomFandomID}
 
-					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 						Page:      1,
 						Limit:     20,
 						FandomIDs: fandomIDS,
@@ -584,7 +584,7 @@ func TestCircle(t *testing.T) {
 						fandomIDS = append(fandomIDS, i)
 					}
 
-					data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+					data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 						Page:      1,
 						Limit:     20,
 						FandomIDs: fandomIDS,
@@ -615,7 +615,7 @@ func TestCircle(t *testing.T) {
 		t.Run("Test filter by event", func(t *testing.T) {
 			t.Run("Test single event", func(t *testing.T) {
 				event := "event-1"
-				data, err := instance.circleService.GetPaginatedCircle(&circle_dto.FindAllCircleFilter{
+				data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 					Page:  1,
 					Limit: 20,
 					Event: event,
