@@ -73,7 +73,7 @@ func InitializeServer(db *gorm.DB, validate *validator.Validate, s3_2 *s3.Client
 	referralHandler := referral.NewReferralHandler(referralService, validate)
 	
 	reportRepo := report.NewReportRepo(db)
-	reportService := report.NewReportService(reportRepo)
+	reportService := report.NewReportService(reportRepo, circleRepo)
 	reportHandler := report.NewReportHandler(reportService, validate)
 	
 	http := router.NewHTTP(

@@ -48,15 +48,15 @@ func (rh *ReportHandler) PostCreateOneReportCircle(c *fiber.Ctx) error {
 
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
-	errInsertDb := rh.reportService.CreateReportCircle(&entity.Report{
+	serviceErr := rh.reportService.CreateReportCircle(&entity.Report{
 		UserID:   user.UserID,
 		CircleID: circleID,
 		Reason:   body.Reason,
 	})
-	if errInsertDb != nil {
+	if serviceErr != nil {
 		return c.
-			Status(errInsertDb.Code).
-			JSON(domain.NewErrorFiber(c, errInsertDb))
+			Status(serviceErr.Code).
+			JSON(domain.NewErrorFiber(c, serviceErr))
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
