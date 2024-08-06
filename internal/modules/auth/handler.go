@@ -68,7 +68,7 @@ func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
 	c.Cookie(cookie)
 }
 
-func (a *AuthHandler) Logout(c *fiber.Ctx) error {
+func (a *AuthHandler) PostLogout(c *fiber.Ctx) error {
 	user := c.Locals("user")
 	if user != nil {
 		claims := user.(*auth_dto.ATClaims)
@@ -193,7 +193,7 @@ func (a *AuthHandler) GetSelf(c *fiber.Ctx) error {
 	})
 }
 
-func (a *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+func (a *AuthHandler) GetRefreshToken(c *fiber.Ctx) error {
 	type reqCookie struct {
 		RefreshToken string `cookie:"refresh_token"`
 	}

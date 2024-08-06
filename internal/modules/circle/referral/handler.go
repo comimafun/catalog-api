@@ -13,7 +13,7 @@ type ReferralHandler struct {
 	validator *validator.Validate
 }
 
-func (h *ReferralHandler) CreateReferral(c *fiber.Ctx) error {
+func (h *ReferralHandler) CreateOneReferral(c *fiber.Ctx) error {
 	var body referral_dto.CreateReferralBody
 
 	if err := c.BodyParser(&body); err != nil {

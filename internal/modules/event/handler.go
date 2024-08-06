@@ -13,7 +13,7 @@ type EventHandler struct {
 	validator    *validator.Validate
 }
 
-func (e *EventHandler) CreateOne(c *fiber.Ctx) error {
+func (e *EventHandler) CreateOneEvent(c *fiber.Ctx) error {
 	body := new(event_dto.CreateEventReqeuestBody)
 	if err := c.BodyParser(body); err != nil {
 		return c.Status(400).JSON(

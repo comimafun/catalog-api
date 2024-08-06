@@ -19,7 +19,7 @@ type CircleHandler struct {
 	userService   *user.UserService
 }
 
-func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) PostPublishOrUnpublishCircle(c *fiber.Ctx) error {
 	circleID, parserr := c.ParamsInt("circleid")
 	if parserr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, parserr, nil)))
@@ -45,7 +45,7 @@ func (h *CircleHandler) PublishUnpublishCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) PatchUpdateOneCircleByCircleID(c *fiber.Ctx) error {
 	circleID, parserr := c.ParamsInt("circleid")
 	if parserr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("CIRCLE_ID_SHOULD_BE_NUMBER"), nil)))
@@ -79,7 +79,7 @@ func (h *CircleHandler) UpdateCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) PostOnboardNewCircle(c *fiber.Ctx) error {
 	user := c.Locals("user").(*auth_dto.ATClaims)
 
 	checkUser, checkErr := h.userService.FindOneByID(user.UserID)
@@ -116,7 +116,7 @@ func (h *CircleHandler) OnboardNewCircle(c *fiber.Ctx) error {
 
 }
 
-func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
+func (h *CircleHandler) GetOneCricleByCircleSlug(c *fiber.Ctx) error {
 	slug := c.Params("slug")
 	slug = strings.TrimSpace(slug)
 	if slug == "" {
@@ -140,7 +140,7 @@ func (h *CircleHandler) FindCircleBySlug(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) GetCircleReferral(c *fiber.Ctx) error {
+func (h *CircleHandler) GetCircleReferralByCirclceID(c *fiber.Ctx) error {
 	circleID, err := c.ParamsInt("circleid")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, errors.New("CIRCLE_ID_SHOULD_BE_NUMBER"), nil)))
@@ -165,7 +165,7 @@ func (h *CircleHandler) GetCircleReferral(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) GetPaginatedCircles(c *fiber.Ctx) error {
 	var query circle_dto.FindAllCircleFilter
 	if err := c.QueryParser(&query); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
@@ -194,7 +194,7 @@ func (h *CircleHandler) GetPaginatedCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) GetPaginatedBookmarkedCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) GetPaginatedBookmarkedCircles(c *fiber.Ctx) error {
 	var query circle_dto.FindAllCircleFilter
 	if err := c.QueryParser(&query); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
@@ -218,7 +218,7 @@ func (h *CircleHandler) GetPaginatedBookmarkedCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) SaveCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) PostBookmarkCircleByCircleID(c *fiber.Ctx) error {
 
 	circleID, parseErr := c.ParamsInt("id")
 
@@ -239,7 +239,7 @@ func (h *CircleHandler) SaveCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
+func (h *CircleHandler) DeleteBookmarkCircleByCircleID(c *fiber.Ctx) error {
 	circleID, parseErr := c.ParamsInt("id")
 
 	if parseErr != nil {
@@ -259,8 +259,8 @@ func (h *CircleHandler) UnsaveCircle(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) UpdateCircleEventAttending(c *fiber.Ctx) error {
-	circleID, err := c.ParamsInt("id")
+func (h *CircleHandler) PutUpdateAttendingEventByCircleID(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("circleid")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
@@ -295,8 +295,8 @@ func (h *CircleHandler) UpdateCircleEventAttending(c *fiber.Ctx) error {
 	})
 }
 
-func (h *CircleHandler) DeleteCircleEventAttending(c *fiber.Ctx) error {
-	circleID, err := c.ParamsInt("id")
+func (h *CircleHandler) DeleteAttendingEventByCircleID(c *fiber.Ctx) error {
+	circleID, err := c.ParamsInt("circleid")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}

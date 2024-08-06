@@ -15,7 +15,7 @@ type createUpdateRequestBody struct {
 	Name string `json:"name" validate:"required,min=1,max=255"`
 }
 
-func (h *WorkTypeHandler) CreateOne(c *fiber.Ctx) error {
+func (h *WorkTypeHandler) PostCreateOneWorkType(c *fiber.Ctx) error {
 	var body createUpdateRequestBody
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -34,7 +34,7 @@ func (h *WorkTypeHandler) CreateOne(c *fiber.Ctx) error {
 	})
 }
 
-func (h *WorkTypeHandler) UpdateOne(c *fiber.Ctx) error {
+func (h *WorkTypeHandler) PutUpdateOneWorkType(c *fiber.Ctx) error {
 	var body createUpdateRequestBody
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -58,7 +58,7 @@ func (h *WorkTypeHandler) UpdateOne(c *fiber.Ctx) error {
 	})
 }
 
-func (h *WorkTypeHandler) DeleteByID(c *fiber.Ctx) error {
+func (h *WorkTypeHandler) DeleteOneWorkTypeByID(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -77,7 +77,7 @@ func (h *WorkTypeHandler) DeleteByID(c *fiber.Ctx) error {
 	})
 }
 
-func (h *WorkTypeHandler) GetAll(c *fiber.Ctx) error {
+func (h *WorkTypeHandler) GetAllWorkTypes(c *fiber.Ctx) error {
 	workTypes, err := h.workTypeService.FindAll()
 	if err != nil {
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
