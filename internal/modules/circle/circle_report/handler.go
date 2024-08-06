@@ -32,7 +32,7 @@ func (crh *CircleReportHandler) CreateReportCircle(c *fiber.Ctx) error {
 			JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	var body circle_report_dto.CreateCircleReportBody
+	var body circle_report_dto.CreateCircleReportPayload
 	if err := c.BodyParser(&body); err != nil {
 		return c.
 			Status(fiber.StatusBadRequest).
