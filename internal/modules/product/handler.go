@@ -128,7 +128,7 @@ func (p *ProductHandler) UpdateOneProductByCircleID(c *fiber.Ctx) error {
 			JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
 	}
 
-	product, productErr := p.productService.UpdateOneProductByCircleID(id, entity.Product{
+	product, productErr := p.productService.UpdateOneProductByCircleAndProductID(id, entity.Product{
 		ID:       productID,
 		Name:     body.Name,
 		ImageURL: body.ImageURL,
@@ -167,7 +167,7 @@ func (p *ProductHandler) DeleteOneProductByCircleIDAndProductID(c *fiber.Ctx) er
 			JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusForbidden, errors.New("FORBIDDEN"), nil)))
 	}
 
-	deleteErr := p.productService.DeleteOneByID(circleID, productID)
+	deleteErr := p.productService.DeleteOneProductByID(circleID, productID)
 
 	if deleteErr != nil {
 		return c.
