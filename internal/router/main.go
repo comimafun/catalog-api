@@ -8,6 +8,7 @@ import (
 	"catalog-be/internal/modules/event"
 	"catalog-be/internal/modules/fandom"
 	"catalog-be/internal/modules/product"
+	"catalog-be/internal/modules/report"
 	"catalog-be/internal/modules/upload"
 	"catalog-be/internal/modules/work_type"
 
@@ -24,6 +25,7 @@ type HTTP struct {
 	upload         *upload.UploadHandler
 	product        *product.ProductHandler
 	referral       *referral.ReferralHandler
+	report         *report.ReportHandler
 }
 
 func (h *HTTP) RegisterRoutes(app *fiber.App) {
@@ -89,6 +91,9 @@ func (h *HTTP) RegisterRoutes(app *fiber.App) {
 
 	referral := v1.Group("/referral")
 	referral.Post("/", h.authMiddleware.Init, h.authMiddleware.AdminOnly, h.referral.CreateOneReferral)
+
+	report := v1.Group("/report")
+	report.Post("/:id/circle", h.authMiddleware.Init, h.report.PostCreateOneReportCircle)
 }
 
 func NewHTTP(
@@ -101,6 +106,7 @@ func NewHTTP(
 	upload *upload.UploadHandler,
 	product *product.ProductHandler,
 	referral *referral.ReferralHandler,
+	report *report.ReportHandler,
 ) *HTTP {
 	return &HTTP{
 		auth,
@@ -112,5 +118,6 @@ func NewHTTP(
 		upload,
 		product,
 		referral,
+		report,
 	}
 }
