@@ -525,7 +525,7 @@ func (c *CircleService) GetOneCircleByCircleSlug(slug string, userID int) (*circ
 	return &response[0], nil
 }
 
-// PublishCircleByID implements CircleService
+// PublishCircleByID implements CircleService.
 func (c *CircleService) PublishCircleByID(circleID int) (*string, *domain.Error) {
 	if circleID == 0 {
 		return nil, domain.NewError(400, errors.New("CIRCLE_NOT_FOUND"), nil)
