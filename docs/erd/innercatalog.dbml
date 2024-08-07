@@ -59,10 +59,10 @@ Table circle {
   slug varchar(255) [not null, unique]
   picture_url varchar(255)
   cover_picture_url varchar(255)
-  url varchar(255) 
-  facebook_url varchar(255) 
-  twitter_url varchar(255) 
-  instagram_url varchar(255) 
+  url varchar(255)
+  facebook_url varchar(255)
+  twitter_url varchar(255)
+  instagram_url varchar(255)
   description text
   day day
   published bool [default:  false]
@@ -72,6 +72,7 @@ Table circle {
   deleted_at timestamp
 
   event_id int [ref: - event.id]
+  used_referral_code_id int [ref: > referral.id]
 
   indexes {
     verified [name: "idx_circle_verified"]
@@ -159,5 +160,18 @@ Table block_event {
     event_id [name: "idx_block_event_event_id"]
     circle_id [name: "idx_block_event_circle_id"]
     (prefix, postfix, event_id) [name: "idx_block_event_prefix_postfix_event_id"]
+  }
+}
+
+
+Table referral {
+  id serial [pk]
+  referral_code varchar(255) [not null, unique]
+  circle_id integer [not null, unique, ref: - circle.id]
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  indexes {
+    circle_id [name: "idx_referral_circle_id"]
   }
 }
