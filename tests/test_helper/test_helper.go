@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 )
@@ -173,62 +174,26 @@ func SeedUser(t *testing.T, db *gorm.DB) {
 }
 
 func GetConnURL(t *testing.T, ctx context.Context) (string, testcontainers.Container) {
-	// Define container request
-	containerReq := testcontainers.ContainerRequest{
-		Image:        "postgres:16",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_DB":       "testdb",
-			"POSTGRES_USER":     "user",
-			"POSTGRES_PASSWORD": "foobar",
-		},
-		WaitingFor: wait.ForLog("database system is ready to accept connections").
-			WithOccurrence(2).
-			WithStartupTimeout(5 * time.Second),
-	}
+	container, err := postgres.Run(ctx,
+		"postgres:16-alpine",
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("user"),
+		postgres.WithPassword("foobar"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second),
+		),
+	)
 
-	// Start the PostgreSQL container
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: containerReq,
-		Started:          true,
-	})
 	if err != nil {
-		t.Fatalf("Could not start PostgreSQL container: %s", err)
+		t.Fatalf("Could not start postgres container: %s", err)
 	}
 
-	// Get the mapped port for PostgreSQL
-	port, err := container.MappedPort(ctx, "5432")
+	connUrl, err := container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		t.Fatalf("Could not get mapped port: %s", err)
+		t.Fatalf("Could not get connection string: %s", err)
 	}
 
-	// Construct the connection URL
-	connURL := fmt.Sprintf("postgres://user:foobar@localhost:%s/testdb?sslmode=disable", port.Port())
-	return connURL, container
+	return connUrl, container
 }
-
-//! save old code for now
-// func GetConnURL(t *testing.T, ctx context.Context) (string, testcontainers.Container) {
-// 	container, err := postgres.RunContainer(ctx,
-// 		testcontainers.WithImage("postgres:16"),
-// 		postgres.WithDatabase("testdb"),
-// 		postgres.WithUsername("user"),
-// 		postgres.WithPassword("foobar"),
-// 		testcontainers.WithWaitStrategy(
-// 			wait.ForLog("database system is ready to accept connections").
-// 				WithOccurrence(2).
-// 				WithStartupTimeout(5*time.Second),
-// 		),
-// 	)
-
-// 	if err != nil {
-// 		t.Fatalf("Could not start postgres container: %s", err)
-// 	}
-
-// 	connUrl, err := container.ConnectionString(ctx, "sslmode=disable")
-// 	if err != nil {
-// 		t.Fatalf("Could not get connection string: %s", err)
-// 	}
-
-// 	return connUrl, container
-// }
