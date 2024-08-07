@@ -1,0 +1,25 @@
+meta {
+  name: Create Report
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{hostnamev1}}/report/:id/circle
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 1
+}
+
+headers {
+  Authorization: Bearer {{at}}
+}
+
+body:json {
+  {
+    "reason": "alasan kenapa direport"
+  }
+}
