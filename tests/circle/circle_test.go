@@ -1,7 +1,6 @@
 package circle_test
 
 import (
-	"catalog-be/internal/database"
 	"catalog-be/internal/entity"
 	"catalog-be/internal/modules/circle"
 	"catalog-be/internal/modules/circle/bookmark"
@@ -13,9 +12,9 @@ import (
 	"catalog-be/internal/modules/user"
 	"catalog-be/internal/utils"
 	"catalog-be/internal/validation"
+	test_helper "catalog-be/tests/test_helper"
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"os"
 	"strings"
@@ -23,156 +22,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 )
-
-type circleJson struct {
-	Name             string     `json:"name"`
-	Slug             string     `json:"slug"`
-	Rating           *string    `json:"rating"` // enum GA, PG, M
-	Day              entity.Day `json:"day"`
-	Comission        bool       `json:"comission"`
-	Comic            bool       `json:"comic"`
-	Artbook          bool       `json:"artbook"`
-	PhotobookGeneral bool       `json:"photobook_general"`
-	Novel            bool       `json:"novel"`
-	Game             bool       `json:"game"`
-	Music            bool       `json:"music"`
-	Goods            bool       `json:"goods"`
-	HandmadeCrafts   bool       `json:"handmade_crafts"`
-	PhotobookCosplay bool       `json:"photobook_cosplay"`
-	Fandom           string     `json:"fandom"`
-	WorkTypeIDs      []int      `json:"work_type_ids"`
-}
-
-func migrate(t *testing.T, db *gorm.DB) {
-	sqlDir := "../../migrator/migrations"
-
-	files, err := os.ReadDir(sqlDir)
-	if err != nil {
-		t.Fatalf("Error reading directory: %s", err)
-	}
-
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), "up.sql") {
-			sqlContent, err := os.ReadFile(fmt.Sprintf("%s/%s", sqlDir, file.Name()))
-			if err != nil {
-				t.Fatalf("Error reading directory: %s", err)
-			}
-
-			err = db.Exec(string(sqlContent)).Error
-			if err != nil {
-				t.Fatalf("Error reading directory: %s", err)
-			}
-		}
-	}
-}
-
-func setupDb(t *testing.T, dsn string) *gorm.DB {
-	db := database.New(dsn, false)
-	migrate(t, db)
-	return db
-}
-func getConnUrl(t *testing.T, ctx context.Context) string {
-	container, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16"),
-		postgres.WithDatabase("testdb"),
-		postgres.WithUsername("user"),
-		postgres.WithPassword("foobar"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second),
-		),
-	)
-
-	if err != nil {
-		t.Fatalf("Could not start postgres container: %s", err)
-	}
-
-	connUrl, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("Could not get connection string: %s", err)
-	}
-
-	return connUrl
-}
-
-func seedEvent(t *testing.T, db *gorm.DB) {
-	err := db.Create([]entity.Event{
-		{
-			Name: "Event 1",
-			Slug: "event-1",
-		},
-		{
-			Name: "Event 2",
-			Slug: "event-2",
-		}, {
-			Name: "Event 3",
-			Slug: "event-3",
-		},
-	}).Error
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func seedFandom(t *testing.T, db *gorm.DB) {
-	fandomFile, err := os.Open("./data/fandom.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer fandomFile.Close()
-
-	var fandoms []entity.Fandom
-	if err := json.NewDecoder(fandomFile).Decode(&fandoms); err != nil {
-		t.Fatal(err)
-	}
-
-	fandomModels := []entity.Fandom{}
-	for _, fandom := range fandoms {
-		fandomModel := entity.Fandom{
-			Name:    fandom.Name,
-			Visible: true,
-		}
-		fandomModels = append(fandomModels, fandomModel)
-	}
-	err = db.Create(&fandomModels).Error
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func seedWorkType(t *testing.T, db *gorm.DB) {
-	workType, err := os.Open("./data/work_type.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer workType.Close()
-
-	var workTypes []entity.WorkType
-	if err := json.NewDecoder(workType).Decode(&workTypes); err != nil {
-		t.Fatal(err)
-	}
-
-	workTypeModels := []entity.WorkType{}
-
-	for _, workType := range workTypes {
-		workTypeModel := entity.WorkType{
-			Name: workType.Name,
-		}
-		workTypeModels = append(workTypeModels, workTypeModel)
-	}
-
-	err = db.Create(&workTypeModels).Error
-	if err != nil {
-		t.Fatal(err)
-	}
-}
 
 func seedCircle(t *testing.T, db *gorm.DB) {
 	file, err := os.Open("./data/circle_initial.json")
@@ -181,24 +32,25 @@ func seedCircle(t *testing.T, db *gorm.DB) {
 	}
 	defer file.Close()
 
-	var circles []circleJson
+	var circles []test_helper.CircleJson
 	if err := json.NewDecoder(file).Decode(&circles); err != nil {
 		t.Fatal(err)
 	}
 
 	circleModels := []entity.Circle{}
 
-	for _, circle := range circles {
-		// Seed the random number generator to ensure different results each time
-		rand.Seed(time.Now().UnixNano())
+	for index, circle := range circles {
+		// Create a new random number generator with a seed
+		rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-		// Generate a random number between 1 and 3
-		randomNumber := rand.Intn(3) + 1
+		// Generate a random number from 1 to 3
+		randomNumber := rng.Intn(3) + 1
 
 		cover := "https://cdn.innercatalog.com/development/covers/0190eefb-669a-75e9-a29c-3b244895c4fb.jpg"
 		picture := "https://cdn.innercatalog.com/profiles/0190c595-24dd-79f3-8f7a-f2b8f9198d3e.png"
 
 		circleModel := entity.Circle{
+			ID:                 index + 1,
 			Name:               circle.Name,
 			Slug:               circle.Slug,
 			Rating:             circle.Rating,
@@ -213,6 +65,7 @@ func seedCircle(t *testing.T, db *gorm.DB) {
 
 		circleModels = append(circleModels, circleModel)
 	}
+
 	err = db.Create(&circleModels).Error
 	if err != nil {
 		t.Fatal(err)
@@ -279,16 +132,16 @@ func seedCircleFandom(t *testing.T, db *gorm.DB) {
 }
 
 func seedDataForPagination(t *testing.T, db *gorm.DB) {
-	seedEvent(t, db)
-	seedFandom(t, db)
-	seedWorkType(t, db)
+	test_helper.SeedEvent(t, db)
+	test_helper.SeedFandom(t, db)
+	test_helper.SeedWorkType(t, db)
 	seedCircle(t, db)
 	seedCircleWorkType(t, db)
 	seedCircleFandom(t, db)
 }
 
-func TestMain(t *testing.M) {
-	res := t.Run()
+func TestMain(m *testing.M) {
+	res := m.Run()
 	os.Exit(res)
 }
 
@@ -323,13 +176,15 @@ func newCreateCircleInstance(db *gorm.DB) *createCircleInstance {
 func TestCircle(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Test pagination", func(t *testing.T) {
-		ctx := context.Background()
-		connUrl := getConnUrl(t, ctx)
-		db := setupDb(t, connUrl)
-		seedDataForPagination(t, db)
-		instance := newCreateCircleInstance(db)
+	ctx := context.Background()
+	connURL, _ := test_helper.GetConnURL(t, ctx)
+	db := test_helper.SetupDb(t, connURL)
 
+	// Seed database with initial data
+	seedDataForPagination(t, db)
+	instance := newCreateCircleInstance(db)
+
+	t.Run("Test pagination", func(t *testing.T) {
 		t.Run("Test GetPaginatedCircles should return correct metadata", func(t *testing.T) {
 			data, err := instance.circleService.GetPaginatedCircles(&circle_dto.GetPaginatedCirclesFilter{
 				Page:  1,

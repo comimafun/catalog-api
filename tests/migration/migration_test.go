@@ -2,44 +2,16 @@ package migration_test
 
 import (
 	"catalog-be/internal/database"
+	test_helper "catalog-be/tests/test_helper"
 	"context"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"gorm.io/gorm"
 )
-
-func getConnUrl(t *testing.T, ctx context.Context) string {
-	container, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:16"),
-		postgres.WithDatabase("testdb"),
-		postgres.WithUsername("user"),
-		postgres.WithPassword("foobar"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2).
-				WithStartupTimeout(5*time.Second),
-		),
-	)
-
-	if err != nil {
-		t.Fatalf("Could not start postgres container: %s", err)
-	}
-
-	connUrl, err := container.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatalf("Could not get connection string: %s", err)
-	}
-
-	return connUrl
-}
 
 func TestMain(m *testing.M) {
 	res := m.Run()
@@ -109,8 +81,8 @@ func migrateDown(t *testing.T, db *gorm.DB) error {
 
 func TestMigrationScript(t *testing.T) {
 	ctx := context.Background()
-	connUrl := getConnUrl(t, ctx)
-	db := database.New(connUrl, false)
+	connURL, _ := test_helper.GetConnURL(t, ctx)
+	db := database.New(connURL, false)
 
 	err := migrateUp(t, db)
 	if err != nil {
@@ -122,6 +94,5 @@ func TestMigrationScript(t *testing.T) {
 	if err != nil {
 		t.Logf("Error migrating down: %s", err)
 	}
-
 	assert.Nil(t, err)
 }
