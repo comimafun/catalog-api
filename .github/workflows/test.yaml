@@ -1,13 +1,19 @@
-name: Testcontainers tests
+name: Run tests
 
 on:
-  pull_request:
-    types:
-      - labeled
   push:
     branches:
-      - dev
       - master
+      - dev
+    paths-ignore:
+      - '.github/**'
+  pull_request:
+    branches:
+      - master
+      - dev
+    paths-ignore:
+      - '.github/**'
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -15,7 +21,7 @@ concurrency:
 
 jobs:
   run-testing:
-    if: ${{ github.event.label.name == 'run-test' || (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/master')) }}
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
