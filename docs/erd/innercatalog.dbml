@@ -175,3 +175,10 @@ Table referral {
     circle_id [name: "idx_referral_circle_id"]
   }
 }
+
+Table report {
+  id serial [pk]
+  user_id int [not null, ref: > user.id]
+  circle_id int [not null, ref: > circle.id]
+  created_at timestamp [not null]
+}
