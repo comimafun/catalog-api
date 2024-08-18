@@ -76,10 +76,22 @@ func (a *AuthMiddleware) IfAuthed(c *fiber.Ctx) error {
 		c.Locals("user", nil)
 		return c.Next()
 	}
-
 	claims, err := a.parseToken(accessToken)
 	if err != nil {
-		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+		type reqCookie struct {
+			RefreshToken string `cookie:"refresh_token"`
+		}
+		reqCookies := new(reqCookie)
+		if err := c.CookieParser(reqCookies); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+		}
+
+		if reqCookies.RefreshToken == "" {
+			c.Locals("user", nil)
+			return c.Next()
+		} else {
+			return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
+		}
 	}
 
 	c.Locals("user", claims)
@@ -99,7 +111,6 @@ func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 	}
 
 	if accessToken == "" {
-
 		if reqCookies.RefreshToken == "" {
 			return c.
 				Status(fiber.StatusUnauthorized).
