@@ -72,20 +72,25 @@ func (a *AuthMiddleware) parseToken(accessToken string) (*auth_dto.ATClaims, *do
 func (a *AuthMiddleware) IfAuthed(c *fiber.Ctx) error {
 	accessToken := c.Get("Authorization")
 	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+	type reqCookie struct {
+		RefreshToken string `cookie:"refresh_token"`
+	}
+	reqCookies := new(reqCookie)
+	if err := c.CookieParser(reqCookies); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
 	if accessToken == "" {
-		c.Locals("user", nil)
-		return c.Next()
+		if reqCookies.RefreshToken == "" {
+			c.Locals("user", nil)
+			return c.Next()
+		} else {
+			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
+		}
+
 	}
 	claims, err := a.parseToken(accessToken)
 	if err != nil {
-		type reqCookie struct {
-			RefreshToken string `cookie:"refresh_token"`
-		}
-		reqCookies := new(reqCookie)
-		if err := c.CookieParser(reqCookies); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
-		}
-
 		if reqCookies.RefreshToken == "" {
 			c.Locals("user", nil)
 			return c.Next()
