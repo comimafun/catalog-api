@@ -90,14 +90,35 @@ func (a *AuthMiddleware) IfAuthed(c *fiber.Ctx) error {
 func (a *AuthMiddleware) Init(c *fiber.Ctx) error {
 	accessToken := c.Get("Authorization")
 	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+	type reqCookie struct {
+		RefreshToken string `cookie:"refresh_token"`
+	}
+	reqCookies := new(reqCookie)
+	if err := c.CookieParser(reqCookies); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusBadRequest, err, nil)))
+	}
+
 	if accessToken == "" {
-		return c.
-			Status(fiber.StatusUnauthorized).
-			JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
+
+		if reqCookies.RefreshToken == "" {
+			return c.
+				Status(fiber.StatusUnauthorized).
+				JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+		} else {
+			return c.
+				Status(fiber.StatusUnauthorized).
+				JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("TOKEN_INVALID"), nil)))
+		}
+
 	}
 
 	claims, err := a.parseToken(accessToken)
 	if err != nil {
+
+		if err.Err.Error() == "TOKEN_INVALID" && reqCookies.RefreshToken == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(domain.NewErrorFiber(c, domain.NewError(fiber.StatusUnauthorized, errors.New("UNAUTHORIZED"), nil)))
+		}
+
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 

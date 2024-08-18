@@ -54,9 +54,10 @@ func (a *AuthHandler) removeCookie(c *fiber.Ctx) {
 
 	cookie := new(fiber.Cookie)
 	cookie.Name = "refresh_token"
+	cookie.Value = ""
 	cookie.Expires = time.Now().Add(-time.Hour)
-	cookie.HTTPOnly = true
 
+	cookie.HTTPOnly = true
 	cookie.SameSite = "None"
 
 	if appStage == "local" {
@@ -209,6 +210,7 @@ func (a *AuthHandler) GetGenerateNewTokenAndRefreshToken(c *fiber.Ctx) error {
 
 	data, err := a.authService.GenerateNewTokenAndRefreshToken(reqCookies.RefreshToken)
 	if err != nil {
+		a.removeCookie(c)
 		return c.Status(err.Code).JSON(domain.NewErrorFiber(c, err))
 	}
 
